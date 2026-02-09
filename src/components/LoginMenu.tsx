@@ -1,0 +1,120 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, User, BarChart3, Settings, LogIn, Shield } from 'lucide-react';
+import { ROUTE_PATHS } from '@/lib/index';
+import { Button } from '@/components/ui/button';
+import { useRiskProfile } from '@/hooks/useRiskProfile';
+
+interface LoginMenuProps {
+  className?: string;
+}
+
+const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const { setShowProfileModal } = useRiskProfile();
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current && 
+        buttonRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const menuItems = [
+    {
+      label: 'Cliente',
+      icon: <User className="w-4 h-4" />,
+      href: ROUTE_PATHS.CLIENT_REGISTER,
+      description: 'Registro de cliente'
+    },
+    {
+      label: 'Dashboard',
+      icon: <BarChart3 className="w-4 h-4" />,
+      href: ROUTE_PATHS.INTERNAL_LOGIN,
+      description: 'Dashboard interno'
+    },
+    {
+      label: 'CMS',
+      icon: <Settings className="w-4 h-4" />,
+      href: ROUTE_PATHS.CMS_SETUP,
+      description: 'Sistema de gestión'
+    },
+    {
+      label: 'Super Admin',
+      icon: <Shield className="w-4 h-4" />,
+      href: ROUTE_PATHS.SUPER_ADMIN_LOGIN,
+      description: 'Acceso de super administrador'
+    }
+  ];
+
+  return (
+    <div className={`relative ${className}`}>
+      {/* Botón principal */}
+      <Button
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-[#24d594] text-white hover:bg-[#24d594]/90 transition-colors shadow-sm flex items-center gap-2"
+        size="sm"
+      >
+        <LogIn className="w-4 h-4" />
+        Login
+        <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </Button>
+
+      {/* Menú desplegable */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-56 bg-white border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+          >
+            <div className="py-2">
+              {menuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#24d594]/10 text-[#24d594] group-hover:bg-[#24d594]/20 transition-colors">
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{item.label}</div>
+                    <div className="text-xs text-muted-foreground">{item.description}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            {/* Separador y footer */}
+            <div className="border-t border-border bg-muted/30 px-4 py-3">
+              <p className="text-xs text-muted-foreground text-center">
+                Acceso para usuarios autorizados
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default LoginMenu;
