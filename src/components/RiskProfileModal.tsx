@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, DollarSign, Target, Clock, TrendingUp, Shield } from 'lucide-react';
+import { X, User, DollarSign, Target, Clock, TrendingUp, Shield, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [wantsToRegister, setWantsToRegister] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
   const [formData, setFormData] = useState<RiskProfile>({
     firstName: '',
     lastName: '',
@@ -114,7 +115,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.firstName && formData.lastName && formData.email);
+        return !!(formData.firstName.trim() && formData.lastName.trim() && formData.email.trim());
       case 2:
         return !!(formData.riskTolerance && formData.tradingExperience);
       case 3:
@@ -128,7 +129,11 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
 
   const nextStep = () => {
     if (validateStep(currentStep) && currentStep < totalSteps) {
+      setShowValidationError(false);
       setCurrentStep(currentStep + 1);
+    } else {
+      setShowValidationError(true);
+      setTimeout(() => setShowValidationError(false), 3000);
     }
   };
 
@@ -214,7 +219,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
             </div>
             
             <div>
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">Teléfono *</Label>
               <Input
                 id="phone"
                 name="tel"
@@ -405,32 +410,30 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
               </div>
             </div>
 
-            {/* Opción de registro automático */}
-            {showRegistrationOption && (
-              <div className="mt-8 p-4 bg-muted/30 rounded-lg border border-primary/20">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="register-client"
-                    checked={wantsToRegister}
-                    onCheckedChange={(checked) => setWantsToRegister(checked as boolean)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor="register-client" className="text-sm font-medium cursor-pointer">
-                      Crear cuenta automáticamente en el Portal del Cliente
-                    </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Al seleccionar esta opción, crearemos automáticamente tu cuenta de trading y te daremos acceso inmediato al Portal del Cliente con datos simulados para que puedas explorar la plataforma.
-                    </p>
-                    {wantsToRegister && (
-                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
-                        ✓ Recibirás un email con tus credenciales de acceso
-                      </div>
-                    )}
+            {/* Mensaje de redirección al registro */}
+            <div className="mt-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <ArrowRight className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-primary mb-1">
+                    Próximo Paso: Registro de Cliente
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Una vez completado tu perfil de riesgo, serás redirigido automáticamente al formulario de registro de cliente para crear tu cuenta en el Portal del Cliente.
+                  </p>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-primary">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Perfil de riesgo personalizado</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-primary">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Acceso al Portal del Cliente</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         );
 
@@ -495,6 +498,13 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
             </CardContent>
 
             <div className="p-6 border-t border-border/40 bg-card/50">
+              {showValidationError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">
+                    Por favor, completa todos los campos obligatorios antes de continuar.
+                  </p>
+                </div>
+              )}
               <div className="flex justify-between">
                 <Button
                   variant="outline"
@@ -520,8 +530,8 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
                     className="min-w-[120px] bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {isSubmitting 
-                      ? (wantsToRegister ? 'Creando cuenta...' : 'Guardando...') 
-                      : (wantsToRegister ? 'Crear Cuenta y Acceder' : 'Completar Perfil')
+                      ? 'Guardando perfil...' 
+                      : 'Completar y Continuar al Registro'
                     }
                   </Button>
                 )}

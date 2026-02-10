@@ -21,6 +21,8 @@ export const ROUTE_PATHS = {
   // Internal Dashboard
   INTERNAL_DASHBOARD: '/dashboard-interno',
   INTERNAL_LOGIN: '/login-interno',
+  // Access Diagnostic
+  ACCESS_DIAGNOSTIC: '/diagnostico-acceso',
   // CMS Routes
   CMS_SETUP: '/cms/setup',
   CMS_LOGIN: '/cms/login',

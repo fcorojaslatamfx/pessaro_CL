@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone, Mail, MapPin, ChevronRight, ArrowRight } from 'lucide-react';
 import { SiLinkedin, SiFacebook, SiX, SiInstagram } from 'react-icons/si';
@@ -29,6 +29,7 @@ export function Layout({
   });
   const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     isOpen,
     popupType,
@@ -48,6 +49,20 @@ export function Layout({
   const handleMobileNavClick = () => {
     setIsMenuOpen(false);
   };
+
+  // Prevenir scroll del body cuando el menú móvil está abierto
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup al desmontar el componente
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -132,15 +147,24 @@ export function Layout({
         }} exit={{
           opacity: 0,
           height: 0
-        }} className="lg:hidden bg-background border-b border-border overflow-hidden">
-              <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4 sm:gap-6">
-                {navLinks.map(link => <NavLink key={link.path} to={link.path} onClick={handleMobileNavClick} className={({
-              isActive
-            }) => `text-lg font-semibold transition-colors ${isActive ? 'text-primary' : 'text-foreground'}`}>
+        }} className="lg:hidden bg-background border-b border-border relative z-50 shadow-lg">
+              <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4 sm:gap-6 max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain">
+                {navLinks.map(link => (
+                  <NavLink 
+                    key={link.path} 
+                    to={link.path} 
+                    onClick={handleMobileNavClick} 
+                    className={({ isActive }) => 
+                      `text-lg font-semibold transition-colors py-3 px-4 rounded-lg hover:bg-muted/50 block min-h-[48px] flex items-center ${
+                        isActive ? 'text-primary bg-primary/10' : 'text-foreground'
+                      }`
+                    }
+                  >
                     {link.label}
-                  </NavLink>)}
+                  </NavLink>
+                ))}
                 <div className="flex flex-col gap-4 pt-4 border-t border-border">
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" onClick={() => setShowProfileModal(true)}>
+                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" onClick={() => { setShowProfileModal(true); setIsMenuOpen(false); }}>
                     Empezar Ahora
                   </Button>
                   <div className="flex justify-center">
@@ -264,6 +288,24 @@ export function Layout({
                 className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
               >
                 Advertencia de Riesgo
+              </button>
+              <button 
+                onClick={() => setShowProfileModal(true)}
+                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+              >
+                Perfil de Riesgo
+              </button>
+              <button 
+                onClick={() => navigate(ROUTE_PATHS.CLIENT_REGISTER)}
+                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+              >
+                Registro de Clientes
+              </button>
+              <button 
+                onClick={() => openPopup('account')}
+                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+              >
+                Contactar Asesor Comercial
               </button>
             </div>
           </div>

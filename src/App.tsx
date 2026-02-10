@@ -26,6 +26,8 @@ import ClientRegister from '@/pages/ClientRegister';
 // Super Admin System
 import SuperAdminLogin from '@/pages/SuperAdminLogin';
 import SuperAdminPanel from '@/pages/SuperAdminPanel';
+// Access Diagnostic
+import AccessDiagnostic from '@/pages/AccessDiagnostic';
 // CMS pages
 import Setup from '@/pages/cms/Setup';
 import Login from '@/pages/cms/Login';
@@ -134,6 +136,12 @@ const App: React.FC = () => {
               <Route 
                 path={ROUTE_PATHS.SUPER_ADMIN_PANEL} 
                 element={<SuperAdminPanel />} 
+              />
+
+              {/* Access Diagnostic */}
+              <Route 
+                path={ROUTE_PATHS.ACCESS_DIAGNOSTIC} 
+                element={<AccessDiagnostic />} 
               />
 
               {/* Internal Dashboard Section */}

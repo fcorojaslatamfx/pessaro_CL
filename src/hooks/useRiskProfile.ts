@@ -95,7 +95,12 @@ export const useRiskProfile = () => {
         // No bloquear el proceso si falla el email
       }
 
-      // Si se solicita registro de cliente, proceder con el registro automático
+      // Siempre redirigir al formulario de registro de clientes después de completar el perfil
+      setTimeout(() => {
+        navigate(ROUTE_PATHS.CLIENT_REGISTER);
+      }, 1500);
+
+      // Si se solicita registro automático, proceder con el registro
       if (shouldRegisterClient) {
         setIsRegistering(true);
         
@@ -124,10 +129,17 @@ export const useRiskProfile = () => {
             }, 2000);
           } else {
             console.error('Error en registro automático:', result.error);
-            // Aún así, el perfil se guardó correctamente
+            // Redirigir al formulario de registro manual
+            setTimeout(() => {
+              navigate(ROUTE_PATHS.CLIENT_REGISTER);
+            }, 1500);
           }
         } catch (error) {
           console.error('Error durante el registro:', error);
+          // Redirigir al formulario de registro manual
+          setTimeout(() => {
+            navigate(ROUTE_PATHS.CLIENT_REGISTER);
+          }, 1500);
         } finally {
           setIsRegistering(false);
         }

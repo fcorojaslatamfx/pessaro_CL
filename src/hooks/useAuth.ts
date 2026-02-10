@@ -14,6 +14,11 @@ export interface AuthUser {
   email: string;
   role: string;
   profile?: any;
+  fullName?: string;
+  department?: string;
+  isActive?: boolean;
+  lastLogin?: string;
+  permissions?: Record<string, any>;
 }
 
 export const useAuth = () => {
@@ -57,36 +62,76 @@ export const useAuth = () => {
 
   const loadUserWithRole = async (authUser: any) => {
     try {
-      // Obtener rol del usuario
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles_2026_02_08_22_02')
-        .select('role')
-        .eq('user_id', authUser.id)
-        .single();
+      // Usar la nueva Edge Function para verificar usuario
+      const { data: response, error: functionError } = await supabase.functions.invoke('user_access_management_2026_02_09', {
+        body: {
+          action: 'verify_user',
+          email: authUser.email
+        }
+      });
 
-      if (roleError) {
-        console.error('Error loading user role:', roleError);
-        setError('Error cargando rol de usuario');
+      if (functionError || !response?.success) {
+        console.error('Error verifying user:', functionError || response?.error);
+        
+        // Fallback: intentar con el método anterior
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles_2026_02_08_22_02')
+          .select('role')
+          .eq('user_id', authUser.id)
+          .single();
+
+        if (roleError) {
+          console.error('Error loading user role:', roleError);
+          setError('Error cargando rol de usuario');
+          return;
+        }
+
+        // Obtener perfil adicional si es cliente
+        let profile = null;
+        if (roleData.role === 'cliente') {
+          const { data: profileData } = await supabase
+            .from('client_profiles_2026_02_08_22_02')
+            .select('*')
+            .eq('user_id', authUser.id)
+            .single();
+          
+          profile = profileData;
+        }
+
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          role: roleData.role,
+          profile
+        });
         return;
       }
 
+      // Usar datos de la Edge Function
+      const userData = response.data.user;
+      
       // Obtener perfil adicional si es cliente
       let profile = null;
-      if (roleData.role === 'cliente') {
+      if (userData.role === 'cliente') {
         const { data: profileData } = await supabase
           .from('client_profiles_2026_02_08_22_02')
           .select('*')
-          .eq('user_id', authUser.id)
+          .eq('user_id', userData.id)
           .single();
         
         profile = profileData;
       }
 
       setUser({
-        id: authUser.id,
-        email: authUser.email || '',
-        role: roleData.role,
-        profile
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        profile,
+        fullName: userData.fullName,
+        department: userData.department,
+        isActive: userData.isActive,
+        lastLogin: userData.lastLogin,
+        permissions: userData.rolePermissions
       });
 
     } catch (error) {
