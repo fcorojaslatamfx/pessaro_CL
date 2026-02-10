@@ -108,7 +108,7 @@ const EducationAssessmentPopup: React.FC<EducationAssessmentPopupProps> = ({
 
       if (result?.success) {
         setIsSubmitted(true);
-        toast.success('Evaluación enviada correctamente. Nos pondremos en contacto pronto.');
+        toast.success('✅ Su información fue recepcionada con éxito.');
         
         // Resetear después de 3 segundos
         setTimeout(() => {

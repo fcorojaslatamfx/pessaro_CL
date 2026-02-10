@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useClientRegistration } from './useClientRegistration';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { ROUTE_PATHS } from '@/lib/index';
 
 export interface RiskProfile {
@@ -79,6 +80,20 @@ export const useRiskProfile = () => {
       setProfile(profileData);
       setIsProfileComplete(true);
       setShowProfileModal(false);
+
+      // Enviar email de confirmación de perfil de riesgo
+      try {
+        await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+          body: {
+            formType: 'risk_profile',
+            formData: profileData,
+            userEmail: profileData.email
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending risk profile confirmation:', emailError);
+        // No bloquear el proceso si falla el email
+      }
 
       // Si se solicita registro de cliente, proceder con el registro automático
       if (shouldRegisterClient) {

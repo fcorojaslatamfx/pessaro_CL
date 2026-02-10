@@ -49,6 +49,23 @@ export const useClientRegistration = () => {
         return { success: false, error: data.error };
       }
 
+      // Enviar email de confirmación de registro
+      try {
+        await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+          body: {
+            formType: 'client_registration',
+            formData: {
+              ...profileData,
+              tempPassword: data.user.temp_password
+            },
+            userEmail: profileData.email
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending client registration confirmation:', emailError);
+        // No bloquear el proceso si falla el email
+      }
+
       return {
         success: true,
         message: data.message,

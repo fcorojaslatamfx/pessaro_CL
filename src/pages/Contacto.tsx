@@ -21,6 +21,11 @@ const contactFormSchema = z.object({
   email: z.string().email({
     message: 'Correo electrónico no válido'
   }),
+  phone: z.string().min(8, {
+    message: 'El número móvil debe tener al menos 8 dígitos'
+  }).regex(/^[+]?[0-9\s\-\(\)]+$/, {
+    message: 'Formato de número móvil no válido'
+  }),
   subject: z.string().min(5, {
     message: 'El asunto debe ser más descriptivo'
   }),
@@ -43,26 +48,37 @@ const Contacto: React.FC = () => {
   });
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      // Enviar email usando Edge Function
-      const { data: result, error } = await supabase.functions.invoke('send_contact_email_corrected_2026_01_30_20_41', {
+      // Enviar email de confirmación automático al usuario
+      const { data: confirmationResult, error: confirmationError } = await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
         body: {
           formType: 'contact',
-          formData: data
+          formData: data,
+          userEmail: data.email
         }
       });
 
-      if (error) {
-        console.error('Error sending email:', error);
-        toast.error('Error al enviar el mensaje. Por favor, intente nuevamente.');
-        return;
+      if (confirmationError) {
+        console.error('Error sending confirmation email:', confirmationError);
+        // No bloquear el proceso si falla el email de confirmación
       }
 
-      if (result?.success) {
-        toast.success('Mensaje enviado correctamente. Nos pondremos en contacto pronto.');
-        reset();
-      } else {
-        toast.error('Error al enviar el mensaje. Por favor, intente nuevamente.');
+      // Enviar notificación interna (opcional - mantener función existente si existe)
+      try {
+        await supabase.functions.invoke('send_contact_email_corrected_2026_01_30_20_41', {
+          body: {
+            formType: 'contact',
+            formData: data
+          }
+        });
+      } catch (internalError) {
+        console.error('Error sending internal notification:', internalError);
+        // No bloquear si falla la notificación interna
       }
+
+      // Mostrar mensaje de éxito al usuario
+      toast.success('✅ Su información fue recepcionada con éxito.');
+      reset();
+
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al enviar el mensaje. Por favor, intente nuevamente.');
@@ -136,6 +152,18 @@ const Contacto: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="phone">Número Móvil</Label>
+                      <Input 
+                        id="phone" 
+                        type="tel" 
+                        placeholder="+56 9 1234 5678" 
+                        {...register('phone')} 
+                        className={errors.phone ? 'border-destructive' : ''} 
+                      />
+                      {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="subject">Asunto</Label>
                       <Input id="subject" placeholder="Consulta sobre gestión de carteras" {...register('subject')} className={errors.subject ? 'border-destructive' : ''} />
                       {errors.subject && <p className="text-xs text-destructive">{errors.subject.message}</p>}
@@ -181,7 +209,7 @@ const Contacto: React.FC = () => {
               once: true
             }} className="space-y-6">
                 <h2 className="text-3xl font-bold text-foreground">Canales de Atención</h2>
-                <p className="text-muted-foreground">Nuestra sede central ecoordina todas las operaciones globales. Puede visitarnos o contactarnos directamente a través de los siguientes canales.</p>
+                <p className="text-muted-foreground">Nuestra sede central coordina todas las operaciones globales. Puede visitarnos o contactarnos directamente a través de los siguientes canales.</p>
 
                 <div className="grid grid-cols-1 gap-4">
                   <Card className="bg-secondary/30 border-none">

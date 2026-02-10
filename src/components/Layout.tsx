@@ -44,6 +44,10 @@ export function Layout({
   const closeLegalPopup = () => {
     setLegalPopup({ isOpen: false, type: null });
   };
+
+  const handleMobileNavClick = () => {
+    setIsMenuOpen(false);
+  };
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -86,7 +90,7 @@ export function Layout({
       {/* Navigation Header */}
       <header ref={headerRef} className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-background/90 backdrop-blur-md border-b border-border py-2 md:py-3 shadow-sm' : 'bg-transparent py-3 md:py-5'}`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <Link to={ROUTE_PATHS.HOME} className="flex items-center gap-2">
+          <Link to={ROUTE_PATHS.HOME} onClick={handleMobileNavClick} className="flex items-center gap-2">
             <img src={PESSARO_LOGO} alt="Pessaro Capital" className="h-8 sm:h-10 md:h-12 w-auto object-contain" />
           </Link>
 
@@ -130,7 +134,7 @@ export function Layout({
           height: 0
         }} className="lg:hidden bg-background border-b border-border overflow-hidden">
               <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4 sm:gap-6">
-                {navLinks.map(link => <NavLink key={link.path} to={link.path} className={({
+                {navLinks.map(link => <NavLink key={link.path} to={link.path} onClick={handleMobileNavClick} className={({
               isActive
             }) => `text-lg font-semibold transition-colors ${isActive ? 'text-primary' : 'text-foreground'}`}>
                     {link.label}

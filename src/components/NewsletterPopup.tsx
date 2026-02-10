@@ -222,9 +222,9 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                     className="text-center py-8"
                   >
                     <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">¡Suscripción Exitosa!</h3>
+                    <h3 className="text-xl font-bold mb-2">¡Información Recepcionada!</h3>
                     <p className="text-muted-foreground">
-                      Te hemos enviado un email de confirmación. Comenzarás a recibir contenido personalizado pronto.
+                      Su información fue recepcionada con éxito.
                     </p>
                   </motion.div>
                 ) : (

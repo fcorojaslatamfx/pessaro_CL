@@ -32,6 +32,7 @@ import Login from '@/pages/cms/Login';
 import Dashboard from '@/pages/cms/Dashboard';
 // Protected Route Component
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ScrollToTop from '@/components/ScrollToTop';
 import BlogManager from '@/pages/cms/BlogManager';
 import TeamManager from '@/pages/cms/TeamManager';
 import ServicesManager from '@/pages/cms/ServicesManager';
@@ -60,6 +61,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Layout>
             <Routes>
               {/* Main Landing & Home Section */}

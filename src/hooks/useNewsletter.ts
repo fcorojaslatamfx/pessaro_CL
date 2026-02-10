@@ -60,6 +60,20 @@ export const useNewsletter = () => {
 
         if (updateError) throw updateError;
 
+        // Enviar email de confirmación para actualización
+        try {
+          await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+            body: {
+              formType: 'newsletter',
+              formData: normalizedData,
+              userEmail: normalizedData.email
+            }
+          });
+        } catch (emailError) {
+          console.error('Error sending newsletter update confirmation:', emailError);
+          // No bloquear el proceso si falla el email
+        }
+
         setSuccess(true);
       } else {
         // Crear nueva suscripción
@@ -76,6 +90,20 @@ export const useNewsletter = () => {
           });
 
         if (insertError) throw insertError;
+
+        // Enviar email de confirmación automático
+        try {
+          await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+            body: {
+              formType: 'newsletter',
+              formData: normalizedData,
+              userEmail: normalizedData.email
+            }
+          });
+        } catch (emailError) {
+          console.error('Error sending newsletter confirmation:', emailError);
+          // No bloquear el proceso si falla el email
+        }
 
         setSuccess(true);
       }

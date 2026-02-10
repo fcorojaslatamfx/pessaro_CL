@@ -101,7 +101,7 @@ const ContactPopup: React.FC<ContactPopupProps> = ({ isOpen, onClose, buttonType
 
       if (result?.success) {
         setIsSubmitted(true);
-        toast.success('Solicitud enviada correctamente. Nos pondremos en contacto pronto.');
+        toast.success('✅ Su información fue recepcionada con éxito.');
         
         // Resetear después de 3 segundos
         setTimeout(() => {
