@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import DomainInfo from '@/components/DomainInfo';
 
 interface SystemStatus {
   total_auth_users: number;
@@ -401,6 +402,11 @@ const AccessDiagnostic: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Información de Dominio */}
+      <div className="mt-8">
+        <DomainInfo />
       </div>
     </div>
   );

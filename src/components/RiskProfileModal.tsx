@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { RiskProfile } from '@/hooks/useRiskProfile';
 import { supabase } from '@/integrations/supabase/client';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 
 interface RiskProfileModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [wantsToRegister, setWantsToRegister] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const { showWhatsApp } = useWhatsApp();
   const [formData, setFormData] = useState<RiskProfile>({
     firstName: '',
     lastName: '',
@@ -143,6 +145,11 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
     }
   };
 
+  const handleClose = () => {
+    onClose();
+    showWhatsApp();
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(4)) return;
 
@@ -159,6 +166,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
 
       // Guardar perfil localmente y opcionalmente registrar cliente
       onSave(formData, wantsToRegister);
+      showWhatsApp();
     } catch (error) {
       console.error('Error submitting risk profile:', error);
     } finally {
@@ -477,7 +485,7 @@ const RiskProfileModal: React.FC<RiskProfileModalProps> = ({ isOpen, onClose, on
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-4 h-4" />

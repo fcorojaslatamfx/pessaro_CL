@@ -154,6 +154,27 @@ export const faqs: FAQ[] = [
     id: 'faq-5',
     question: '¿Proporcionan análisis de mercado y señales de trading?',
     answer: 'Sí, nuestro equipo de analistas publica análisis técnico y fundamental diariamente, además de señales de trading para nuestros clientes premium.'
+  },
+  // FAQs de Servicios Financieros
+  {
+    id: 'faq-forex',
+    question: '¿Qué es Forex Trading?',
+    answer: 'Forex (Foreign Exchange) es el mercado de divisas más grande y líquido del mundo, donde se intercambian monedas de diferentes países. En Pessaro Capital ofrecemos acceso a más de 60 pares de divisas con spreads desde 0.0 pips, apalancamiento hasta 1:500 y ejecución en menos de 30ms. Es ideal para traders que buscan alta liquidez y oportunidades de trading 24/5.'
+  },
+  {
+    id: 'faq-commodities',
+    question: '¿Qué son las Materias Primas?',
+    answer: 'Las materias primas son recursos naturales básicos como oro, plata, petróleo y productos agrícolas que se utilizan en la producción de bienes. Son considerados activos refugio y ofrecen diversificación de cartera. En Pessaro Capital puede operar oro y plata sin comisiones, petróleo WTI y Brent, y productos agrícolas globales, proporcionando cobertura contra la inflación y volatilidad de mercados.'
+  },
+  {
+    id: 'faq-indices',
+    question: '¿Qué son los Índices Bursátiles?',
+    answer: 'Los índices bursátiles son indicadores que miden el rendimiento de un grupo seleccionado de acciones, representando sectores específicos o mercados completos. Ejemplos incluyen S&P 500, NASDAQ, DAX y FTSE. Permiten obtener exposición diversificada a mercados enteros con un solo instrumento. En Pessaro Capital ofrecemos índices europeos, asiáticos y americanos con spreads fijos garantizados y horarios extendidos de trading.'
+  },
+  {
+    id: 'faq-crypto',
+    question: '¿Qué son las Criptomonedas?',
+    answer: 'Las criptomonedas son monedas digitales descentralizadas basadas en tecnología blockchain, como Bitcoin, Ethereum y Litecoin. Representan el futuro de las finanzas digitales y ofrecen trading 24/7 sin interrupciones. En Pessaro Capital puede operar las principales criptomonedas sin necesidad de wallet o custodia de activos, con apalancamiento hasta 1:10 y acceso a un mercado que nunca cierra.'
   }
 ];
 

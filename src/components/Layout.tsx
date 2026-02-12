@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Phone, Mail, MapPin, ChevronRight, ArrowRight } from 'lucide-react';
+import { Menu, X, Phone, Mail, MapPin, ChevronRight, ArrowRight, Shield } from 'lucide-react';
 import { SiLinkedin, SiFacebook, SiX, SiInstagram } from 'react-icons/si';
-import { ROUTE_PATHS, PESSARO_LOGO } from '@/lib/index';
+import { ROUTE_PATHS, PESSARO_LOGO, PESSARO_LOGO_HEADER, PESSARO_LOGO_FOOTER } from '@/lib/index';
 import { Button } from '@/components/ui/button';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import ContactPopup from '@/components/ContactPopup';
@@ -13,12 +13,26 @@ import { useContactPopup } from '@/hooks/useContactPopup';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
 import RiskProfileModal from '@/components/RiskProfileModal';
 import LoginMenu from '@/components/LoginMenu';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { useAuth } from '@/hooks/useAuth';
+import { isLoginDomain, isLoginRoute, isDevelopment, getMainSiteUrl, getAdminUrl } from '@/lib/domains';
+import LoginLayout from '@/components/LoginLayout';
+
 interface LayoutProps {
   children: React.ReactNode;
 }
-export function Layout({
-  children
-}: LayoutProps) {
+
+export function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+  
+  // Detectar si estamos en el dominio de login o en una ruta administrativa
+  const shouldUseLoginLayout = isLoginDomain() || (isDevelopment() && isLoginRoute(location.pathname));
+  
+  // Si debemos usar el LoginLayout, renderizarlo en su lugar
+  if (shouldUseLoginLayout) {
+    return <LoginLayout>{children}</LoginLayout>;
+  }
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
@@ -28,7 +42,6 @@ export function Layout({
     type: null
   });
   const headerRef = useRef<HTMLElement>(null);
-  const location = useLocation();
   const navigate = useNavigate();
   const {
     isOpen,
@@ -37,6 +50,8 @@ export function Layout({
     closePopup
   } = useContactPopup();
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
+  const { hideWhatsApp, showWhatsApp } = useWhatsApp();
+  const { user } = useAuth();
 
   const openLegalPopup = (type: 'terms' | 'privacy' | 'risk') => {
     setLegalPopup({ isOpen: true, type });
@@ -63,6 +78,7 @@ export function Layout({
       document.body.style.overflow = 'unset';
     };
   }, [isMenuOpen]);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -70,59 +86,92 @@ export function Layout({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   useEffect(() => {
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.offsetHeight);
     }
     setIsMenuOpen(false);
   }, [location.pathname]);
-  const navLinks = [{
-    path: ROUTE_PATHS.HOME,
-    label: 'Inicio'
-  }, {
-    path: ROUTE_PATHS.SERVICIOS,
-    label: 'Servicios'
-  }, {
-    path: ROUTE_PATHS.INSTRUMENTOS,
-    label: 'Instrumentos'
-  }, {
-    path: ROUTE_PATHS.EDUCACION,
-    label: 'Educación'
-  }, {
-    path: ROUTE_PATHS.BASE_CONOCIMIENTOS,
-    label: 'Base de Conocimientos'
-  }, {
-    path: ROUTE_PATHS.BLOG,
-    label: 'Blog'
-  }, {
-    path: ROUTE_PATHS.NOSOTROS,
-    label: 'Nosotros'
-  }, {
-    path: ROUTE_PATHS.CONTACTO,
-    label: 'Contacto'
-  }];
-  return <div className="flex flex-col min-h-screen bg-background">
+
+  // Manejar visibilidad del botón de WhatsApp
+  useEffect(() => {
+    const hasOpenPopup = isOpen || showProfileModal || showNewsletterPopup || legalPopup.isOpen;
+    const shouldHideWhatsApp = hasOpenPopup || isMenuOpen; // Incluir menú móvil
+    
+    if (shouldHideWhatsApp) {
+      hideWhatsApp();
+    } else {
+      showWhatsApp();
+    }
+  }, [isOpen, showProfileModal, showNewsletterPopup, legalPopup.isOpen, isMenuOpen, hideWhatsApp, showWhatsApp]);
+
+  const navLinks = [
+    { path: ROUTE_PATHS.HOME, label: 'Inicio' },
+    { path: ROUTE_PATHS.SERVICIOS, label: 'Servicios' },
+    { path: ROUTE_PATHS.INSTRUMENTOS, label: 'Instrumentos' },
+    { path: ROUTE_PATHS.EDUCACION, label: 'Educación' },
+    { path: ROUTE_PATHS.BASE_CONOCIMIENTOS, label: 'Base de Conocimientos' },
+    { path: ROUTE_PATHS.BLOG, label: 'Blog' },
+    { path: ROUTE_PATHS.NOSOTROS, label: 'Nosotros' },
+    { path: ROUTE_PATHS.CONTACTO, label: 'Contacto' }
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Navigation Header */}
-      <header ref={headerRef} className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-background/90 backdrop-blur-md border-b border-border py-2 md:py-3 shadow-sm' : 'bg-transparent py-3 md:py-5'}`}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <Link to={ROUTE_PATHS.HOME} onClick={handleMobileNavClick} className="flex items-center gap-2">
-            <img src={PESSARO_LOGO} alt="Pessaro Capital" className="h-8 sm:h-10 md:h-12 w-auto object-contain" />
+      <header 
+        ref={headerRef} 
+        role="banner"
+        aria-label="Navegación principal"
+        className={`nav-mobile transition-all duration-300 safe-area-top ${
+          isScrolled 
+            ? 'bg-background/95 backdrop-blur-md border-b border-border py-2 sm:py-3 shadow-sm' 
+            : 'bg-transparent py-3 sm:py-4 md:py-5'
+        }`}
+      >
+        <div className="container-wide flex items-center justify-between h-full">
+          <Link 
+            to={ROUTE_PATHS.HOME} 
+            onClick={handleMobileNavClick} 
+            className="flex items-center gap-2 touch-target"
+            aria-label="Ir a la página principal de Pessaro Capital"
+          >
+            <img 
+              src={PESSARO_LOGO_HEADER}
+              alt="Pessaro Capital - Plataforma de Trading" 
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain" 
+              loading="eager"
+              decoding="async"
+            />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map(link => <NavLink key={link.path} to={link.path} className={({
-            isActive
-          }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground/80'}`}>
+          <nav 
+            className="desktop-only flex items-center gap-6 xl:gap-8"
+            role="navigation"
+            aria-label="Menú principal"
+          >
+            {navLinks.map(link => (
+              <NavLink 
+                key={link.path} 
+                to={link.path} 
+                className={({ isActive }) => 
+                  `text-sm xl:text-base font-medium transition-colors hover:text-primary touch-target flex items-center justify-center ${
+                    isActive ? 'text-primary' : 'text-foreground/80'
+                  }`
+                }
+              >
                 {link.label}
-              </NavLink>)}
+              </NavLink>
+            ))}
           </nav>
 
           {/* CTA Desktop */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="desktop-only flex items-center gap-3 xl:gap-4">
             <Button 
               size="sm" 
-              className="bg-accent text-accent-foreground font-semibold shadow-lg hover:shadow-accent/30 hover:bg-accent/90"
+              className="btn-responsive-sm bg-accent text-accent-foreground font-semibold shadow-lg hover:shadow-accent/30 hover:bg-accent/90"
               onClick={() => setShowProfileModal(true)}
             >
               Abrir Cuenta
@@ -131,31 +180,43 @@ export function Layout({
           </div>
 
           {/* Mobile Toggle */}
-          <button className="lg:hidden p-2 text-foreground hover:bg-muted rounded-md transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu Principal">
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button 
+            className="mobile-tablet touch-target p-2 text-foreground hover:bg-muted rounded-md transition-colors" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            aria-label={isMenuOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+            type="button"
+          >
+            {isMenuOpen ? 
+              <X size={20} className="sm:w-6 sm:h-6" aria-hidden="true" /> : 
+              <Menu size={20} className="sm:w-6 sm:h-6" aria-hidden="true" />
+            }
           </button>
         </div>
 
         {/* Mobile Menu Overlay */}
         <AnimatePresence>
-          {isMenuOpen && <motion.div initial={{
-          opacity: 0,
-          height: 0
-        }} animate={{
-          opacity: 1,
-          height: 'auto'
-        }} exit={{
-          opacity: 0,
-          height: 0
-        }} className="lg:hidden bg-background border-b border-border relative z-50 shadow-lg">
-              <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4 sm:gap-6 max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain">
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }} 
+              animate={{ opacity: 1, height: 'auto' }} 
+              exit={{ opacity: 0, height: 0 }} 
+              className="mobile-tablet bg-background border-b border-border relative z-50 shadow-lg safe-area-bottom"
+            >
+              <nav 
+                id="mobile-navigation"
+                className="container-wide py-6 sm:py-8 flex flex-col gap-4 sm:gap-6 max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain mobile-touch-pan-y"
+                role="navigation"
+                aria-label="Menú de navegación móvil"
+              >
                 {navLinks.map(link => (
                   <NavLink 
                     key={link.path} 
                     to={link.path} 
                     onClick={handleMobileNavClick} 
                     className={({ isActive }) => 
-                      `text-lg font-semibold transition-colors py-3 px-4 rounded-lg hover:bg-muted/50 block min-h-[48px] flex items-center ${
+                      `text-lg sm:text-xl font-semibold transition-colors py-4 px-4 rounded-lg hover:bg-muted/50 block touch-target flex items-center ${
                         isActive ? 'text-primary bg-primary/10' : 'text-foreground'
                       }`
                     }
@@ -163,8 +224,14 @@ export function Layout({
                     {link.label}
                   </NavLink>
                 ))}
-                <div className="flex flex-col gap-4 pt-4 border-t border-border">
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" onClick={() => { setShowProfileModal(true); setIsMenuOpen(false); }}>
+                <div className="flex flex-col gap-4 pt-6 border-t border-border mobile-safe-area">
+                  <Button 
+                    className="btn-responsive w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" 
+                    onClick={() => { 
+                      setShowProfileModal(true); 
+                      setIsMenuOpen(false); 
+                    }}
+                  >
                     Empezar Ahora
                   </Button>
                   <div className="flex justify-center">
@@ -172,40 +239,49 @@ export function Layout({
                   </div>
                 </div>
               </nav>
-            </motion.div>}
+            </motion.div>
+          )}
         </AnimatePresence>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow" style={{
-      paddingTop: `${headerHeight}px`
-    }}>
+      <main className="flex-grow" style={{ paddingTop: `${headerHeight}px` }}>
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="bg-secondary text-secondary-foreground pt-16 pb-8 border-t border-border">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-12 mb-12 sm:mb-16">
+      <footer 
+        className="bg-secondary text-secondary-foreground py-responsive-sm border-t border-border safe-area-bottom"
+        role="contentinfo"
+        aria-label="Información de la empresa y enlaces adicionales"
+      >
+        <div className="container-wide">
+          <div className="grid grid-responsive-4 gap-responsive-lg mb-responsive-lg">
             {/* Company Info */}
-            <div className="space-y-6">
-              <img src={PESSARO_LOGO} alt="Pessaro Capital" className="h-10 w-auto" />
-              <p className="text-sm leading-relaxed opacity-80">
+            <div className="space-y-responsive">
+              <img 
+                src={PESSARO_LOGO_FOOTER}
+                alt="Pessaro Capital - Plataforma de Trading" 
+                className="h-8 sm:h-10 w-auto" 
+                loading="lazy"
+                decoding="async"
+              />
+              <p className="text-caption leading-relaxed opacity-80">
                 Pessaro Capital es una entidad financiera líder con más de 15 años de experiencia 
                 proporcionando soluciones de inversión de vanguardia y acceso global a los mercados financieros.
               </p>
-              <div className="flex items-center gap-4">
-                <a href="#" className="p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
-                  <SiLinkedin size={18} />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <a href="https://www.linkedin.com/company/pessarocapital/?viewAsMember=true" target="_blank" rel="noopener noreferrer" className="touch-target p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
+                  <SiLinkedin size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </a>
-                <a href="#" className="p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
-                  <SiFacebook size={18} />
+                <a href="https://facebook.com/pessarocapital" target="_blank" rel="noopener noreferrer" className="touch-target p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
+                  <SiFacebook size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </a>
-                <a href="#" className="p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
-                  <SiX size={18} />
+                <a href="https://x.com/pessaro" target="_blank" rel="noopener noreferrer" className="touch-target p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
+                  <SiX size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </a>
-                <a href="#" className="p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
-                  <SiInstagram size={18} />
+                <a href="https://instagram.com/pessarocapital" target="_blank" rel="noopener noreferrer" className="touch-target p-2 bg-white rounded-full text-accent hover:bg-accent hover:text-white transition-all duration-300">
+                  <SiInstagram size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </a>
               </div>
             </div>
@@ -214,12 +290,17 @@ export function Layout({
             <div className="space-y-6">
               <h4 className="text-lg font-bold">Enlaces Rápidos</h4>
               <ul className="space-y-3">
-                {navLinks.map(link => <li key={link.path}>
-                    <Link to={link.path} className="text-sm opacity-80 hover:text-primary hover:opacity-100 flex items-center gap-2 group">
-                      <ChevronRight size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                {navLinks.map(link => (
+                  <li key={link.path}>
+                    <Link 
+                      to={link.path} 
+                      className="text-sm opacity-70 hover:opacity-100 hover:text-green-400 flex items-center gap-2 group transition-all"
+                    >
+                      <ChevronRight size={14} className="text-green-400 opacity-0 group-hover:opacity-100 transition-all" />
                       {link.label}
                     </Link>
-                  </li>)}
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -227,12 +308,17 @@ export function Layout({
             <div className="space-y-6">
               <h4 className="text-lg font-bold">Mercados</h4>
               <ul className="space-y-3">
-                {['Divisas / Forex', 'Materias Primas', 'Índices Bursátiles', 'Acciones Globales', 'Criptoactivos'].map(market => <li key={market}>
-                    <Link to={ROUTE_PATHS.INSTRUMENTOS} className="text-sm opacity-80 hover:text-primary hover:opacity-100 flex items-center gap-2 group">
-                      <ChevronRight size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                {['Divisas / Forex', 'Materias Primas', 'Índices Bursátiles', 'Acciones Globales', 'Criptoactivos'].map(market => (
+                  <li key={market}>
+                    <Link 
+                      to={ROUTE_PATHS.INSTRUMENTOS} 
+                      className="text-sm opacity-70 hover:opacity-100 hover:text-green-400 flex items-center gap-2 group transition-all"
+                    >
+                      <ChevronRight size={14} className="text-green-400 opacity-0 group-hover:opacity-100 transition-all" />
                       {market}
                     </Link>
-                  </li>)}
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -270,43 +356,98 @@ export function Layout({
               © 2026 Pessaro Capital. Todos los derechos reservados. 
               Regulado bajo estándares internacionales de transparencia financiera.
             </p>
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              {/* Enlaces Legales Básicos */}
               <button 
                 onClick={() => openLegalPopup('terms')}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Términos y Condiciones
               </button>
               <button 
                 onClick={() => openLegalPopup('privacy')}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Política de Privacidad
               </button>
               <button 
                 onClick={() => openLegalPopup('risk')}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Advertencia de Riesgo
               </button>
               <button 
                 onClick={() => setShowProfileModal(true)}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Perfil de Riesgo
               </button>
-              <button 
-                onClick={() => navigate(ROUTE_PATHS.CLIENT_REGISTER)}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+              <a 
+                href={getMainSiteUrl(ROUTE_PATHS.CLIENT_REGISTER)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Registro de Clientes
-              </button>
+              </a>
               <button 
                 onClick={() => openPopup('account')}
-                className="text-xs opacity-60 hover:text-primary transition-colors cursor-pointer"
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
               >
                 Contactar Asesor Comercial
               </button>
+              
+              {/* Dashboard Wyckoff - Acceso para usuarios internos */}
+              <button 
+                onClick={() => {
+                  if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
+                    window.open(getAdminUrl(ROUTE_PATHS.WYCKOFF_DASHBOARD), '_blank');
+                  } else if (user) {
+                    alert('Acceso restringido: Solo usuarios internos pueden acceder al Dashboard Wyckoff');
+                  } else {
+                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
+                  }
+                }}
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
+                title={user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin') 
+                  ? 'Acceder al Dashboard Wyckoff' 
+                  : 'Requiere acceso de usuario interno'
+                }
+              >
+                Dashboard Wyckoff
+              </button>
+              
+              {/* Sistema CMS - Acceso para usuarios internos y super admin */}
+              <button 
+                onClick={() => {
+                  if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
+                    window.open(getAdminUrl(ROUTE_PATHS.CMS_DASHBOARD), '_blank');
+                  } else if (user) {
+                    alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
+                  } else {
+                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
+                  }
+                }}
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
+                title={user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin') 
+                  ? 'Acceder al Sistema CMS' 
+                  : 'Requiere acceso de usuario interno'
+                }
+              >
+                Sistema CMS
+              </button>
+              
+              {/* Super Admin - Destacado como botón especial */}
+              {user && user.role === 'super_admin' && (
+                <Button
+                  onClick={() => window.open(getAdminUrl(ROUTE_PATHS.SUPER_ADMIN_PANEL), '_blank')}
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 h-auto font-medium shadow-lg"
+                >
+                  <Shield size={12} className="mr-1" />
+                  Super Admin
+                </Button>
+              )}
             </div>
           </div>
 
@@ -330,22 +471,20 @@ export function Layout({
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         onSave={saveProfile}
-        showRegistrationOption={true}
       />
-
+      
       {/* Newsletter Popup */}
-      <NewsletterPopup
-        isOpen={showNewsletterPopup}
-        onClose={() => setShowNewsletterPopup(false)}
+      <NewsletterPopup 
+        isOpen={showNewsletterPopup} 
+        onClose={() => setShowNewsletterPopup(false)} 
       />
-
+      
       {/* Legal Popup */}
-      {legalPopup.type && (
-        <LegalPopup
-          isOpen={legalPopup.isOpen}
-          onClose={closeLegalPopup}
-          type={legalPopup.type}
-        />
-      )}
-    </div>;
+      <LegalPopup 
+        isOpen={legalPopup.isOpen} 
+        type={legalPopup.type} 
+        onClose={closeLegalPopup} 
+      />
+    </div>
+  );
 }

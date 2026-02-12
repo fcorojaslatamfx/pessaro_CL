@@ -98,7 +98,7 @@ const Contacto: React.FC = () => {
         }} animate={{
           opacity: 1,
           y: 0
-        }} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+        }} className="text-hero font-bold text-white mb-responsive">
             Contacto
           </motion.h1>
           <motion.p initial={{
@@ -109,16 +109,16 @@ const Contacto: React.FC = () => {
           y: 0
         }} transition={{
           delay: 0.1
-        }} className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
+        }} className="text-body-lg text-white/80 container-narrow">
             Estamos aquí para responder sus preguntas y ayudarle a alcanzar sus metas financieras.
           </motion.p>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+      <section className="py-responsive-lg">
+        <div className="container-wide">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-responsive-lg items-start">
             
             {/* Contact Form */}
             <motion.div initial={{
@@ -131,14 +131,14 @@ const Contacto: React.FC = () => {
             once: true
           }}>
               <Card className="border-border/50 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-2xl">Envíenos un mensaje</CardTitle>
-                  <CardDescription>
+                <CardHeader className="card-responsive">
+                  <CardTitle className="text-heading">Envíenos un mensaje</CardTitle>
+                  <CardDescription className="text-body">
                     Complete el formulario a continuación y un asesor se pondrá en contacto con usted en menos de 24 horas.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <CardContent className="card-responsive">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-responsive">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nombre Completo</Label>
                       <Input id="name" placeholder="Juan Pérez" {...register('name')} className={errors.name ? 'border-destructive' : ''} />

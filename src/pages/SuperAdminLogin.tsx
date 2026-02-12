@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTE_PATHS } from '@/lib/index';
 import PasswordChangeModal from '@/components/PasswordChangeModal';
 import { supabase } from '@/integrations/supabase/client';
+import { resetPassword, isResetPasswordFlow, clearResetParams, ResetPasswordResult } from '@/services/passwordReset';
 
 // Función para mejorar los mensajes de error con contexto específico
 const getImprovedErrorMessage = (errorMessage: string): { message: string; type: 'error' | 'warning' | 'info' } => {
@@ -114,6 +115,10 @@ const SuperAdminLogin: React.FC = () => {
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState<string>('');
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
   
   const { signIn, createSuperAdmin, checkSuperAdminExists, isSuperAdmin, user } = useSuperAdmin();
   const navigate = useNavigate();
@@ -158,6 +163,14 @@ const SuperAdminLogin: React.FC = () => {
       navigate('/super-admin-panel');
     }
   }, [isSuperAdmin, user, navigate]);
+
+  // Detectar si estamos en el flujo de reset de contraseña
+  useEffect(() => {
+    if (isResetPasswordFlow()) {
+      setSuccess('🔗 Haga clic en el enlace del correo para restablecer su contraseña.');
+      clearResetParams();
+    }
+  }, []);
 
   // Resetear intentos después de 15 minutos
   useEffect(() => {
@@ -319,6 +332,54 @@ const SuperAdminLogin: React.FC = () => {
     // El usuario debe cambiar la contraseña para continuar
   };
 
+  // Funciones para reset de contraseña
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true);
+    setResetEmail(email); // Pre-llenar con el email actual
+    setResetMessage(null);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim()) {
+      setResetMessage({ text: '❌ El email es obligatorio.', type: 'error' });
+      return;
+    }
+
+    setResetLoading(true);
+    setResetMessage(null);
+
+    try {
+      const result: ResetPasswordResult = await resetPassword(resetEmail);
+      
+      setResetMessage({
+        text: result.message,
+        type: result.type
+      });
+
+      if (result.success) {
+        // Cerrar el modal después de 3 segundos si fue exitoso
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setResetEmail('');
+          setResetMessage(null);
+        }, 3000);
+      }
+    } catch (error) {
+      setResetMessage({
+        text: '❌ Error inesperado. Intente nuevamente.',
+        type: 'error'
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleCancelReset = () => {
+    setShowForgotPassword(false);
+    setResetEmail('');
+    setResetMessage(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
       <motion.div
@@ -442,6 +503,10 @@ const SuperAdminLogin: React.FC = () => {
                     placeholder="admin@pessarocapital.com"
                     required
                     disabled={loading || connectionStatus === 'offline' || isBlocked}
+                    autoComplete="email"
+                    inputMode="email"
+                    aria-describedby="email-description"
+                    aria-invalid={error ? 'true' : 'false'}
                   />
                 </div>
               </div>
@@ -461,6 +526,9 @@ const SuperAdminLogin: React.FC = () => {
                     placeholder="Ingrese su contraseña"
                     required
                     disabled={loading || connectionStatus === 'offline' || isBlocked}
+                    autoComplete="current-password"
+                    aria-describedby="password-description"
+                    aria-invalid={error ? 'true' : 'false'}
                   />
                   <Button
                     type="button"
@@ -469,11 +537,13 @@ const SuperAdminLogin: React.FC = () => {
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading || connectionStatus === 'offline' || isBlocked}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    tabIndex={-1}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     )}
                   </Button>
                 </div>
@@ -498,6 +568,18 @@ const SuperAdminLogin: React.FC = () => {
                 )}
               </Button>
             </form>
+
+            {/* Enlace de olvidó contraseña */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-primary hover:text-primary/80 underline transition-colors"
+                disabled={loading || resetLoading}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
 
             {/* Información de seguridad */}
             <div className="pt-4 border-t border-border">
@@ -551,6 +633,113 @@ const SuperAdminLogin: React.FC = () => {
           onPasswordChanged={handlePasswordChanged}
           onCancel={handleCancelPasswordChange}
         />
+      )}
+      
+      {/* Modal de reset de contraseña */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-md"
+          >
+            <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-bold text-foreground">
+                  Restablecer Contraseña
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Ingrese su email para recibir un enlace de restablecimiento
+                </p>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Mensaje de estado */}
+                {resetMessage && (
+                  <Alert className={`${
+                    resetMessage.type === 'success' 
+                      ? 'border-green-200 bg-green-50' 
+                      : resetMessage.type === 'warning'
+                      ? 'border-yellow-200 bg-yellow-50'
+                      : 'border-red-200 bg-red-50'
+                  }`}>
+                    {resetMessage.type === 'success' ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : resetMessage.type === 'warning' ? (
+                      <Info className="h-4 w-4 text-yellow-600" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                    )}
+                    <AlertDescription className={`${
+                      resetMessage.type === 'success' 
+                        ? 'text-green-800' 
+                        : resetMessage.type === 'warning'
+                        ? 'text-yellow-800'
+                        : 'text-red-800'
+                    }`}>
+                      {resetMessage.text}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {/* Campo de email */}
+                <div className="space-y-2">
+                  <Label htmlFor="resetEmail" className="text-sm font-medium">
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="resetEmail"
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="admin@pessarocapital.com"
+                      className="pl-10"
+                      disabled={resetLoading}
+                    />
+                  </div>
+                </div>
+                
+                {/* Botones */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelReset}
+                    disabled={resetLoading}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetLoading || !resetEmail.trim()}
+                    className="flex-1"
+                  >
+                    {resetLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Enviando...
+                      </div>
+                    ) : (
+                      'Enviar Enlace'
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Información adicional */}
+                <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                  <p>📬 El enlace será enviado a su correo electrónico</p>
+                  <p>🔗 Redirigirá a login.pessaro.cl</p>
+                  <p>⏱️ Válido por 1 hora</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       )}
     </div>
   );

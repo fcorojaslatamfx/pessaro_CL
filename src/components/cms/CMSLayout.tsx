@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useCMSAccess } from '@/hooks/useCMSAccess';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +29,8 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ElementType;
-  roles?: ('admin' | 'editor')[];
+  roles?: ('interno' | 'admin' | 'super_admin')[];
+  requiredRoles?: string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -66,12 +68,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Configuración',
     path: '/cms/settings',
     icon: Settings,
-    roles: ['admin']
+    roles: ['admin', 'super_admin']
   }
 ];
 
 export function CMSLayout({ children }: CMSLayoutProps) {
   const { user, signOut, loading } = useAuth();
+  const { hasAccess, canAccessSettings } = useCMSAccess();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,7 +141,12 @@ export function CMSLayout({ children }: CMSLayoutProps) {
 
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
           {NAV_ITEMS.map((item) => {
-            if (item.roles && !item.roles.includes(user?.role as any)) return null;
+            // Verificar acceso usando el hook
+            if (item.roles) {
+              if (item.path === '/cms/settings' && !canAccessSettings) {
+                return null;
+              }
+            }
             
             const isActive = location.pathname === item.path;
             

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X } from 'lucide-react';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 
 const WhatsAppButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isVisible } = useWhatsApp();
   const phoneNumber = '+56922071511'; // Número sin espacios ni guiones para WhatsApp
   const message = encodeURIComponent('Hola, me interesa conocer más sobre los servicios de Pessaro Capital.');
 
@@ -12,18 +14,20 @@ const WhatsAppButton = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  if (!isVisible) return null;
+
   return (
     <>
       {/* WhatsApp Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 safe-area-bottom safe-area-right"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 2, type: "spring", stiffness: 260, damping: 20 }}
       >
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-[#25D366] hover:bg-[#20BA5A] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+          className="bg-[#25D366] hover:bg-[#20BA5A] text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group touch-target"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
@@ -36,7 +40,7 @@ const WhatsAppButton = () => {
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <X size={24} />
+                <X size={20} className="sm:w-6 sm:h-6" />
               </motion.div>
             ) : (
               <motion.div
@@ -46,7 +50,7 @@ const WhatsAppButton = () => {
                 exit={{ rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <MessageCircle size={24} />
+                <MessageCircle size={20} className="sm:w-6 sm:h-6" />
               </motion.div>
             )}
           </AnimatePresence>

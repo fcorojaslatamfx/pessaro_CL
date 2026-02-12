@@ -5,6 +5,7 @@ import { ChevronDown, User, BarChart3, Settings, LogIn, Shield } from 'lucide-re
 import { ROUTE_PATHS } from '@/lib/index';
 import { Button } from '@/components/ui/button';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
+import { getMainSiteUrl, getAdminUrl } from '@/lib/domains';
 
 interface LoginMenuProps {
   className?: string;
@@ -35,28 +36,18 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
 
   const menuItems = [
     {
-      label: 'Cliente',
+      label: 'Registro de Usuario',
       icon: <User className="w-4 h-4" />,
-      href: ROUTE_PATHS.CLIENT_REGISTER,
-      description: 'Registro de cliente'
+      href: getMainSiteUrl(ROUTE_PATHS.CLIENT_REGISTER),
+      description: 'Registro de cliente',
+      external: true
     },
     {
       label: 'Dashboard',
       icon: <BarChart3 className="w-4 h-4" />,
-      href: ROUTE_PATHS.INTERNAL_LOGIN,
-      description: 'Dashboard interno'
-    },
-    {
-      label: 'CMS',
-      icon: <Settings className="w-4 h-4" />,
-      href: ROUTE_PATHS.CMS_SETUP,
-      description: 'Sistema de gestión'
-    },
-    {
-      label: 'Super Admin',
-      icon: <Shield className="w-4 h-4" />,
-      href: ROUTE_PATHS.SUPER_ADMIN_LOGIN,
-      description: 'Acceso de super administrador'
+      href: getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN),
+      description: 'Acceso al dashboard',
+      external: true
     }
   ];
 
@@ -87,9 +78,11 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
           >
             <div className="py-2">
               {menuItems.map((item, index) => (
-                <Link
+                <a
                   key={index}
-                  to={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group"
                 >
@@ -100,7 +93,7 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
                     <div className="font-medium">{item.label}</div>
                     <div className="text-xs text-muted-foreground">{item.description}</div>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
             

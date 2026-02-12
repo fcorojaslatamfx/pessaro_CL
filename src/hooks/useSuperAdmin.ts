@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, signInWithRedirect, getAuthRedirectForOperation } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { getLoginDomainUrl } from '@/lib/domains';
 
 interface UserRole {
   id: string;
@@ -149,10 +150,8 @@ export const useSuperAdmin = () => {
         return { success: false, error: '❌ La contraseña debe tener al menos 6 caracteres.' };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password
-      });
+      // Usar la función de login con redirect automático
+      const { data, error } = await signInWithRedirect(email.trim(), password);
 
       if (error) {
         return { success: false, error: getAuthErrorMessage(error.message) };

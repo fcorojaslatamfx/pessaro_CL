@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CMSLayout } from '@/components/cms/CMSLayout';
+import { CMSAccessGuard } from '@/components/cms/CMSAccessGuard';
 import { useCMS } from '@/hooks/useCMS';
 import { 
   Card, 
@@ -296,3 +297,12 @@ export default function Dashboard() {
     </CMSLayout>
   );
 }
+
+// Envolver el componente con CMSAccessGuard
+const ProtectedDashboard = () => (
+  <CMSAccessGuard>
+    <Dashboard />
+  </CMSAccessGuard>
+);
+
+export { ProtectedDashboard };

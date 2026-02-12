@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,7 +34,7 @@ interface ContactPopupProps {
 const ContactPopup: React.FC<ContactPopupProps> = ({ isOpen, onClose, buttonType }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { showWhatsApp } = useWhatsApp();
   const {
     register,
     handleSubmit,
@@ -108,6 +109,7 @@ const ContactPopup: React.FC<ContactPopupProps> = ({ isOpen, onClose, buttonType
           setIsSubmitted(false);
           reset();
           onClose();
+          showWhatsApp();
         }, 3000);
       } else {
         toast.error('Error al enviar la solicitud. Por favor, intente nuevamente.');
@@ -125,6 +127,7 @@ const ContactPopup: React.FC<ContactPopupProps> = ({ isOpen, onClose, buttonType
       setIsSubmitted(false);
       reset();
       onClose();
+      showWhatsApp();
     }
   };
 

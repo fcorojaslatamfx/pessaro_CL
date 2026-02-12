@@ -21,6 +21,8 @@ export const ROUTE_PATHS = {
   // Internal Dashboard
   INTERNAL_DASHBOARD: '/dashboard-interno',
   INTERNAL_LOGIN: '/login-interno',
+  // Wyckoff Dashboard (Internal Only)
+  WYCKOFF_DASHBOARD: '/wyckoff-dashboard',
   // Access Diagnostic
   ACCESS_DIAGNOSTIC: '/diagnostico-acceso',
   // CMS Routes
@@ -103,7 +105,10 @@ export interface BlogPost {
  * Logo oficial de Pessaro Capital con fondo transparente para el website.
  */
 import { IMAGES } from '@/assets/images';
-export const PESSARO_LOGO = IMAGES.LOGO_PESSARO;
+export const PESSARO_LOGO = IMAGES.LOGO_MAIN; // Logo principal optimizado
+export const PESSARO_LOGO_HEADER = IMAGES.LOGO_HEADER; // Logo para header
+export const PESSARO_LOGO_FOOTER = IMAGES.LOGO_FOOTER; // Logo para footer
+export const PESSARO_LOGO_MOBILE = IMAGES.LOGO_MOBILE; // Logo para móvil
 
 /**
  * Utilidades de formateo para datos financieros en español.

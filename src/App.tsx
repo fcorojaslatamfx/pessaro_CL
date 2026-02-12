@@ -7,7 +7,9 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 
 import { ROUTE_PATHS } from '@/lib/index';
 import { Layout } from '@/components/Layout';
-
+import { WhatsAppProvider } from '@/hooks/useWhatsApp';
+import DomainRedirect from '@/components/DomainRedirect';
+import DomainGuard from '@/components/DomainGuard';
 // Main website pages
 import Home from '@/pages/Home';
 import Servicios from '@/pages/Servicios';
@@ -20,6 +22,8 @@ import Contacto from '@/pages/Contacto';
 // Internal Dashboard
 import InternalDashboard from '@/pages/InternalDashboard';
 import InternalLogin from '@/pages/InternalLogin';
+// Wyckoff Dashboard
+import WyckoffDashboard from '@/pages/WyckoffDashboard';
 // Client Portal
 import ClientPortal from '@/pages/ClientPortal';
 import ClientRegister from '@/pages/ClientRegister';
@@ -62,9 +66,12 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Layout>
+        <WhatsAppProvider>
+          <BrowserRouter>
+            <DomainRedirect />
+            <ScrollToTop />
+            <DomainGuard>
+              <Layout>
             <Routes>
               {/* Main Landing & Home Section */}
               <Route 
@@ -157,10 +164,24 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 } 
               />
-              {/* CMS Routes - No Layout wrapper for CMS pages */}
+              
+              {/* Wyckoff Dashboard - Internal Only */}
+              <Route 
+                path={ROUTE_PATHS.WYCKOFF_DASHBOARD} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <WyckoffDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              {/* CMS Routes - Protected for Internal Users and Super Admin */}
               <Route 
                 path={ROUTE_PATHS.CMS_SETUP} 
-                element={<Setup />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <Setup />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_LOGIN} 
@@ -168,31 +189,59 @@ const App: React.FC = () => {
               />
               <Route 
                 path={ROUTE_PATHS.CMS_DASHBOARD} 
-                element={<Dashboard />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_BLOG} 
-                element={<BlogManager />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <BlogManager />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_TEAM} 
-                element={<TeamManager />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <TeamManager />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_SERVICES} 
-                element={<ServicesManager />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <ServicesManager />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_INSTRUMENTS} 
-                element={<InstrumentsManager />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <InstrumentsManager />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_MEDIA} 
-                element={<MediaLibrary />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <MediaLibrary />
+                  </ProtectedRoute>
+                } 
               />
               <Route 
                 path={ROUTE_PATHS.CMS_SETTINGS} 
-                element={<Settings />} 
+                element={
+                  <ProtectedRoute requiredRoles={['interno', 'admin', 'super_admin']}>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
               />
 
               {/* Catch-all route redirecting to Home or a custom 404 */}
@@ -201,12 +250,14 @@ const App: React.FC = () => {
                 element={<Navigate to={ROUTE_PATHS.HOME} replace />} 
               />
             </Routes>
-          </Layout>
-        </BrowserRouter>
+              </Layout>
+            </DomainGuard>
+          </BrowserRouter>
 
-        {/* Feedback Components */}
-        <Toaster />
-        <Sonner position="top-right" expand={false} richColors />
+          {/* Feedback Components */}
+          <Toaster />
+          <Sonner position="top-right" expand={false} richColors />
+        </WhatsAppProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

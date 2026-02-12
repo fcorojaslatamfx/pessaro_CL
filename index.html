@@ -2,35 +2,170 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+    <!-- Responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="telephone=no" />
     
-    <!-- SEO Meta Tags -->
-    <title>Pessaro Capital</title>
+    <!-- PWA y móvil -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Pessaro Capital" />
+    
+    <!-- Navegadores / Dark Mode -->
+    <meta name="theme-color" content="#050816" />
+    <meta name="msapplication-TileColor" content="#050816" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <!-- Preconnect para optimización de carga -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://ldlflxujrjihiybrcree.supabase.co" />
+    <link rel="dns-prefetch" href="https://pessaro.cl" />
+    <link rel="dns-prefetch" href="https://login.pessaro.cl" />
+    
+    <!-- SEO -->
+    <title>Pessaro Capital - Trading e Inversiones Financieras</title>
     <meta name="description" content="Pessaro Capital ofrece acceso a mercados financieros globales con spreads competitivos, apalancamiento flexible y tecnología de vanguardia. Forex, materias primas, índices y criptomonedas." />
-    <meta name="keywords" content="trading, forex, inversión, materias primas, índices, criptomonedas, Pessaro Capital, mercados financieros" />
+    <meta name="keywords" content="trading, forex, inversión, materias primas, índices, criptomonedas, Pessaro Capital, mercados financieros, CFD, apalancamiento, spreads" />
     <meta name="author" content="Pessaro Capital" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
     
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Pessaro Capital" />
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pessaro.cl" />
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+    
+    <!-- Idiomas alternativos -->
+    <link rel="alternate" hreflang="es" href="https://pessaro.cl" />
+    <link rel="alternate" hreflang="x-default" href="https://pessaro.cl" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Pessaro Capital - Trading e Inversiones Financieras" />
     <meta property="og:description" content="Acceso a mercados financieros globales con condiciones institucionales. Forex, materias primas, índices y criptomonedas." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://pessarocapital.com" />
-    <meta property="og:image" content="/favicon.png" />
+    <meta property="og:url" content="https://pessaro.cl" />
+    <meta property="og:image" content="https://pessaro.cl/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Pessaro Capital - Plataforma de Trading" />
+    <meta property="og:site_name" content="Pessaro Capital" />
+    <meta property="og:locale" content="es_ES" />
     
-    <!-- Twitter Card Meta Tags -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pessaro Capital" />
+    <meta name="twitter:title" content="Pessaro Capital - Trading e Inversiones" />
     <meta name="twitter:description" content="Plataforma líder de trading con acceso a mercados financieros globales." />
-    <meta name="twitter:image" content="/favicon.png" />
+    <meta name="twitter:image" content="https://pessaro.cl/og-image.png" />
+    <meta name="twitter:image:alt" content="Pessaro Capital - Plataforma de Trading" />
+    <meta name="twitter:site" content="@pessaro" />
+    <meta name="twitter:creator" content="@pessaro" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ldlflxujrjihiybrcree.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://ldlflxujrjihiybrcree.supabase.co wss://ldlflxujrjihiybrcree.supabase.co; frame-src 'self' https://www.tradingview.com;" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+    
+    <!-- Performance hints -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="modulepreload" href="/src/main.tsx" />
+    
+    <!-- JSON-LD Institucional -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FinancialService",
+      "@id": "https://pessaro.cl/#organization",
+      "name": "Pessaro Capital",
+      "url": "https://pessaro.cl",
+      "logo": "https://pessaro.cl/images/logo-512.webp",
+      "image": "https://pessaro.cl/og-image.png",
+      "description": "Pessaro Capital ofrece acceso a mercados financieros globales con spreads competitivos, apalancamiento flexible y tecnología de vanguardia.",
+      "serviceType": "Servicios de trading e inversión en mercados financieros",
+      "telephone": "+56922071511",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+56922071511",
+        "contactType": "customer service",
+        "availableLanguage": ["es", "en"]
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CL",
+        "addressLocality": "Santiago",
+        "addressRegion": "Región Metropolitana",
+        "streetAddress": "—"
+      },
+      "areaServed": ["CL", "LATAM"],
+      "sameAs": [
+        "https://www.linkedin.com/company/pessarocapital/?viewAsMember=true",
+        "https://instagram.com/pessaro",
+        "https://twitter.com/pessaro"
+      ]
+    }
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <!-- Fallback para usuarios sin JavaScript -->
+    <noscript>
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-family: system-ui, -apple-system, sans-serif;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+      ">
+        <div style="max-width: 400px;">
+          <img src="/favicon-192.png" alt="Pessaro Capital" style="width: 64px; height: 64px; margin-bottom: 20px;" />
+          <h1 style="color: #050816; margin-bottom: 16px; font-size: 24px;">Pessaro Capital</h1>
+          <p style="color: #4a5568; margin-bottom: 20px; line-height: 1.5;">
+            <strong>Para usar este sitio necesitas habilitar JavaScript.</strong>
+          </p>
+          <p style="color: #718096; font-size: 14px; line-height: 1.4;">
+            Si tienes dudas, contacta a soporte de Pessaro Capital.
+          </p>
+          <div style="margin-top: 20px;">
+            <a href="mailto:soporte@pessaro.cl" style="
+              color: #050816;
+              text-decoration: none;
+              padding: 8px 16px;
+              border: 1px solid #050816;
+              border-radius: 4px;
+              display: inline-block;
+              font-size: 14px;
+            ">
+              Contactar Soporte
+            </a>
+          </div>
+        </div>
+      </div>
+    </noscript>
+    
+    <!-- App root con aria-label para accesibilidad -->
+    <div id="root" role="main" aria-label="Aplicación Pessaro Capital"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

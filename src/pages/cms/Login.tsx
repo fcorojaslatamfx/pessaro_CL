@@ -11,8 +11,12 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    // Verificar si el usuario tiene acceso al CMS
+    if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
       navigate('/cms/dashboard');
+    } else if (user && user.role === 'cliente') {
+      // Los clientes no tienen acceso al CMS, redirigir al portal
+      navigate('/portal-cliente');
     }
   }, [user, navigate]);
 
@@ -27,8 +31,14 @@ const Login: React.FC = () => {
     );
   }
 
+  // Verificar acceso al CMS
   if (user) {
-    return <Navigate to="/cms/dashboard" replace />;
+    if (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin') {
+      return <Navigate to="/cms/dashboard" replace />;
+    } else {
+      // Usuario sin acceso al CMS
+      return <Navigate to="/" replace />;
+    }
   }
 
   return (

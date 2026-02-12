@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, TrendingUp, ShieldCheck, Globe2, Zap, CheckCircle2, MessageSquare, Send, BarChart3, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { IMAGES } from '@/assets/images';
-import { ROUTE_PATHS, PESSARO_LOGO } from '@/lib/index';
-import { services, tradingInstruments, contactInfo } from '@/data/index';
+import { ROUTE_PATHS, PESSARO_LOGO_HEADER } from '@/lib/index';
+import { services, tradingInstruments, contactInfo, faqs } from '@/data/index';
 import { ServiceCard, InstrumentCard, TestimonialCard } from '@/components/Cards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,7 +71,7 @@ const testimonials = [{
   role: 'Inversionista Privada',
   content: 'El servicio al cliente es extraordinario. Disponibilidad 24/7, respuestas inmediatas y un trato personalizado que hace la diferencia. Nunca me he sentido como un número más.',
   rating: 5,
-  image: IMAGES.BUSINESS_OFFICE_5
+  image: IMAGES.PROFESSIONAL_WOMAN_3
 }, {
   id: 'testimonial-6',
   name: 'Diego Fernández',
@@ -126,17 +126,26 @@ const Home: React.FC = () => {
     const interval = setInterval(nextTestimonial, 5000); // Cambia cada 5 segundos
     return () => clearInterval(interval);
   }, []);
-  return <div className="flex flex-col w-full">
+  return <main className="flex flex-col w-full" role="main" aria-label="Página principal de Pessaro Capital">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white overflow-hidden">
+      <section 
+        className="relative min-h-[80vh] sm:min-h-[85vh] lg:min-h-screen flex items-center bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white overflow-hidden safe-area-top"
+        aria-labelledby="hero-title"
+      >
         {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img src={IMAGES.TRADING_CHARTS_1} alt="Trading Background" className="w-full h-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70"></div>
+        <div className="hero-background" role="img" aria-label="Gráficos de trading en tiempo real">
+          <img 
+            src={IMAGES.TRADING_CHARTS_1} 
+            alt="Gráficos de trading y análisis financiero en tiempo real" 
+            className="img-hero" 
+            loading="eager"
+            decoding="async"
+          />
+          <div className="hero-overlay" aria-hidden="true"></div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl">
+        <div className="container-narrow relative z-20">
+          <div className="text-center">
             <motion.div initial={{
             opacity: 0,
             y: 20
@@ -146,22 +155,25 @@ const Home: React.FC = () => {
           }} transition={{
             duration: 0.6
           }}>
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-sm font-medium mb-6 text-[rgb(125,225,129)]">
+              <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-sm font-medium mb-4 sm:mb-6 text-[rgb(125,225,129)]">
                 <ShieldCheck className="w-4 h-4" />
                 Mercado Regulado y Fondos Segregados
               </span>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6">
+              <h1 
+                id="hero-title"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6"
+              >
                 <span className="text-title-primary">Domine los Mercados con</span> <span className="text-title-accent">Precisión Institucional</span>
               </h1>
-              <p className="text-base sm:text-lg md:text-xl text-white/80 mb-6 sm:mb-8 max-w-2xl">
+              <p className="text-lg sm:text-xl text-white/80 mb-6 sm:mb-8 max-w-3xl mx-auto">
                 Acceda a Forex, Commodities e Índices con tecnología de baja latencia y el respaldo de 15 años de excelencia financiera.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30 text-lg px-8" onClick={() => setShowProfileModal(true)}>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
+                <Button size="lg" className="px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" onClick={() => setShowProfileModal(true)}>
                   Abrir Cuenta Real
-                  <ArrowRight className="ml-2 w-5 h-5" />
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
-                <Button size="lg" variant="outline" className="text-white border-white/20 hover:bg-white/10 hover:border-white/40 text-lg px-8" onClick={() => setShowProfileModal(true)}>
+                <Button size="lg" variant="outline" className="px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg text-white border-white/20 hover:bg-white/10 hover:border-white/40" onClick={() => setShowProfileModal(true)}>
                   Prueba Demo Gratis
                 </Button>
               </div>
@@ -171,9 +183,9 @@ const Home: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-secondary/50 border-y border-border">
-        <div className="container px-4 sm:px-6 lg:px-8 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+      <section className="py-responsive-sm bg-secondary/50 border-y border-border">
+        <div className="container-wide">
+          <div className="grid grid-responsive-features gap-responsive">
             {stats.map(stat => <motion.div key={stat.id} initial={{
             opacity: 0,
             scale: 0.95
@@ -182,22 +194,22 @@ const Home: React.FC = () => {
             scale: 1
           }} viewport={{
             once: true
-          }} className="flex flex-col items-center text-center">
+          }} className="flex flex-col items-center text-center card-responsive-sm">
                 <div className="p-3 rounded-full bg-accent/10 mb-4">
-                  <stat.icon className="w-6 h-6 text-accent" />
+                  <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
                 </div>
-                <span className="text-3xl md:text-4xl font-bold text-accent mb-1">{stat.value}</span>
-                <span className="text-sm text-muted-foreground font-medium">{stat.label}</span>
+                <span className="text-heading font-bold text-accent mb-1">{stat.value}</span>
+                <span className="text-caption text-muted-foreground font-medium">{stat.label}</span>
               </motion.div>)}
           </div>
         </div>
       </section>
 
       {/* Servicios Section */}
-      <section id="servicios" className="py-24 bg-background">
-        <div className="container px-4 sm:px-6 lg:px-8 mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+      <section id="servicios" className="py-responsive-lg bg-background">
+        <div className="container-wide">
+          <div className="text-center container-narrow mb-responsive-lg">
+            <h2 className="text-display font-bold mb-responsive">
               <span className="text-foreground">Servicios Financieros de</span> <span className="text-title-accent">Elite</span>
             </h2>
             <p className="text-muted-foreground">
@@ -206,6 +218,36 @@ const Home: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {services.map(service => <ServiceCard key={service.id} service={service} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Servicios Financieros Section */}
+      <section className="py-responsive-lg bg-muted/20">
+        <div className="container-wide">
+          <div className="text-center container-narrow mb-responsive-lg">
+            <h2 className="text-display font-bold mb-responsive">
+              <span className="text-foreground">¿Qué son nuestros</span> <span className="text-title-accent">Servicios Financieros?</span>
+            </h2>
+            <p className="text-muted-foreground">
+              Conozca en detalle cada uno de nuestros servicios de inversión y trading.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            {faqs.filter(faq => faq.id.startsWith('faq-forex') || faq.id.startsWith('faq-commodities') || faq.id.startsWith('faq-indices') || faq.id.startsWith('faq-crypto')).map(faq => (
+              <motion.div
+                key={faq.id}
+                id={faq.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                className="bg-card border border-border/40 rounded-xl p-6 hover:border-accent/40 transition-all duration-300"
+              >
+                <h3 className="text-lg font-bold text-foreground mb-3">{faq.question}</h3>
+                <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -527,6 +569,6 @@ const Home: React.FC = () => {
         isOpen={showNewsletterPopup}
         onClose={() => setShowNewsletterPopup(false)}
       />
-    </div>;
+    </main>;
 };
 export default Home;

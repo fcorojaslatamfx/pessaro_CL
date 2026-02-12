@@ -37,14 +37,14 @@ export function ServiceCard({
     damping: 20
   }} className="h-full">
       <Card className="h-full border-border/40 bg-card/60 backdrop-blur-md hover:border-accent/40 hover:shadow-xl transition-all duration-300 flex flex-col">
-        <CardHeader className="pb-4">
-          <div className="w-14 h-14 rounded-xl bg-primary/5 flex items-center justify-center mb-4 ring-1 ring-border/20 shadow-inner">
-            <Icon className="w-7 h-7 text-accent" />
+        <CardHeader className="card-responsive-sm">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/5 flex items-center justify-center mb-4 ring-1 ring-border/20 shadow-inner">
+            <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-accent" />
           </div>
-          <h3 className="text-xl font-bold text-foreground leading-tight">{service.title}</h3>
+          <h3 className="text-subheading font-bold text-foreground leading-tight">{service.title}</h3>
         </CardHeader>
-        <CardContent className="flex-grow">
-          <p className="text-muted-foreground leading-relaxed">{service.description}</p>
+        <CardContent className="flex-grow card-responsive-sm">
+          <p className="text-body text-muted-foreground leading-relaxed">{service.description}</p>
           {service.benefits && service.benefits.length > 0 && <ul className="mt-4 space-y-2">
               {service.benefits.slice(0, 3).map((benefit, idx) => <li key={idx} className="text-xs flex items-center text-muted-foreground/80">
                   <div className="w-1 h-1 rounded-full bg-accent mr-2" />
@@ -53,7 +53,30 @@ export function ServiceCard({
             </ul>}
         </CardContent>
         <CardFooter className="pt-2">
-          <Button variant="ghost" className="text-accent hover:text-accent-foreground hover:bg-accent p-0 px-4 group rounded-full transition-all">
+          <Button 
+            variant="ghost" 
+            className="text-accent hover:text-accent-foreground hover:bg-accent p-0 px-4 group rounded-full transition-all"
+onClick={() => {
+              // Mapear IDs de servicios a IDs de FAQs
+              const serviceToFaqMap: Record<string, string> = {
+                'forex-trading': 'faq-forex',
+                'commodities': 'faq-commodities', 
+                'indices': 'faq-indices',
+                'crypto': 'faq-crypto'
+              };
+              
+              const faqId = serviceToFaqMap[service.id];
+              const element = document.getElementById(faqId);
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight effect
+                element.classList.add('bg-accent/10', 'border-accent/30');
+                setTimeout(() => {
+                  element.classList.remove('bg-accent/10', 'border-accent/30');
+                }, 2000);
+              }
+            }}
+          >
             Ver detalles <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </CardFooter>
@@ -81,21 +104,21 @@ export function InstrumentCard({
     damping: 25
   }}>
       <Card className="overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:shadow-lg transition-all group">
-        <div className="p-3 sm:p-4 flex items-center justify-between border-b border-border/10 bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm text-primary ring-1 ring-primary/20">
+        <div className="card-responsive-sm flex items-center justify-between border-b border-border/10 bg-muted/30">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs sm:text-sm text-primary ring-1 ring-primary/20">
               {instrument.symbol.substring(0, 2)}
             </div>
             <div>
-              <div className="font-bold font-mono text-foreground">{instrument.symbol}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-tighter">{instrument.name}</div>
+              <div className="font-bold font-mono text-caption sm:text-base text-foreground">{instrument.symbol}</div>
+              <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-tighter">{instrument.name}</div>
             </div>
           </div>
-          <Badge variant={instrument.isPopular ? "default" : "secondary"} className={instrument.isPopular ? "bg-accent text-accent-foreground border-none" : "bg-secondary/50 border-none"}>
+          <Badge variant={instrument.isPopular ? "default" : "secondary"} className={`text-xs ${instrument.isPopular ? "bg-accent text-accent-foreground border-none" : "bg-secondary/50 border-none"}`}>
             {instrument.category}
           </Badge>
         </div>
-        <CardContent className="pt-4 sm:pt-6 grid grid-cols-2 gap-3 sm:gap-4 pb-3 sm:pb-4 px-3 sm:px-6">
+        <CardContent className="card-responsive-sm grid grid-cols-2 gap-responsive-sm">
           <div className="space-y-1">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Spread</div>
             <div className="font-mono text-sm font-bold text-foreground">{instrument.spread} pips</div>
@@ -105,7 +128,7 @@ export function InstrumentCard({
             <div className="font-mono text-sm font-bold text-foreground">{instrument.leverage}</div>
           </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between gap-4 pt-0 pb-4 px-4">
+        <CardFooter className="flex items-center justify-between gap-2 sm:gap-4 pt-0 card-responsive-sm">
           <div className="flex items-center gap-1 bg-muted/40 px-2 py-1 rounded-md">
             {isUp ? <TrendingUp className="w-3 h-3 text-[oklch(0.68_0.16_150)]" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
             <span className={`text-xs font-mono font-medium ${isUp ? "text-[oklch(0.68_0.16_150)]" : "text-destructive"}`}>
@@ -114,7 +137,7 @@ export function InstrumentCard({
           </div>
           <Button 
             size="sm" 
-            className="h-8 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs font-bold"
+            className="h-7 sm:h-8 px-3 sm:px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs font-bold touch-target"
             onClick={onTrade}
           >
             Operar

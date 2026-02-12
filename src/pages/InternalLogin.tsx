@@ -9,7 +9,10 @@ import {
   LogIn, 
   AlertCircle,
   Shield,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle,
+  Info,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTE_PATHS } from '@/lib/index';
+import { resetPassword, ResetPasswordResult } from '@/services/passwordReset';
 
 interface InternalLoginProps {
   redirectTo?: string;
@@ -34,7 +38,10 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [searchParams] = useSearchParams();
-
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
   const { signIn, loading, error, user } = useAuth();
   const navigate = useNavigate();
 
@@ -82,6 +89,54 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  // Funciones para reset de contraseña
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true);
+    setResetEmail(formData.email); // Pre-llenar con el email actual
+    setResetMessage(null);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim()) {
+      setResetMessage({ text: '❌ El email es obligatorio.', type: 'error' });
+      return;
+    }
+
+    setResetLoading(true);
+    setResetMessage(null);
+
+    try {
+      const result: ResetPasswordResult = await resetPassword(resetEmail);
+      
+      setResetMessage({
+        text: result.message,
+        type: result.type
+      });
+
+      if (result.success) {
+        // Cerrar el modal después de 3 segundos si fue exitoso
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setResetEmail('');
+          setResetMessage(null);
+        }, 3000);
+      }
+    } catch (error) {
+      setResetMessage({
+        text: '❌ Error inesperado. Intente nuevamente.',
+        type: 'error'
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleCancelReset = () => {
+    setShowForgotPassword(false);
+    setResetEmail('');
+    setResetMessage(null);
   };
 
   return (
@@ -184,6 +239,18 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                   )}
                 </Button>
               </form>
+              
+              {/* Enlace de olvidó contraseña */}
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-primary hover:text-primary/80 underline transition-colors"
+                  disabled={loading || resetLoading}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             </CardContent>
           </Card>
 
@@ -216,6 +283,115 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
           </Card>
         </motion.div>
       </div>
+      
+      {/* Modal de reset de contraseña */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-md"
+          >
+            <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-bold text-foreground">
+                  Restablecer Contraseña
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Ingrese su email para recibir un enlace de restablecimiento
+                </p>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Mensaje de estado */}
+                {resetMessage && (
+                  <div className={`p-3 rounded-lg border ${
+                    resetMessage.type === 'success' 
+                      ? 'border-green-200 bg-green-50' 
+                      : resetMessage.type === 'warning'
+                      ? 'border-yellow-200 bg-yellow-50'
+                      : 'border-red-200 bg-red-50'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {resetMessage.type === 'success' ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : resetMessage.type === 'warning' ? (
+                        <Info className="h-4 w-4 text-yellow-600" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                      )}
+                      <p className={`text-sm ${
+                        resetMessage.type === 'success' 
+                          ? 'text-green-800' 
+                          : resetMessage.type === 'warning'
+                          ? 'text-yellow-800'
+                          : 'text-red-800'
+                      }`}>
+                        {resetMessage.text}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Campo de email */}
+                <div className="space-y-2">
+                  <Label htmlFor="resetEmail" className="text-sm font-medium">
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="resetEmail"
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="usuario@pessarocapital.com"
+                      className="pl-10"
+                      disabled={resetLoading}
+                    />
+                  </div>
+                </div>
+                
+                {/* Botones */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelReset}
+                    disabled={resetLoading}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetLoading || !resetEmail.trim()}
+                    className="flex-1"
+                  >
+                    {resetLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Enviando...
+                      </div>
+                    ) : (
+                      'Enviar Enlace'
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Información adicional */}
+                <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                  <p>📬 El enlace será enviado a su correo electrónico</p>
+                  <p>🔗 Redirigirá a login.pessaro.cl</p>
+                  <p>⏱️ Válido por 1 hora</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
