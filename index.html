@@ -25,6 +25,27 @@
     <link rel="preconnect" href="https://ldlflxujrjihiybrcree.supabase.co" />
     <link rel="dns-prefetch" href="https://pessaro.cl" />
     <link rel="dns-prefetch" href="https://login.pessaro.cl" />
+<!-- Security Headers Optimizados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://ldlflxujrjihiybrcree.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://ldlflxujrjihiybrcree.supabase.co wss://ldlflxujrjihiybrcree.supabase.co; frame-src 'self' https://www.tradingview.com;" />
+
+<!-- Preload crítico (Solo si usas Vite y main.tsx es el punto de entrada real) -->
+<link rel="modulepreload" href="/src/main.tsx" />
+
+<!-- Ajuste en JSON-LD para evitar errores de validación -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FinancialService",
+  "name": "Pessaro Capital",
+  "url": "https://pessaro.cl",
+  "logo": "https://pessaro.cl",
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "CL",
+    "addressLocality": "Santiago"
+  }
+}
+</script>
     
     <!-- SEO -->
     <title>Pessaro Capital - Trading e Inversiones Financieras</title>
