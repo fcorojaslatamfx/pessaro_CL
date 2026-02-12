@@ -29,47 +29,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "apple touch icon"
     }
   ],
   "shortcuts": [
     {
       "name": "Iniciar Sesión",
       "short_name": "Login",
-      "description": "Acceder a tu cuenta",
       "url": "/login-interno",
-      "icons": [
-        {
-          "src": "/favicon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Abrir Cuenta",
       "short_name": "Registro",
-      "description": "Crear nueva cuenta",
       "url": "/#registro",
-      "icons": [
-        {
-          "src": "/favicon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
     }
   ],
   "screenshots": [
     {
-      "src": "/og-image.jpg",
+      "src": "/og-image.png",
       "sizes": "1200x630",
-      "type": "image/jpeg",
-      "platform": "wide",
-      "label": "Vista principal de Pessaro Capital"
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Plataforma de escritorio"
     }
   ]
 }
