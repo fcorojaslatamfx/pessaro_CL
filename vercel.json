@@ -3,6 +3,16 @@
   "rewrites": [
     {
       "source": "/(.*)",
+      "destination": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "login.pessaro.cl"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
