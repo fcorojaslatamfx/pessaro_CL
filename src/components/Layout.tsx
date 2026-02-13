@@ -446,25 +446,26 @@ export function Layout({ children }: LayoutProps) {
               </button>
               
               {/* Sistema CMS - Acceso para usuarios internos y super admin */}
-              <button 
-                onClick={() => {
-                  if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
-                    window.open(getAdminUrl(ROUTE_PATHS.CMS_DASHBOARD), '_blank');
-                  } else if (user) {
-                    alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
-                  } else {
-                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
-                  }
-                }}
-                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
-                title={user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin') 
-                  ? 'Acceder al Sistema CMS' 
-                  : 'Requiere acceso de usuario interno'
-                }
-              >
-                Sistema CMS
-              </button>
-              
+<button 
+  onClick={() => {
+    if (user && (['interno', 'admin', 'super_admin'].includes(user.role))) {
+      // Usar navigate para abrir en la misma pestaña o window.location para asegurar el dominio actual
+      window.location.href = ROUTE_PATHS.CMS_DASHBOARD;
+    } else if (user) {
+      alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
+    } else {
+      // Redirigir al login interno dentro del mismo sitio
+      window.location.href = ROUTE_PATHS.INTERNAL_LOGIN;
+    }
+  }}
+  className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
+  title={user && (['interno', 'admin', 'super_admin'].includes(user.role))
+    ? 'Acceder al Sistema CMS' 
+    : 'Requiere acceso de usuario interno'
+  }
+>
+  Sistema CMS
+</button>              
               {/* Super Admin - Destacado como botón especial */}
               {user && user.role === 'super_admin' && (
                 <Button
