@@ -6,7 +6,11 @@ import { teamMembers } from '@/data/index';
 import { TeamCard } from '@/components/Cards';
 import { ROUTE_PATHS } from '@/lib/index';
 import { Link } from 'react-router-dom';
+import { useRiskProfile } from '@/hooks/useRiskProfile';
+import RiskProfileModal from '@/components/RiskProfileModal';
 const Nosotros = () => {
+  const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
+  
   const stats = [{
     label: 'Años de Experiencia',
     value: '15+'
@@ -236,17 +240,31 @@ const Nosotros = () => {
                 Únase a los miles de inversores que ya confían en Pessaro Capital para potenciar su patrimonio global.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to={ROUTE_PATHS.CONTACTO} className="bg-accent text-accent-foreground px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform">
+                <button 
+                  onClick={() => setShowProfileModal(true)}
+                  className="bg-accent text-accent-foreground px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform"
+                >
                   Abrir Cuenta Real
-                </Link>
-                <Link to={ROUTE_PATHS.INSTRUMENTOS} className="bg-white/10 backdrop-blur-md border border-white/20 px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all">
-                  Explorar Instrumentos
-                </Link>
+                </button>
+                <button 
+                  onClick={() => setShowProfileModal(true)}
+                  className="bg-white/10 backdrop-blur-md border border-white/20 px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all"
+                >
+                  Evaluar Perfil de Riesgo
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
+      
+      {/* Risk Profile Modal */}
+      <RiskProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSave={saveProfile}
+        showRegistrationOption={true}
+      />
     </div>;
 };
 export default Nosotros;

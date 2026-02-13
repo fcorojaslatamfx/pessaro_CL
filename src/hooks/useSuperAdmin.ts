@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, signInWithRedirect, getAuthRedirectForOperation } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { getLoginDomainUrl } from '@/lib/domains';
 
@@ -151,7 +151,10 @@ export const useSuperAdmin = () => {
       }
 
       // Usar la función de login con redirect automático
-      const { data, error } = await signInWithRedirect(email.trim(), password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password
+      });
 
       if (error) {
         return { success: false, error: getAuthErrorMessage(error.message) };

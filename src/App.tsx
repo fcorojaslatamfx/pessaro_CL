@@ -10,15 +10,17 @@ import { Layout } from '@/components/Layout';
 import { WhatsAppProvider } from '@/hooks/useWhatsApp';
 import DomainRedirect from '@/components/DomainRedirect';
 import DomainGuard from '@/components/DomainGuard';
+import ErrorBoundary from '@/components/ErrorBoundary';
 // Main website pages
 import Home from '@/pages/Home';
 import Servicios from '@/pages/Servicios';
 import Instrumentos from '@/pages/Instrumentos';
 import Educacion from '@/pages/Educacion';
-import BaseConocimientos from '@/pages/BaseConocimientos';
+
 import Blog from '@/pages/Blog';
 import Nosotros from '@/pages/Nosotros';
 import Contacto from '@/pages/Contacto';
+import ErrorPage from '@/pages/ErrorPage';
 // Internal Dashboard
 import InternalDashboard from '@/pages/InternalDashboard';
 import InternalLogin from '@/pages/InternalLogin';
@@ -71,8 +73,9 @@ const App: React.FC = () => {
             <DomainRedirect />
             <ScrollToTop />
             <DomainGuard>
-              <Layout>
-            <Routes>
+              <ErrorBoundary>
+                <Layout>
+                  <Routes>
               {/* Main Landing & Home Section */}
               <Route 
                 path={ROUTE_PATHS.HOME} 
@@ -97,11 +100,7 @@ const App: React.FC = () => {
                 element={<Educacion />} 
               />
 
-              {/* Knowledge Base Section */}
-              <Route 
-                path={ROUTE_PATHS.BASE_CONOCIMIENTOS} 
-                element={<BaseConocimientos />} 
-              />
+
 
               {/* Blog & Market Analysis Section */}
               <Route 
@@ -119,6 +118,12 @@ const App: React.FC = () => {
               <Route 
                 path={ROUTE_PATHS.CONTACTO} 
                 element={<Contacto />} 
+              />
+
+              {/* Error Page */}
+              <Route 
+                path={ROUTE_PATHS.ERROR} 
+                element={<ErrorPage />} 
               />
 
               {/* Client Portal Section */}
@@ -244,13 +249,14 @@ const App: React.FC = () => {
                 } 
               />
 
-              {/* Catch-all route redirecting to Home or a custom 404 */}
+              {/* Catch-all route for 404 errors */}
               <Route 
                 path="*" 
-                element={<Navigate to={ROUTE_PATHS.HOME} replace />} 
+                element={<Navigate to={ROUTE_PATHS.ERROR} replace />} 
               />
-            </Routes>
-              </Layout>
+                  </Routes>
+                </Layout>
+              </ErrorBoundary>
             </DomainGuard>
           </BrowserRouter>
 

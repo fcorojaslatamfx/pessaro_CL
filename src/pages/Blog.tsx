@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import RiskProfileModal from '@/components/RiskProfileModal';
 import NewsletterPopup from '@/components/NewsletterPopup';
+import SocialShare from '@/components/SocialShare';
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
@@ -76,7 +77,7 @@ const Blog = () => {
             </div>
 
             {/* Category Filters */}
-            <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+            <div className="flex flex-wrap gap-mobile-xs justify-center lg:justify-start">
               {categories.map((category) => (
                 <Button
                   key={category}
@@ -84,8 +85,8 @@ const Blog = () => {
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
                   className={selectedCategory === category ? 
-                    "bg-accent text-accent-foreground hover:bg-accent/90" : 
-                    "border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                    "btn-mobile-sm transition-all duration-200 bg-accent text-accent-foreground hover:bg-accent/90" : 
+                    "btn-mobile-sm transition-all duration-200 border-accent text-accent hover:bg-accent hover:text-accent-foreground"
                   }
                 >
                   {category}
@@ -192,7 +193,7 @@ const Blog = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-responsive-blog gap-mobile-lg">
               {filteredPosts.map((post, index) => (
                 <motion.div
                   key={post.id}
@@ -315,13 +316,17 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
             </div>
           </div>
           
-          <Button 
-            variant="ghost" 
-            className="w-full mt-3 text-accent hover:text-accent-foreground hover:bg-accent"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? 'Leer menos' : 'Leer más'}
-          </Button>
+          <div className="flex items-center gap-2 mt-3">
+            <Button 
+              variant="ghost" 
+              className="flex-1 text-accent hover:text-accent-foreground hover:bg-accent"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? 'Leer menos' : 'Leer más'}
+            </Button>
+            
+            <SocialShare post={post} />
+          </div>
         </div>
       </CardContent>
       
@@ -379,6 +384,16 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
                 </p>
               );
             })}
+            
+            {/* Compartir en redes sociales */}
+            <div className="border-t border-border/40 pt-4 mt-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">
+                  ¿Te gustó este artículo? ¡Compártelo!
+                </span>
+                <SocialShare post={post} className="" />
+              </div>
+            </div>
           </div>
         </motion.div>
       )}

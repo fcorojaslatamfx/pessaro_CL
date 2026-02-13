@@ -8,7 +8,6 @@ export const ROUTE_PATHS = {
   SERVICIOS: '/servicios',
   INSTRUMENTOS: '/instrumentos',
   EDUCACION: '/educacion',
-  BASE_CONOCIMIENTOS: '/base-conocimientos',
   BLOG: '/blog',
   NOSOTROS: '/nosotros',
   CONTACTO: '/contacto',
@@ -35,6 +34,8 @@ export const ROUTE_PATHS = {
   CMS_INSTRUMENTS: '/cms/instruments',
   CMS_MEDIA: '/cms/media',
   CMS_SETTINGS: '/cms/settings',
+  // Error Page
+  ERROR: '/error',
 } as const;
 
 export type MarketCategory = 'Forex' | 'Commodities' | 'Indices' | 'Acciones' | 'ETF' | 'Criptomonedas';

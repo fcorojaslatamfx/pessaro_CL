@@ -144,8 +144,8 @@ const Home: React.FC = () => {
           <div className="hero-overlay" aria-hidden="true"></div>
         </div>
 
-        <div className="container-narrow relative z-20">
-          <div className="text-center">
+        <div className="container-narrow relative z-20 px-mobile-md">
+          <div className="text-center space-mobile-md">
             <motion.div initial={{
             opacity: 0,
             y: 20
@@ -161,19 +161,19 @@ const Home: React.FC = () => {
               </span>
               <h1 
                 id="hero-title"
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6"
+                className="text-fluid-3xl font-bold leading-tight mb-mobile-md"
               >
                 <span className="text-title-primary">Domine los Mercados con</span> <span className="text-title-accent">Precisión Institucional</span>
               </h1>
-              <p className="text-lg sm:text-xl text-white/80 mb-6 sm:mb-8 max-w-3xl mx-auto">
+              <p className="text-fluid-lg text-white/80 mb-mobile-lg max-w-3xl mx-auto">
                 Acceda a Forex, Commodities e Índices con tecnología de baja latencia y el respaldo de 15 años de excelencia financiera.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
-                <Button size="lg" className="px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" onClick={() => setShowProfileModal(true)}>
+              <div className="flex flex-col sm:flex-row gap-mobile-md justify-center items-center">
+                <Button size="lg" className="btn-mobile-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30 transition-all duration-200" onClick={() => setShowProfileModal(true)}>
                   Abrir Cuenta Real
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
-                <Button size="lg" variant="outline" className="px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg text-white border-white/20 hover:bg-white/10 hover:border-white/40" onClick={() => setShowProfileModal(true)}>
+                <Button size="lg" variant="outline" className="btn-mobile-lg text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-200" onClick={() => setShowProfileModal(true)}>
                   Prueba Demo Gratis
                 </Button>
               </div>
@@ -183,9 +183,9 @@ const Home: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-responsive-sm bg-secondary/50 border-y border-border">
-        <div className="container-wide">
-          <div className="grid grid-responsive-features gap-responsive">
+      <section className="py-mobile-lg bg-secondary/50 border-y border-border">
+        <div className="container-wide px-mobile-md">
+          <div className="grid grid-responsive-features gap-mobile-md">
             {stats.map(stat => <motion.div key={stat.id} initial={{
             opacity: 0,
             scale: 0.95
@@ -194,8 +194,8 @@ const Home: React.FC = () => {
             scale: 1
           }} viewport={{
             once: true
-          }} className="flex flex-col items-center text-center card-responsive-sm">
-                <div className="p-3 rounded-full bg-accent/10 mb-4">
+          }} className="flex flex-col items-center text-center card-mobile-sm">
+                <div className="p-mobile-sm rounded-full bg-accent/10 mb-mobile-sm">
                   <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
                 </div>
                 <span className="text-heading font-bold text-accent mb-1">{stat.value}</span>

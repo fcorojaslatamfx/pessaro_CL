@@ -17,6 +17,9 @@ import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { useAuth } from '@/hooks/useAuth';
 import { isLoginDomain, isLoginRoute, isDevelopment, getMainSiteUrl, getAdminUrl } from '@/lib/domains';
 import LoginLayout from '@/components/LoginLayout';
+import { useTrackNavigation } from '@/hooks/useTrackNavigation';
+import { useWorkWithUs } from '@/hooks/useWorkWithUs';
+import WorkWithUsPopup from '@/components/WorkWithUsPopup';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,6 +27,9 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  
+  // Rastrear navegación para capturar errores 404
+  useTrackNavigation();
   
   // Detectar si estamos en el dominio de login o en una ruta administrativa
   const shouldUseLoginLayout = isLoginDomain() || (isDevelopment() && isLoginRoute(location.pathname));
@@ -41,6 +47,7 @@ export function Layout({ children }: LayoutProps) {
     isOpen: false,
     type: null
   });
+  const { isOpen: isWorkWithUsOpen, openPopup: openWorkWithUsPopup, closePopup: closeWorkWithUsPopup } = useWorkWithUs();
   const headerRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const {
@@ -96,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
 
   // Manejar visibilidad del botón de WhatsApp
   useEffect(() => {
-    const hasOpenPopup = isOpen || showProfileModal || showNewsletterPopup || legalPopup.isOpen;
+    const hasOpenPopup = isOpen || showProfileModal || showNewsletterPopup || legalPopup.isOpen || isWorkWithUsOpen;
     const shouldHideWhatsApp = hasOpenPopup || isMenuOpen; // Incluir menú móvil
     
     if (shouldHideWhatsApp) {
@@ -104,14 +111,13 @@ export function Layout({ children }: LayoutProps) {
     } else {
       showWhatsApp();
     }
-  }, [isOpen, showProfileModal, showNewsletterPopup, legalPopup.isOpen, isMenuOpen, hideWhatsApp, showWhatsApp]);
+  }, [isOpen, showProfileModal, showNewsletterPopup, legalPopup.isOpen, isWorkWithUsOpen, isMenuOpen, hideWhatsApp, showWhatsApp]);
 
   const navLinks = [
     { path: ROUTE_PATHS.HOME, label: 'Inicio' },
     { path: ROUTE_PATHS.SERVICIOS, label: 'Servicios' },
     { path: ROUTE_PATHS.INSTRUMENTOS, label: 'Instrumentos' },
     { path: ROUTE_PATHS.EDUCACION, label: 'Educación' },
-    { path: ROUTE_PATHS.BASE_CONOCIMIENTOS, label: 'Base de Conocimientos' },
     { path: ROUTE_PATHS.BLOG, label: 'Blog' },
     { path: ROUTE_PATHS.NOSOTROS, label: 'Nosotros' },
     { path: ROUTE_PATHS.CONTACTO, label: 'Contacto' }
@@ -198,15 +204,27 @@ export function Layout({ children }: LayoutProps) {
         {/* Mobile Menu Overlay */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }} 
-              animate={{ opacity: 1, height: 'auto' }} 
-              exit={{ opacity: 0, height: 0 }} 
-              className="mobile-tablet bg-background border-b border-border relative z-50 shadow-lg safe-area-bottom"
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              
+              {/* Menu Panel */}
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -20 }} 
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="mobile-tablet bg-background/95 backdrop-blur-md border-b border-border relative z-50 shadow-2xl safe-area-bottom"
             >
               <nav 
                 id="mobile-navigation"
-                className="container-wide py-6 sm:py-8 flex flex-col gap-4 sm:gap-6 max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain mobile-touch-pan-y"
+                className="container-wide py-mobile-md flex flex-col gap-mobile-sm max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain scroll-mobile-smooth"
                 role="navigation"
                 aria-label="Menú de navegación móvil"
               >
@@ -216,17 +234,17 @@ export function Layout({ children }: LayoutProps) {
                     to={link.path} 
                     onClick={handleMobileNavClick} 
                     className={({ isActive }) => 
-                      `text-lg sm:text-xl font-semibold transition-colors py-4 px-4 rounded-lg hover:bg-muted/50 block touch-target flex items-center ${
-                        isActive ? 'text-primary bg-primary/10' : 'text-foreground'
+                      `nav-mobile-item rounded-xl hover:bg-muted/50 active:bg-muted/70 transition-all duration-200 ${
+                        isActive ? 'text-primary bg-primary/10 border-l-4 border-primary' : 'text-foreground hover:text-primary'
                       }`
                     }
                   >
                     {link.label}
                   </NavLink>
                 ))}
-                <div className="flex flex-col gap-4 pt-6 border-t border-border mobile-safe-area">
+                <div className="flex flex-col gap-mobile-sm pt-6 border-t border-border/50 mobile-safe-padding">
                   <Button 
-                    className="btn-responsive w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30" 
+                    className="btn-mobile-md w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30 transition-all duration-200"
                     onClick={() => { 
                       setShowProfileModal(true); 
                       setIsMenuOpen(false); 
@@ -240,6 +258,7 @@ export function Layout({ children }: LayoutProps) {
                 </div>
               </nav>
             </motion.div>
+            </>
           )}
         </AnimatePresence>
       </header>
@@ -334,6 +353,15 @@ export function Layout({ children }: LayoutProps) {
               >
                 Suscribirse
               </Button>
+              
+              {/* Botón Trabaja con Nosotros */}
+              <Button 
+                onClick={openWorkWithUsPopup}
+                className="w-full bg-green-600 text-white hover:bg-green-700 transition-colors mt-3"
+              >
+                Trabaja con Nosotros
+              </Button>
+              
               <div className="space-y-2">
                 <h5 className="text-sm font-semibold">Contacto</h5>
                 <ul className="space-y-2">
@@ -484,6 +512,12 @@ export function Layout({ children }: LayoutProps) {
         isOpen={legalPopup.isOpen} 
         type={legalPopup.type} 
         onClose={closeLegalPopup} 
+      />
+      
+      {/* Work With Us Popup */}
+      <WorkWithUsPopup
+        isOpen={isWorkWithUsOpen}
+        onClose={closeWorkWithUsPopup}
       />
     </div>
   );
