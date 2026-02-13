@@ -3,21 +3,6 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html",
-      "has": [{ "type": "host", "value": "pessaro.cl" }]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html",
-      "has": [{ "type": "host", "value": "www.pessaro.cl" }]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html",
-      "has": [{ "type": "host", "value": "login.pessaro.cl" }]
-    },
-    {
-      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -33,24 +18,5 @@
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
       ]
     }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "login.pessaro.cl" }],
-      "destination": "/super-admin-login",
-      "permanent": false
-    },
-    {
-      "source": "/index.html",
-      "has": [{ "type": "host", "value": "login.pessaro.cl" }],
-      "destination": "/super-admin-login",
-      "permanent": false
-    }
-  ],
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
