@@ -16,6 +16,11 @@ import Home from '@/pages/Home';
 import Servicios from '@/pages/Servicios';
 import Instrumentos from '@/pages/Instrumentos';
 import Educacion from '@/pages/Educacion';
+import ResetPassword from '@/pages/ResetPassword';
+<Route 
+  path="/reset-password" 
+  element={<ResetPassword />} 
+/>
 
 import Blog from '@/pages/Blog';
 import Nosotros from '@/pages/Nosotros';
