@@ -165,15 +165,41 @@ export default function Servicios() {
       {/* Beneficios por Servicio (Breakdown) */}
       <section className="py-24 bg-background" data-service-details>
         <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={springPresets.smooth}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold mb-4"
+            >
+              Detalles de Nuestros Servicios
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ ...springPresets.smooth, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-muted-foreground"
+            >
+              Explore en profundidad cada uno de nuestros servicios financieros y descubra cómo pueden transformar su estrategia de inversión.
+            </motion.p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {services.map((service, idx) => (
               <motion.div 
                 key={service.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ 
+                  delay: idx * 0.1,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
                 viewport={{ once: true }}
-                className="p-8 rounded-2xl border border-border bg-card shadow-sm transition-all duration-300"
+                className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:shadow-xl hover:border-accent/40 transition-all duration-300 cursor-pointer"
                 data-service-id={service.id}
               >
                 <div className="flex items-center gap-4 mb-6">

@@ -57,23 +57,33 @@ export function ServiceCard({
             variant="ghost" 
             className="text-accent hover:text-accent-foreground hover:bg-accent p-0 px-4 group rounded-full transition-all"
 onClick={() => {
-              // Mapear IDs de servicios a IDs de FAQs
-              const serviceToFaqMap: Record<string, string> = {
-                'forex-trading': 'faq-forex',
-                'commodities': 'faq-commodities', 
-                'indices': 'faq-indices',
-                'crypto': 'faq-crypto'
-              };
-              
-              const faqId = serviceToFaqMap[service.id];
-              const element = document.getElementById(faqId);
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Highlight effect
-                element.classList.add('bg-accent/10', 'border-accent/30');
+              // Hacer scroll a la sección de detalles de servicios
+              const detailsSection = document.querySelector('[data-service-details]');
+              if (detailsSection) {
+                // Scroll con offset para el header fijo
+                const headerHeight = 80; // Altura aproximada del header
+                const elementPosition = detailsSection.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerHeight;
+                
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth'
+                });
+                
+                // Buscar la tarjeta específica del servicio en la sección de detalles
                 setTimeout(() => {
-                  element.classList.remove('bg-accent/10', 'border-accent/30');
-                }, 2000);
+                  const serviceCard = detailsSection.querySelector(`[data-service-id="${service.id}"]`) as HTMLElement;
+                  if (serviceCard) {
+                    // Highlight effect mejorado en la tarjeta específica
+                    serviceCard.classList.add('ring-4', 'ring-accent', 'ring-opacity-75', 'shadow-2xl', 'scale-105');
+                    serviceCard.style.transform = 'translateY(-12px)';
+                    
+                    setTimeout(() => {
+                      serviceCard.classList.remove('ring-4', 'ring-accent', 'ring-opacity-75', 'shadow-2xl', 'scale-105');
+                      serviceCard.style.transform = '';
+                    }, 4000);
+                  }
+                }, 800); // Delay para que termine el scroll
               }
             }}
           >
