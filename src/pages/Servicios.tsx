@@ -163,7 +163,7 @@ export default function Servicios() {
       </section>
 
       {/* Beneficios por Servicio (Breakdown) */}
-      <section className="py-24 bg-background">
+      <section className="py-24 bg-background" data-service-details>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {services.map((service, idx) => (
@@ -173,7 +173,8 @@ export default function Servicios() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 viewport={{ once: true }}
-                className="p-8 rounded-2xl border border-border bg-card shadow-sm"
+                className="p-8 rounded-2xl border border-border bg-card shadow-sm transition-all duration-300"
+                data-service-id={service.id}
               >
                 <div className="flex items-center gap-4 mb-6">
                   <div className="p-3 rounded-lg bg-primary/10 text-primary">
@@ -193,6 +194,142 @@ export default function Servicios() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+         SECCIÓN: Gestión de Cuentas PAMM / MAM / CopyTrading
+         ============================================================ */}
+      <section className="py-24 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          {/* Título */}
+          <div className="text-center max-w-4xl mx-auto mb-16">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={springPresets.smooth}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold mb-6"
+            >
+              Gestión Profesional de Cuentas de Trading
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ ...springPresets.smooth, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-lg text-muted-foreground leading-relaxed"
+            >
+              Administración institucional mediante modelos <strong>PAMM</strong>, 
+              <strong> MAM</strong> y <strong> CopyTrading</strong>, diseñados para inversionistas que buscan 
+              delegar ejecución, gestión de riesgo y estrategias avanzadas con total transparencia.
+            </motion.p>
+          </div>
+
+          {/* Grid de características */}
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+          >
+            {/* PAMM */}
+            <motion.div 
+              variants={staggerItem}
+              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg transition-all duration-300"
+            >
+              <h3 className="text-2xl font-bold mb-4 text-primary">Modelo PAMM</h3>
+              <p className="text-muted-foreground mb-6">
+                El gestor opera una cuenta maestra y los resultados se distribuyen proporcionalmente entre los inversionistas. 
+                Ideal para quienes buscan delegar completamente la ejecución.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Distribución proporcional de ganancias</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Transparencia total en métricas</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Gestión profesional centralizada</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            {/* MAM */}
+            <motion.div 
+              variants={staggerItem}
+              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg transition-all duration-300"
+            >
+              <h3 className="text-2xl font-bold mb-4 text-primary">Modelo MAM</h3>
+              <p className="text-muted-foreground mb-6">
+                Permite asignaciones flexibles por riesgo, lotaje o estrategia. 
+                Diseñado para inversionistas con perfiles diferenciados.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Asignación por riesgo o lotaje</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Control individual por cuenta</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Ideal para carteras diversificadas</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            {/* CopyTrading */}
+            <motion.div 
+              variants={staggerItem}
+              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg transition-all duration-300"
+            >
+              <h3 className="text-2xl font-bold mb-4 text-primary">CopyTrading</h3>
+              <p className="text-muted-foreground mb-6">
+                Replica automáticamente las operaciones de traders profesionales. 
+                Perfecto para quienes buscan resultados consistentes sin intervenir manualmente.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Copia automática de estrategias</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Control total del riesgo</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm">Ideal para principiantes y pasivos</span>
+                </li>
+              </ul>
+            </motion.div>
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={springPresets.smooth}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <Button 
+              size="lg" 
+              className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-4 text-lg font-bold group"
+              onClick={() => setShowProfileModal(true)}
+            >
+              Solicitar Información
+              <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </motion.div>
         </div>
       </section>
 

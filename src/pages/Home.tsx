@@ -129,7 +129,7 @@ const Home: React.FC = () => {
   return <main className="flex flex-col w-full" role="main" aria-label="Página principal de Pessaro Capital">
       {/* Hero Section */}
       <section 
-        className="relative min-h-[80vh] sm:min-h-[85vh] lg:min-h-screen flex items-center bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white overflow-hidden safe-area-top"
+        className="relative min-h-[85vh] sm:min-h-[90vh] lg:min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white overflow-hidden safe-area-top py-4 sm:py-6 lg:py-8"
         aria-labelledby="hero-title"
       >
         {/* Background Image */}
@@ -144,36 +144,52 @@ const Home: React.FC = () => {
           <div className="hero-overlay" aria-hidden="true"></div>
         </div>
 
-        <div className="container-narrow relative z-20 px-mobile-md">
-          <div className="text-center space-mobile-md">
-            <motion.div initial={{
-            opacity: 0,
-            y: 20
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.6
-          }}>
-              <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-sm font-medium mb-4 sm:mb-6 text-[rgb(125,225,129)]">
-                <ShieldCheck className="w-4 h-4" />
+        <div className="container-narrow relative z-20 px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-5xl mx-auto">
+            <motion.div 
+              initial={{
+                opacity: 0,
+                y: 30
+              }} 
+              animate={{
+                opacity: 1,
+                y: 0
+              }} 
+              transition={{
+                duration: 0.8,
+                ease: "easeOut"
+              }}
+              className="space-y-6 sm:space-y-8 lg:space-y-10"
+            >
+              <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-accent/20 border border-accent/30 text-sm sm:text-base font-medium text-[rgb(125,225,129)]">
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
                 Mercado Regulado y Fondos Segregados
               </span>
               <h1 
                 id="hero-title"
-                className="text-fluid-3xl font-bold leading-tight mb-mobile-md"
+                className="text-fluid-3xl font-bold leading-[1.1]"
               >
-                <span className="text-title-primary">Domine los Mercados con</span> <span className="text-title-accent">Precisión Institucional</span>
+                <span className="block text-title-primary mb-2 sm:mb-3">Domine los Mercados con</span> 
+                <span className="block text-title-accent">Precisión Institucional</span>
               </h1>
-              <p className="text-fluid-lg text-white/80 mb-mobile-lg max-w-3xl mx-auto">
+              <p className="text-fluid-lg text-white/85 leading-relaxed max-w-4xl mx-auto px-4">
                 Acceda a Forex, Commodities e Índices con tecnología de baja latencia y el respaldo de 15 años de excelencia financiera.
               </p>
-              <div className="flex flex-col sm:flex-row gap-mobile-md justify-center items-center">
-                <Button size="lg" className="btn-mobile-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30 transition-all duration-200" onClick={() => setShowProfileModal(true)}>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 justify-center items-center">
+                <Button 
+                  size="lg" 
+                  className="btn-responsive bg-accent text-accent-foreground hover:bg-accent/90 shadow-xl hover:shadow-accent/40 transition-all duration-300 transform hover:scale-105 font-semibold"
+                  onClick={() => setShowProfileModal(true)}
+                >
                   Abrir Cuenta Real
-                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                  <ArrowRight className="ml-2 w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
-                <Button size="lg" variant="outline" className="btn-mobile-lg text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-200" onClick={() => setShowProfileModal(true)}>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="btn-responsive text-white border-2 border-white/30 hover:bg-white/15 hover:border-white/50 transition-all duration-300 transform hover:scale-105 font-semibold"
+                  onClick={() => setShowProfileModal(true)}
+                >
                   Prueba Demo Gratis
                 </Button>
               </div>
@@ -185,16 +201,21 @@ const Home: React.FC = () => {
       {/* Stats Section */}
       <section className="py-mobile-lg bg-secondary/50 border-y border-border">
         <div className="container-wide px-mobile-md">
-          <div className="grid grid-responsive-features gap-mobile-md">
-            {stats.map(stat => <motion.div key={stat.id} initial={{
-            opacity: 0,
-            scale: 0.95
-          }} whileInView={{
-            opacity: 1,
-            scale: 1
-          }} viewport={{
-            once: true
-          }} className="flex flex-col items-center text-center card-mobile-sm">
+          <div className="grid grid-mobile-auto gap-mobile-md">
+            {stats.map(stat => <motion.div key={stat.id}
+                  initial={{
+                    opacity: 0,
+                    scale: 0.95
+                  }} 
+                  whileInView={{
+                    opacity: 1,
+                    scale: 1
+                  }} 
+                  viewport={{
+                    once: true
+                  }} 
+                  className="flex flex-col items-center text-center card-mobile-sm"
+                >
                 <div className="p-mobile-sm rounded-full bg-accent/10 mb-mobile-sm">
                   <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
                 </div>

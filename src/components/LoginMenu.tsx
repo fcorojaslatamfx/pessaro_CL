@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, User, BarChart3, Settings, LogIn, Shield } from 'lucide-react';
+import { ChevronDown, User, BarChart3, Settings, LogIn, Shield, ArrowRight } from 'lucide-react';
 import { ROUTE_PATHS } from '@/lib/index';
 import { Button } from '@/components/ui/button';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
@@ -9,9 +9,10 @@ import { getMainSiteUrl, getAdminUrl } from '@/lib/domains';
 
 interface LoginMenuProps {
   className?: string;
+  onMenuItemClick?: () => void;
 }
 
-const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
+const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -57,10 +58,10 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
       <Button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-[#24d594] text-white hover:bg-[#24d594]/90 transition-colors shadow-sm flex items-center gap-2"
+        className="bg-[#00C077] text-white hover:bg-[#00C077]/90 transition-colors shadow-sm flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg"
         size="sm"
       >
-        <LogIn className="w-4 h-4" />
+        <ArrowRight className="w-4 h-4" />
         Login
         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
@@ -83,7 +84,10 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '' }) => {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false);
+                    onMenuItemClick?.();
+                  }}
                   className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group"
                 >
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#24d594]/10 text-[#24d594] group-hover:bg-[#24d594]/20 transition-colors">

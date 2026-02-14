@@ -32,7 +32,7 @@ export const useClientRegistration = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('client_registration_2026_02_08_22_02', {
+      const { data, error } = await supabase.functions.invoke('client_registration_updated_2026_02_14', {
         body: {
           action: 'register_client_from_profile',
           profileData

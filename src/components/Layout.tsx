@@ -130,13 +130,9 @@ export function Layout({ children }: LayoutProps) {
         ref={headerRef} 
         role="banner"
         aria-label="Navegación principal"
-        className={`nav-mobile transition-all duration-300 safe-area-top ${
-          isScrolled 
-            ? 'bg-background/95 backdrop-blur-md border-b border-border py-2 sm:py-3 shadow-sm' 
-            : 'bg-transparent py-3 sm:py-4 md:py-5'
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 bg-blue-900 border-b border-blue-800 py-1 sm:py-2 transition-all duration-300 safe-area-top"
       >
-        <div className="container-wide flex items-center justify-between h-full">
+        <div className="container-wide flex items-center h-full">
           <Link 
             to={ROUTE_PATHS.HOME} 
             onClick={handleMobileNavClick} 
@@ -154,7 +150,7 @@ export function Layout({ children }: LayoutProps) {
 
           {/* Desktop Navigation */}
           <nav 
-            className="desktop-only flex items-center gap-6 xl:gap-8"
+            className="desktop-only flex items-center gap-6 lg:gap-8 ml-8"
             role="navigation"
             aria-label="Menú principal"
           >
@@ -163,8 +159,8 @@ export function Layout({ children }: LayoutProps) {
                 key={link.path} 
                 to={link.path} 
                 className={({ isActive }) => 
-                  `text-sm xl:text-base font-medium transition-colors hover:text-primary touch-target flex items-center justify-center ${
-                    isActive ? 'text-primary' : 'text-foreground/80'
+                  `text-sm lg:text-base font-medium transition-all duration-200 text-white hover:text-blue-200 px-3 py-2 rounded-md hover:bg-white/10 ${
+                    isActive ? 'text-blue-200 bg-white/20' : ''
                   }`
                 }
               >
@@ -174,10 +170,10 @@ export function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* CTA Desktop */}
-          <div className="desktop-only flex items-center gap-3 xl:gap-4">
+          <div className="desktop-only flex items-center gap-4 ml-auto">
             <Button 
               size="sm" 
-              className="btn-responsive-sm bg-accent text-accent-foreground font-semibold shadow-lg hover:shadow-accent/30 hover:bg-accent/90"
+              className="px-6 py-2.5 text-sm font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-sm"
               onClick={() => setShowProfileModal(true)}
             >
               Abrir Cuenta
@@ -210,7 +206,7 @@ export function Layout({ children }: LayoutProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                className="mobile-menu-overlay lg:hidden"
                 onClick={() => setIsMenuOpen(false)}
               />
               
@@ -234,7 +230,7 @@ export function Layout({ children }: LayoutProps) {
                     to={link.path} 
                     onClick={handleMobileNavClick} 
                     className={({ isActive }) => 
-                      `nav-mobile-item rounded-xl hover:bg-muted/50 active:bg-muted/70 transition-all duration-200 ${
+                      `mobile-menu-item rounded-xl hover:bg-muted/50 active:bg-muted/70 transition-all duration-200 ${
                         isActive ? 'text-primary bg-primary/10 border-l-4 border-primary' : 'text-foreground hover:text-primary'
                       }`
                     }
@@ -253,7 +249,7 @@ export function Layout({ children }: LayoutProps) {
                     Empezar Ahora
                   </Button>
                   <div className="flex justify-center">
-                    <LoginMenu />
+                    <LoginMenu onMenuItemClick={() => setIsMenuOpen(false)} />
                   </div>
                 </div>
               </nav>
@@ -264,7 +260,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow" style={{ paddingTop: `${headerHeight}px` }}>
+      <main className="flex-grow">
         {children}
       </main>
 
@@ -277,7 +273,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="container-wide">
           <div className="grid grid-responsive-4 gap-responsive-lg mb-responsive-lg">
             {/* Company Info */}
-            <div className="space-y-responsive">
+            <div className="space-mobile-sm">
               <img 
                 src={PESSARO_LOGO_FOOTER}
                 alt="Pessaro Capital - Plataforma de Trading" 
@@ -446,26 +442,25 @@ export function Layout({ children }: LayoutProps) {
               </button>
               
               {/* Sistema CMS - Acceso para usuarios internos y super admin */}
-<button 
-  onClick={() => {
-    if (user && (['interno', 'admin', 'super_admin'].includes(user.role))) {
-      // Usar navigate para abrir en la misma pestaña o window.location para asegurar el dominio actual
-      window.location.href = ROUTE_PATHS.CMS_DASHBOARD;
-    } else if (user) {
-      alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
-    } else {
-      // Redirigir al login interno dentro del mismo sitio
-      window.location.href = ROUTE_PATHS.INTERNAL_LOGIN;
-    }
-  }}
-  className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
-  title={user && (['interno', 'admin', 'super_admin'].includes(user.role))
-    ? 'Acceder al Sistema CMS' 
-    : 'Requiere acceso de usuario interno'
-  }
->
-  Sistema CMS
-</button>              
+              <button 
+                onClick={() => {
+                  if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
+                    window.open(getAdminUrl(ROUTE_PATHS.CMS_DASHBOARD), '_blank');
+                  } else if (user) {
+                    alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
+                  } else {
+                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
+                  }
+                }}
+                className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
+                title={user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin') 
+                  ? 'Acceder al Sistema CMS' 
+                  : 'Requiere acceso de usuario interno'
+                }
+              >
+                Sistema CMS
+              </button>
+              
               {/* Super Admin - Destacado como botón especial */}
               {user && user.role === 'super_admin' && (
                 <Button

@@ -37,13 +37,13 @@ export function ServiceCard({
     damping: 20
   }} className="h-full">
       <Card className="h-full border-border/40 bg-card/60 backdrop-blur-md hover:border-accent/40 hover:shadow-xl transition-all duration-300 flex flex-col">
-        <CardHeader className="card-responsive-sm">
+        <CardHeader className="card-mobile-sm">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/5 flex items-center justify-center mb-4 ring-1 ring-border/20 shadow-inner">
             <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-accent" />
           </div>
           <h3 className="text-subheading font-bold text-foreground leading-tight">{service.title}</h3>
         </CardHeader>
-        <CardContent className="flex-grow card-responsive-sm">
+        <CardContent className="flex-grow card-mobile-sm">
           <p className="text-body text-muted-foreground leading-relaxed">{service.description}</p>
           {service.benefits && service.benefits.length > 0 && <ul className="mt-4 space-y-2">
               {service.benefits.slice(0, 3).map((benefit, idx) => <li key={idx} className="text-xs flex items-center text-muted-foreground/80">

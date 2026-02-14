@@ -16,11 +16,6 @@ import Home from '@/pages/Home';
 import Servicios from '@/pages/Servicios';
 import Instrumentos from '@/pages/Instrumentos';
 import Educacion from '@/pages/Educacion';
-import ResetPassword from '@/pages/ResetPassword';
-<Route 
-  path="/reset-password" 
-  element={<ResetPassword />} 
-/>
 
 import Blog from '@/pages/Blog';
 import Nosotros from '@/pages/Nosotros';
@@ -39,6 +34,8 @@ import SuperAdminLogin from '@/pages/SuperAdminLogin';
 import SuperAdminPanel from '@/pages/SuperAdminPanel';
 // Access Diagnostic
 import AccessDiagnostic from '@/pages/AccessDiagnostic';
+// Password Recovery
+import RecuperarContrasena from '@/pages/RecuperarContrasena';
 // CMS pages
 import Setup from '@/pages/cms/Setup';
 import Login from '@/pages/cms/Login';
@@ -252,6 +249,12 @@ const App: React.FC = () => {
                     <Settings />
                   </ProtectedRoute>
                 } 
+              />
+              
+              {/* Password Recovery */}
+              <Route 
+                path={ROUTE_PATHS.RECUPERAR_CONTRASENA} 
+                element={<RecuperarContrasena />} 
               />
 
               {/* Catch-all route for 404 errors */}

@@ -49,44 +49,46 @@ serve(async (req) => {
         try {
           // Crear usuario en Auth
           const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-            email: email,
+            email,
             password: tempPassword,
             email_confirm: true,
             user_metadata: {
               first_name: firstName,
               last_name: lastName,
               full_name: `${firstName} ${lastName}`,
-              phone: phone,
-              role: 'client',
-              account_type: 'standard',
-              created_via: 'risk_profile_registration'
+              phone,
+              role: 'cliente'
             }
           })
 
           if (authError) {
             console.error('Error creating user:', authError)
             return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: 'Error al crear cuenta: ' + authError.message 
-              }),
-              { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 400
-              }
+              JSON.stringify({ success: false, error: authError.message }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
 
-          if (!authData.user) {
+          // Crear perfil de usuario
+          const { error: profileError } = await supabaseAdmin
+            .from('user_profiles')
+            .insert({
+              id: authData.user.id,
+              email,
+              full_name: `${firstName} ${lastName}`,
+              first_name: firstName,
+              last_name: lastName,
+              phone,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+
+          if (profileError) {
+            console.error('Error creating user profile:', profileError)
             return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: 'No se pudo crear la cuenta de usuario' 
-              }),
-              { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 400
-              }
+              JSON.stringify({ success: false, error: 'Error creating user profile' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
 
@@ -95,57 +97,44 @@ serve(async (req) => {
             .from('user_roles_2026_02_08_22_02')
             .insert({
               user_id: authData.user.id,
-              role: 'client',
-              permissions: {
-                access_level: 'client',
-                can_trade: true,
-                can_view_portfolio: true,
-                can_deposit_withdraw: true
-              },
-              created_by: authData.user.id
+              role: 'cliente',
+              assigned_by: 'system',
+              assigned_at: new Date().toISOString()
             })
 
           if (roleError) {
-            console.error('Error assigning client role:', roleError)
+            console.error('Error assigning role:', roleError)
           }
 
-          // Crear perfil del cliente con datos del perfil de riesgo
-          const { error: profileError } = await supabaseAdmin
-            .from('client_profiles_2026_02_08_22_02')
+          // Crear perfil de riesgo
+          const { error: riskError } = await supabaseAdmin
+            .from('risk_profiles_2026_02_08_21_16')
             .insert({
               user_id: authData.user.id,
-              first_name: firstName,
-              last_name: lastName,
-              email: email,
-              phone: phone,
+              email,
+              full_name: `${firstName} ${lastName}`,
+              phone,
               risk_tolerance: riskTolerance,
-              experience_level: experience,
+              trading_experience: experience,
               investment_capital: investmentCapital,
               investment_horizon: investmentHorizon,
               interested_instruments: interestedInstruments,
               investment_goals: investmentGoals,
-              account_status: 'active',
-              account_type: 'standard',
-              created_via: 'risk_profile'
+              profile_completed: true,
+              created_at: new Date().toISOString()
             })
 
-          if (profileError) {
-            console.error('Error creating client profile:', profileError)
+          if (riskError) {
+            console.error('Error creating risk profile:', riskError)
           }
 
-          // Crear cuenta de trading simulada
-          const initialBalance = Math.floor(Math.random() * 50000) + 10000 // Entre 10k y 60k
+          // Crear cuenta de trading demo
           const { error: accountError } = await supabaseAdmin
             .from('trading_accounts_2026_02_08_22_02')
             .insert({
               user_id: authData.user.id,
-              account_number: `PC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
-              account_type: 'standard',
-              balance: initialBalance,
-              equity: initialBalance,
-              margin: 0,
-              free_margin: initialBalance,
-              margin_level: 0,
+              account_type: 'demo',
+              balance: 10000.00,
               currency: 'USD',
               leverage: '1:100',
               status: 'active'
@@ -204,7 +193,7 @@ serve(async (req) => {
                   </div>
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://pessaro.cl/portal-cliente"
+                    <a href="https://pessaro.cl/portal-cliente" 
                        style="background: #24d594; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                       Acceder al Portal del Cliente
                     </a>
@@ -253,93 +242,22 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({
               success: true,
-              message: 'Cuenta creada exitosamente',
+              message: 'Cliente registrado exitosamente. Se ha enviado un correo con las credenciales de acceso.',
               user: {
                 id: authData.user.id,
                 email: authData.user.email,
-                full_name: `${firstName} ${lastName}`,
-                temp_password: tempPassword
+                full_name: `${firstName} ${lastName}`
               },
-              next_step: 'redirect_to_portal'
+              tempPassword
             }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200
-            }
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
 
         } catch (error) {
-          console.error('Error in registration process:', error)
+          console.error('Error in client registration:', error)
           return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Error en el proceso de registro: ' + error.message 
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500
-            }
-          )
-        }
-      }
-
-      if (action === 'login_client') {
-        const { email, password } = await req.json()
-
-        try {
-          // Intentar login con Supabase Auth
-          const { data, error } = await supabaseAdmin.auth.signInWithPassword({
-            email,
-            password
-          })
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: 'Credenciales incorrectas' 
-              }),
-              { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 401
-              }
-            )
-          }
-
-          // Registrar login en logs
-          if (data.user) {
-            await supabaseAdmin
-              .from('access_logs_2026_02_08_22_02')
-              .insert({
-                user_id: data.user.id,
-                action: 'CLIENT_LOGIN',
-                resource_type: 'authentication'
-              })
-          }
-
-          return new Response(
-            JSON.stringify({
-              success: true,
-              message: 'Login exitoso',
-              user: data.user,
-              session: data.session
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200
-            }
-          )
-
-        } catch (error) {
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Error en el login: ' + error.message 
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500
-            }
+            JSON.stringify({ success: false, error: 'Error interno del servidor' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
           )
         }
       }
@@ -347,23 +265,14 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: false, error: 'Método no permitido' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 405
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
     )
 
   } catch (error) {
-    console.error('Error in client registration function:', error)
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Error interno del servidor: ' + error.message 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
+      JSON.stringify({ success: false, error: 'Error interno del servidor' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

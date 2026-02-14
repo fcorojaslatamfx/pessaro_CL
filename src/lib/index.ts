@@ -36,6 +36,8 @@ export const ROUTE_PATHS = {
   CMS_SETTINGS: '/cms/settings',
   // Error Page
   ERROR: '/error',
+  // Password Recovery
+  RECUPERAR_CONTRASENA: '/recuperar-contrasena',
 } as const;
 
 export type MarketCategory = 'Forex' | 'Commodities' | 'Indices' | 'Acciones' | 'ETF' | 'Criptomonedas';
