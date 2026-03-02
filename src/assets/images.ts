@@ -30,6 +30,7 @@ export const IMAGES = {
   CAPTURA_DE_PANTALLA2265_294: "/images/Captura de pantalla2265.png",
   CAPTURA_DE_PANTALLA2759_290: "/images/Captura de pantalla2759.png",
   CAPTURA_DE_PANTALLA3886_291: "/images/Captura de pantalla3886.png",
+  CAPTURA_DE_PANTALLA5968_295: "/images/Captura de pantalla5968.png",
   CAPTURA_DE_PANTALLA6750_292: "/images/Captura de pantalla6750.png",
   CAPTURA_DE_PANTALLA9908_242: "/images/Captura de pantalla9908.png",
   CAPTURA_DE_PANTALLA_2026_01_30_100755_51: "/images/Captura de pantalla 2026-01-30 100755.png",

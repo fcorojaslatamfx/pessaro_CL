@@ -82,8 +82,8 @@ const ContactPopup: React.FC<ContactPopupProps> = ({ isOpen, onClose, buttonType
     setIsSubmitting(true);
     
     try {
-      // Enviar email usando Edge Function
-      const { data: result, error } = await supabase.functions.invoke('send_contact_email_corrected_2026_01_30_20_41', {
+      // Enviar email usando Edge Function unificada
+      const { data: result, error } = await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
         body: {
           formType: 'popup',
           formData: {

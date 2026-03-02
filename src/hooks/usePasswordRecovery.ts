@@ -31,7 +31,7 @@ export const usePasswordRecovery = () => {
     clearMessages();
 
     try {
-      const { data, error } = await supabase.functions.invoke('password_recovery_system_2026_02_13', {
+      const { data, error } = await supabase.functions.invoke('password_recovery_fixed_2026_02_23_19_30', {
         body: {
           action: 'request_reset',
           email: email.toLowerCase().trim()
@@ -65,7 +65,7 @@ export const usePasswordRecovery = () => {
     clearMessages();
 
     try {
-      const { data, error } = await supabase.functions.invoke('password_recovery_system_2026_02_13', {
+      const { data, error } = await supabase.functions.invoke('password_recovery_fixed_2026_02_23_19_30', {
         body: {
           action: 'validate_token',
           access_token: accessToken
@@ -105,7 +105,7 @@ export const usePasswordRecovery = () => {
         throw new Error('La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y símbolos');
       }
 
-      const { data, error } = await supabase.functions.invoke('password_recovery_system_2026_02_13', {
+      const { data, error } = await supabase.functions.invoke('password_recovery_fixed_2026_02_23_19_30', {
         body: {
           action: 'update_password',
           access_token: accessToken,

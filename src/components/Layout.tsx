@@ -170,10 +170,10 @@ export function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* CTA Desktop */}
-          <div className="desktop-only flex items-center gap-4 ml-auto">
+          <div className="desktop-only flex flex-row items-center gap-4 ml-auto">
             <Button 
               size="sm" 
-              className="px-6 py-2.5 text-sm font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-sm"
+              className="flex-shrink-0 px-6 py-2.5 text-sm font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-sm"
               onClick={() => setShowProfileModal(true)}
             >
               Abrir Cuenta

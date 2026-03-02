@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTE_PATHS } from '@/lib/index';
+
+// Loader optimizado para ProtectedRoute
+const AuthLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="text-center"
+    >
+      <div className="relative mb-4">
+        <div className="w-12 h-12 border-3 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+        <Shield className="w-6 h-6 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+      </div>
+      <p className="text-muted-foreground">Verificando acceso...</p>
+      <p className="text-xs text-muted-foreground mt-1">Pessaro Capital</p>
+    </motion.div>
+  </div>
+);
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,18 +41,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Mostrar loading mientras se verifica la autenticación
   if (loading && showLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center"
-        >
-          <Loader2 className="w-8 h-8 text-primary mx-auto mb-4 animate-spin" />
-          <p className="text-muted-foreground">Verificando acceso...</p>
-        </motion.div>
-      </div>
-    );
+    return <AuthLoader />;
   }
 
   // Si no hay usuario, redirigir al login interno con la ruta actual como parámetro
@@ -76,8 +83,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Si todo está bien, mostrar el contenido
-  return <>{children}</>;
+  // Si todo está bien, mostrar el contenido con Suspense
+  return (
+    <Suspense fallback={<AuthLoader />}>
+      {children}
+    </Suspense>
+  );
 };
 
 export default ProtectedRoute;

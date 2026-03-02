@@ -384,18 +384,14 @@
     }
   }
   
- .desktop-only { 
-  display: none !important;
-}
-
-@media (min-width: 768px) {
   .desktop-only { 
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem; /* 16px */
+    display: none !important;
   }
-}
+  @media (min-width: 768px) {
+    .desktop-only { 
+      display: flex !important;
+    }
+  }
   
   .mobile-tablet { 
     display: block !important;

@@ -83,7 +83,7 @@ export const useRiskProfile = () => {
 
       // Enviar email de confirmación de perfil de riesgo
       try {
-        await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+        await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
           body: {
             formType: 'risk_profile',
             formData: profileData,

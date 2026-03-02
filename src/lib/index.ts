@@ -38,6 +38,11 @@ export const ROUTE_PATHS = {
   ERROR: '/error',
   // Password Recovery
   RECUPERAR_CONTRASENA: '/recuperar-contrasena',
+  // Test Pages
+  RESEND_TEST: '/test-resend',
+  RESEND_TEST_COMPLETE: '/test-formularios',
+  SYSTEM_VERIFICATION: '/verificacion-sistema',
+  INTEGRATION_VERIFICATION: '/verificacion-integracion',
 } as const;
 
 export type MarketCategory = 'Forex' | 'Commodities' | 'Indices' | 'Acciones' | 'ETF' | 'Criptomonedas';

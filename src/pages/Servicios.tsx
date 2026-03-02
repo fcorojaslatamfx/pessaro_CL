@@ -163,7 +163,7 @@ export default function Servicios() {
       </section>
 
       {/* Beneficios por Servicio (Breakdown) */}
-      <section className="py-24 bg-background" data-service-details>
+      <section id="servicios-detalles" className="py-24 bg-background" data-service-details>
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <motion.h2 

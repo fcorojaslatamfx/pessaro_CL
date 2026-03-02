@@ -53,7 +53,7 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
   ];
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative flex-shrink-0 ${className}`}>
       {/* Botón principal */}
       <Button
         ref={buttonRef}

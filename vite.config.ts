@@ -48,195 +48,127 @@ function cdnPrefixImages(): Plugin {
     return base + n.slice(1);                          // 'https://cdn/.../images/..'
   };
 
-  const rewriteSrcsetList = (value: string, cdn: string) =>
-    value
-      .split(',')
-      .map((part) => {
-        const [url, desc] = part.trim().split(/\s+/, 2);
-        const out = toCDN(url, cdn);
-        return desc ? `${out} ${desc}` : out;
-      })
-      .join(', ');
-
-  const rewriteHtml = (html: string, cdn: string) => {
-    // src / href
-    html = html.replace(
-      /(src|href)\s*=\s*(['"])([^'"]+)\2/g,
-      (_m, k, q, p) => `${k}=${q}${toCDN(p, cdn)}${q}`
-    );
-    // srcset
-    html = html.replace(
-      /(srcset)\s*=\s*(['"])([^'"]+)\2/g,
-      (_m, k, q, list) => `${k}=${q}${rewriteSrcsetList(list, cdn)}${q}`
-    );
-    return html;
-  };
-
-  const rewriteCssUrls = (code: string, cdn: string) =>
-    code.replace(/url\((['"]?)([^'")]+)\1\)/g, (_m, q, p) => `url(${q}${toCDN(p, cdn)}${q})`);
-
-  const rewriteJsxAst = (code: string, id: string, cdn: string) => {
-    const ast = parse(code, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
-    let rewrites = 0;
-
-    traverse(ast, {
-      JSXAttribute(path) {
-        const name = (path.node.name as t.JSXIdentifier).name;
-        const isSrc = name === 'src' || name === 'href';
-        const isSrcSet = name === 'srcSet' || name === 'srcset';
-        if (!isSrc && !isSrcSet) return;
-
-        const val = path.node.value;
-        if (!val) return;
-
-        if (t.isStringLiteral(val)) {
-          const before = val.value;
-          val.value = isSrc ? toCDN(val.value, cdn) : rewriteSrcsetList(val.value, cdn);
-          if (val.value !== before) rewrites++;
-          return;
-        }
-        if (t.isJSXExpressionContainer(val) && t.isStringLiteral(val.expression)) {
-          const before = val.expression.value;
-          val.expression.value = isSrc
-            ? toCDN(val.expression.value, cdn)
-            : rewriteSrcsetList(val.expression.value, cdn);
-          if (val.expression.value !== before) rewrites++;
-        }
-      },
-
-      StringLiteral(path) {
-        // skip object keys: { "image": "..." }
-        if (t.isObjectProperty(path.parent) && path.parentKey === 'key' && !path.parent.computed) return;
-        // skip import/export sources
-        if (t.isImportDeclaration(path.parent) || t.isExportAllDeclaration(path.parent) || t.isExportNamedDeclaration(path.parent)) return;
-        // skip inside JSX attribute (already handled)
-        if (path.findParent(p => p.isJSXAttribute())) return;
-
-        const before = path.node.value;
-        const after = toCDN(before, cdn);
-        if (after !== before) { path.node.value = after; rewrites++; }
-      },
-
-      TemplateLiteral(path) {
-        // handle `"/images/foo.png"` as template with NO expressions
-        if (path.node.expressions.length) return;
-        const raw = path.node.quasis.map(q => q.value.cooked ?? q.value.raw).join('');
-        const after = toCDN(raw, cdn);
-        if (after !== raw) {
-          path.replaceWith(t.stringLiteral(after));
-          rewrites++;
-        }
-      },
-
-    });
-
-    if (!rewrites) return null;
-    const out = generate(ast, { retainLines: true, sourceMaps: false }, code).code;
-    if (DEBUG) console.log(`[cdn] ${id} → ${rewrites} rewrites`);
-    return out;
-  };
-
-  async function collectPublicImagesFrom(dir: string) {
-    // Recursively collect every file under public/images into imageSet as '/images/relpath'
-    const imagesDir = nodePath.join(dir, 'images');
-    const stack = [imagesDir];
-    while (stack.length) {
-      const cur = stack.pop()!;
-      let entries: any[] = [];
-      try {
-        entries = await fs.readdir(cur, { withFileTypes: true });
-      } catch {
-        continue; // images/ may not exist
-      }
-      for (const ent of entries) {
-        const full = nodePath.join(cur, ent.name);
-        if (ent.isDirectory()) {
-          stack.push(full);
-        } else if (ent.isFile()) {
-          const rel = nodePath.relative(dir, full).split(nodePath.sep).join('/');
-          const canonical = '/' + rel; // '/images/...'
-          imageSet.add(canonical);
-          // also add variant without leading slash for safety
-          imageSet.add(canonical.slice(1)); // 'images/...'
-        }
-      }
-    }
-  }
-
   return {
-    name: 'cdn-prefix-images-existing',
-    apply: 'build',
-    enforce: 'pre', // run before @vitejs/plugin-react
-
-    configResolved(cfg) {
-      publicDir = cfg.publicDir; // absolute
-      if (DEBUG) console.log('[cdn] publicDir =', publicDir);
+    name: 'cdn-prefix-images',
+    configResolved(config) {
+      publicDir = config.publicDir;
     },
-
     async buildStart() {
-      await collectPublicImagesFrom(publicDir);
-      if (DEBUG) console.log('[cdn] images found:', imageSet.size);
+      // scan public/images/ for files
+      try {
+        const imagesDir = nodePath.join(publicDir, 'images');
+        const files = await fs.readdir(imagesDir, { recursive: true });
+        for (const file of files) {
+          if (typeof file === 'string') {
+            const stat = await fs.stat(nodePath.join(imagesDir, file));
+            if (stat.isFile()) {
+              imageSet.add('/images/' + file);
+              if (DEBUG) console.log('[CDN] Found image:', '/images/' + file);
+            }
+          }
+        }
+      } catch (err) {
+        // no images dir or other error → just continue
+        if (DEBUG) console.log('[CDN] No images directory or error scanning:', err);
+      }
     },
-
-    transformIndexHtml(html) {
-      const cdn = process.env.CDN_IMG_PREFIX;
-      if (!cdn) return html;
-      const out = rewriteHtml(html, cdn);
-      if (DEBUG) console.log('[cdn] transformIndexHtml done');
-      return out;
-    },
-
     transform(code, id) {
-      const cdn = process.env.CDN_IMG_PREFIX;
-      if (!cdn) return null;
+      const cdn = process.env.VITE_CDN_URL;
+      if (!cdn || !id.endsWith('.tsx') || !code.includes('IMAGES.')) return;
 
-      if (/\.(jsx|tsx)$/.test(id)) {
-        const out = rewriteJsxAst(code, id, cdn);
-        return out ? { code: out, map: null } : null;
+      try {
+        const ast = parse(code, {
+          sourceType: 'module',
+          plugins: ['typescript', 'jsx'],
+        });
+
+        let modified = false;
+
+        traverse(ast, {
+          MemberExpression(path) {
+            const { node } = path;
+            if (
+              t.isIdentifier(node.object, { name: 'IMAGES' }) &&
+              t.isIdentifier(node.property) &&
+              path.isReferencedIdentifier()
+            ) {
+              // This is IMAGES.SOMETHING - we need to find the actual image path
+              // For now, we'll skip this transformation as it requires more complex analysis
+              // of the IMAGES object definition
+            }
+          },
+          StringLiteral(path) {
+            const { node } = path;
+            if (typeof node.value === 'string' && node.value.includes('/images/')) {
+              const newValue = toCDN(node.value, cdn);
+              if (newValue !== node.value) {
+                node.value = newValue;
+                modified = true;
+                if (DEBUG) console.log('[CDN] Replaced:', node.value, '→', newValue);
+              }
+            }
+          },
+        });
+
+        if (modified) {
+          const result = generate(ast, {}, code);
+          return {
+            code: result.code,
+            map: result.map,
+          };
+        }
+      } catch (err) {
+        console.warn('[CDN] Failed to parse/transform:', id, err);
       }
-
-      if (/\.(css|scss|sass|less|styl)$/i.test(id)) {
-        const out = rewriteCssUrls(code, cdn);
-        return out === code ? null : { code: out, map: null };
-      }
-
-      return null;
     },
   };
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  return {
-    server: {
-      host: "::",
-      port: 8080,
+export default defineConfig(({ command, mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
+  plugins: [
+    react(),
+    tailwindcss(),
+    cdnPrefixImages(),
+    componentTagger(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-    plugins: [
-      tailwindcss(),
-      react(),
-      mode === 'development' &&
-      componentTagger(),
-      cdnPrefixImages(),
-    ].filter(Boolean),
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-        // Proxy react-router-dom to our wrapper
-        "react-router-dom": path.resolve(__dirname, "./src/lib/react-router-dom-proxy.tsx"),
-        // Original react-router-dom under a different name
-        "react-router-dom-original": "react-router-dom",
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: mode === 'development',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+          motion: ['framer-motion'],
+          supabase: ['@supabase/supabase-js'],
+          query: ['@tanstack/react-query'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          icons: ['lucide-react'],
+        },
       },
     },
-    define: {
-      // Define environment variables for build-time configuration
-      // In production, this will be false by default unless explicitly set to 'true'
-      // In development and test, this will be true by default
-      __ROUTE_MESSAGING_ENABLED__: JSON.stringify(
-        mode === 'production' 
-          ? process.env.VITE_ENABLE_ROUTE_MESSAGING === 'true'
-          : process.env.VITE_ENABLE_ROUTE_MESSAGING !== 'false'
-      ),
-    },
-  }
-});
+    chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@supabase/supabase-js',
+      '@tanstack/react-query',
+      'framer-motion',
+      'lucide-react',
+    ],
+  },
+}));

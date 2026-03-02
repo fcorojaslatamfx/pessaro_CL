@@ -24,9 +24,11 @@ const IconMap: Record<string, React.ElementType> = {
  * Diseño moderno con elevación suave y acentos en dorado.
  */
 export function ServiceCard({
-  service
+  service,
+  onDetailsClick
 }: {
   service: Service;
+  onDetailsClick?: () => void;
 }) {
   const Icon = IconMap[service.iconName] || Globe;
   return <motion.div whileHover={{
@@ -57,7 +59,13 @@ export function ServiceCard({
             variant="ghost" 
             className="text-accent hover:text-accent-foreground hover:bg-accent p-0 px-4 group rounded-full transition-all"
 onClick={() => {
-              // Hacer scroll a la sección de detalles de servicios
+              // Si hay una función personalizada, usarla; sino, usar la lógica por defecto
+              if (onDetailsClick) {
+                onDetailsClick();
+                return;
+              }
+              
+              // Lógica por defecto: hacer scroll a la sección de detalles de servicios
               const detailsSection = document.querySelector('[data-service-details]');
               if (detailsSection) {
                 // Scroll con offset para el header fijo
