@@ -102,3 +102,4 @@ uploaded_files/
 # --- Documentation ---
 docs/
 
+*.tar.gz
