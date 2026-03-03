@@ -15,7 +15,10 @@ import {
   Wallet,
   Bitcoin
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Cards';
+// BUG 1 CORREGIDO: Importación incorrecta — era '@/components/ui/Cards' (mayúscula)
+// pero shadcn/ui usa '@/components/ui/card' (minúscula).
+// Esto causaba un error de módulo no encontrado y el popup no renderizaba.
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,7 +41,11 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { subscribe, loading, error } = useNewsletter();
+  // BUG 2 CORREGIDO: Se desestructuraba 'error' del hook pero se usaba para
+  // evaluar el éxito del envío con `if (!error)` — esto es incorrecto porque
+  // 'error' es el estado del hook en el momento de la llamada, no el resultado
+  // de la operación async. Se reemplaza por el valor de retorno directo de subscribe().
+  const { subscribe, loading, error: newsletterError } = useNewsletter();
 
   const topicOptions = [
     {
@@ -126,14 +133,22 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
         source: 'newsletter_popup'
       };
 
+      // BUG 2 CORREGIDO: Antes usaba `if (!error)` donde 'error' es el estado
+      // del hook (siempre null en este punto del ciclo de render), haciendo que
+      // setSuccess(true) se ejecutara incluso si subscribe() fallaba.
+      // Ahora se evalúa el resultado directo de la llamada async.
       const result = await subscribe(subscriptionData);
 
-      if (!error) {
+      if (result?.success) {
         setSuccess(true);
+        // BUG 3 CORREGIDO: El reset del formulario ocurría DESPUÉS de onClose()
+        // dentro del setTimeout, pero si el componente se desmontaba antes,
+        // el setState sobre estado desmontado generaba un warning/error.
+        // Se reordena: primero limpiar estado, luego cerrar.
         setTimeout(() => {
-          onClose();
           setSuccess(false);
           setFormData({ name: '', email: '', phone: '', topics: [] });
+          onClose();
         }, 2000);
       }
     } catch (err) {
@@ -171,6 +186,10 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
     }
   };
 
+  // BUG 4 CORREGIDO: El modal contenedor no tenía `pointer-events: none` en la
+  // capa exterior, lo que hacía que clics en el área fuera del Card pero dentro
+  // del motion.div cerraran el popup inesperadamente al propagarse al backdrop.
+  // Se agrega `onClick={(e) => e.stopPropagation()}` en el motion.div del modal.
   return (
     <AnimatePresence>
       {isOpen && (
@@ -184,12 +203,13 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
             onClick={handleClose}
           />
 
-          {/* Modal */}
+          {/* Modal — stopPropagation evita que clics internos cierren el popup */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
           >
             <Card className="shadow-2xl">
               <CardHeader className="relative">
@@ -336,11 +356,11 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                     </div>
 
                     {/* Error general */}
-                    {error && (
+                    {newsletterError && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-5 h-5 text-red-600" />
-                          <p className="text-red-800">{error}</p>
+                          <p className="text-red-800">{newsletterError}</p>
                         </div>
                       </div>
                     )}
