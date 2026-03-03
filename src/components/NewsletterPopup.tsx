@@ -15,9 +15,7 @@ import {
   Wallet,
   Bitcoin
 } from 'lucide-react';
-// BUG 1 CORREGIDO: Importación incorrecta — era '@/components/ui/Cards' (mayúscula)
-// pero shadcn/ui usa '@/components/ui/card' (minúscula).
-// Esto causaba un error de módulo no encontrado y el popup no renderizaba.
+// BUG CORREGIDO: era '@/components/ui/Cards' (mayúscula) — módulo no encontrado
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,10 +39,6 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // BUG 2 CORREGIDO: Se desestructuraba 'error' del hook pero se usaba para
-  // evaluar el éxito del envío con `if (!error)` — esto es incorrecto porque
-  // 'error' es el estado del hook en el momento de la llamada, no el resultado
-  // de la operación async. Se reemplaza por el valor de retorno directo de subscribe().
   const { subscribe, loading, error: newsletterError } = useNewsletter();
 
   const topicOptions = [
@@ -133,18 +127,14 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
         source: 'newsletter_popup'
       };
 
-      // BUG 2 CORREGIDO: Antes usaba `if (!error)` donde 'error' es el estado
-      // del hook (siempre null en este punto del ciclo de render), haciendo que
-      // setSuccess(true) se ejecutara incluso si subscribe() fallaba.
-      // Ahora se evalúa el resultado directo de la llamada async.
       const result = await subscribe(subscriptionData);
 
+      // BUG CORREGIDO: antes usaba `if (!error)` donde 'error' es el estado
+      // del hook (siempre null en este punto del ciclo async), por lo que
+      // setSuccess(true) se ejecutaba incluso si subscribe() fallaba.
+      // Ahora evalúa result.success que viene directamente del hook corregido.
       if (result?.success) {
         setSuccess(true);
-        // BUG 3 CORREGIDO: El reset del formulario ocurría DESPUÉS de onClose()
-        // dentro del setTimeout, pero si el componente se desmontaba antes,
-        // el setState sobre estado desmontado generaba un warning/error.
-        // Se reordena: primero limpiar estado, luego cerrar.
         setTimeout(() => {
           setSuccess(false);
           setFormData({ name: '', email: '', phone: '', topics: [] });
@@ -186,10 +176,6 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
     }
   };
 
-  // BUG 4 CORREGIDO: El modal contenedor no tenía `pointer-events: none` en la
-  // capa exterior, lo que hacía que clics en el área fuera del Card pero dentro
-  // del motion.div cerraran el popup inesperadamente al propagarse al backdrop.
-  // Se agrega `onClick={(e) => e.stopPropagation()}` en el motion.div del modal.
   return (
     <AnimatePresence>
       {isOpen && (
