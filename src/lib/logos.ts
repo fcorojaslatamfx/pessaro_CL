@@ -1,5 +1,8 @@
 export const PESSARO_LOGO = '/images/logotype.png';
-export const PESSARO_LOGO_HEADER = '/images/pessarocl-logo-header.png';
+
+// Archivo real: pessaro-logo-header.png.webp
+export const PESSARO_LOGO_HEADER = '/images/pessaro-logo-header.png.webp';
+
 export const PESSARO_LOGO_FOOTER = '/images/logotype.png';
 export const PESSARO_LOGO_MOBILE = '/images/pessarocl_capital_mobile_1.png';
 

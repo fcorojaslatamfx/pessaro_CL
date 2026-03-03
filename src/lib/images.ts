@@ -17,20 +17,23 @@ export const IMAGES = {
 } as const;
 
 // ------------------------------------------------------------
-// TIPOS DERIVADOS
+// TIPOS DERIVADOS (AUTOCOMPLETADO Y SEGURIDAD DE TIPOS)
 // ------------------------------------------------------------
 
 export type ImageKey = keyof typeof IMAGES;
 export type ImagePath = (typeof IMAGES)[ImageKey];
 
 // ------------------------------------------------------------
-// CONSTANTES MANUALES
+// CONSTANTES MANUALES (SEGURO PARA REGENERACIÓN)
 // ------------------------------------------------------------
 
-export const PESSARO_LOGO_HEADER: ImagePath = "/images/logotype.png";
+// Logo principal usado en el header del sitio.
+// Archivo real: public/images/pessaro-logo-header.png.webp
+export const PESSARO_LOGO_HEADER: ImagePath | string =
+  "/images/pessaro-logo-header.png.webp";
 
 // ------------------------------------------------------------
-// EXPORTS AGRUPADOS
+// EXPORTS AGRUPADOS (LOGOS OFICIALES)
 // ------------------------------------------------------------
 
 export const LOGOS = {
