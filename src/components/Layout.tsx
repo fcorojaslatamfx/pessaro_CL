@@ -13,9 +13,9 @@ import { useRiskProfile } from '@/hooks/useRiskProfile';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { useAuth } from '@/hooks/useAuth';
 // Importación directa del logo (ajusta el nombre del archivo exacto que tienes)
-import PESSARO_LOGO_HEADER from '@/assets/pessaro-logo-header.png'; 
+// import PESSARO_LOGO_HEADER from '@/assets/pessaro-logo-header.png'; 
 // o si está en public/images:
-// import PESSARO_LOGO_HEADER from '/images/pessaro-logo-header.png';
+const PESSARO_LOGO_HEADER = '/images/logo.png';
 
 interface LayoutProps {
   children: React.ReactNode;
