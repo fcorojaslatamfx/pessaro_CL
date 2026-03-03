@@ -1,16 +1,6 @@
-/**
- * Pessaro Capital - Core Library Index
- * Exporta rutas, tipos, interfaces, logos y utilidades.
- * Punto único de acceso para toda la plataforma.
- */
-
-// Rutas oficiales
 export * from './ROUTE_PATHS';
-
-// Configuración de dominios y lógica multi-dominio
 export * from './domains';
 
-// Tipos e interfaces institucionales
 export type {
   MarketCategory,
   Service,
@@ -21,7 +11,6 @@ export type {
   BlogPost,
 } from './types';
 
-// Logos institucionales (todas las rutas están en logos.ts)
 export {
   PESSARO_LOGO,
   PESSARO_LOGO_HEADER,
@@ -34,6 +23,4 @@ export {
   LOGOS,
 } from './logos';
 
-// Utilidades de formateo
 export { formatCurrency, formatCompactNumber } from './utils';
-

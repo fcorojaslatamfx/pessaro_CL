@@ -1,29 +1,13 @@
-
-/**
- * Pessaro Capital - Constantes de Logos
- * Exporta las rutas de logos usadas en toda la aplicación.
- * Todas las imágenes deben existir en /public/images/.
- */
-
-// Logo principal institucional
 export const PESSARO_LOGO = '/images/logotype.png';
-
-// Logo usado en el header (versión horizontal)
 export const PESSARO_LOGO_HEADER = '/images/pessarocl-logo-header.png';
-
-// Logo usado en el footer (puede ser el mismo logotype)
 export const PESSARO_LOGO_FOOTER = '/images/logotype.png';
-
-// Logo para dispositivos móviles
 export const PESSARO_LOGO_MOBILE = '/images/pessarocl_capital_mobile_1.png';
 
-// Variantes de resolución (todas existen en /public/images/)
 export const LOGO_128 = '/images/logo-128.png';
 export const LOGO_192 = '/images/logo-192.png';
 export const LOGO_256 = '/images/logo-256.png';
 export const LOGO_512 = '/images/logo-512.png';
 
-// Export agrupado opcional
 export const LOGOS = {
   MAIN: PESSARO_LOGO,
   HEADER: PESSARO_LOGO_HEADER,

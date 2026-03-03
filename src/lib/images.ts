@@ -9,9 +9,6 @@ export const IMAGES = {
   APPLE_TOUCH_ICON_273: "/images/apple-touch-icon.png",
   BITCOIN_ETF_INSTITUTIONAL_20260213_113545_287: "/images/bitcoin_etf_institutional_20260213_113545.png",
 
-  // ------------------------------------------------------------
-  // CORREGIDO: ruta válida y sintaxis correcta
-  // ------------------------------------------------------------
   TRUMP_INAUGURATION_MARKETS_20260213_113546_281: "/images/trump_inauguration_markets_20260213_113546.png",
 
   WARREN_BUFFETT: "/images/Warren-Buffett.webp",
