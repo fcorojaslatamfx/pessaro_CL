@@ -30,15 +30,8 @@ export function Layout({ children }: LayoutProps) {
   
   // Rastrear navegación para capturar errores 404
   useTrackNavigation();
-  
-  // Detectar si estamos en el dominio de login o en una ruta administrativa
-  const shouldUseLoginLayout = isLoginDomain() || (isDevelopment() && isLoginRoute(location.pathname));
-  
-  // Si debemos usar el LoginLayout, renderizarlo en su lugar
-  if (shouldUseLoginLayout) {
-    return <LoginLayout>{children}</LoginLayout>;
-  }
 
+  // --- TODOS LOS HOOKS PRIMERO (regla de hooks de React) ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
@@ -59,6 +52,14 @@ export function Layout({ children }: LayoutProps) {
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
   const { hideWhatsApp, showWhatsApp } = useWhatsApp();
   const { user } = useAuth();
+
+  // Detectar si estamos en el dominio de login o en una ruta administrativa
+  const shouldUseLoginLayout = isLoginDomain() || (isDevelopment() && isLoginRoute(location.pathname));
+  
+  // Si debemos usar el LoginLayout, renderizarlo DESPUÉS de todos los hooks
+  if (shouldUseLoginLayout) {
+    return <LoginLayout>{children}</LoginLayout>;
+  }
 
   const openLegalPopup = (type: 'terms' | 'privacy' | 'risk') => {
     setLegalPopup({ isOpen: true, type });
