@@ -311,7 +311,7 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                             <div className="flex items-start gap-3">
                               <Checkbox
                                 checked={formData.topics.includes(topic.id)}
-                                onChange={() => handleTopicToggle(topic.id)}
+                                onCheckedChange={() => handleTopicToggle(topic.id)}
                                 className="mt-1"
                               />
                               <div className="flex-1">
