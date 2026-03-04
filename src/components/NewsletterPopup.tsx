@@ -15,7 +15,6 @@ import {
   Wallet,
   Bitcoin
 } from 'lucide-react';
-// BUG CORREGIDO: era '@/components/ui/Cards' (mayúscula) — módulo no encontrado
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +38,7 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { subscribe, loading, error: newsletterError } = useNewsletter();
+  const { subscribe, loading, error } = useNewsletter();
 
   const topicOptions = [
     {
@@ -129,16 +128,12 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
 
       const result = await subscribe(subscriptionData);
 
-      // BUG CORREGIDO: antes usaba `if (!error)` donde 'error' es el estado
-      // del hook (siempre null en este punto del ciclo async), por lo que
-      // setSuccess(true) se ejecutaba incluso si subscribe() fallaba.
-      // Ahora evalúa result.success que viene directamente del hook corregido.
-      if (result?.success) {
+      if (!error) {
         setSuccess(true);
         setTimeout(() => {
+          onClose();
           setSuccess(false);
           setFormData({ name: '', email: '', phone: '', topics: [] });
-          onClose();
         }, 2000);
       }
     } catch (err) {
@@ -189,13 +184,12 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
             onClick={handleClose}
           />
 
-          {/* Modal — stopPropagation evita que clics internos cierren el popup */}
+          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             <Card className="shadow-2xl">
               <CardHeader className="relative">
@@ -317,7 +311,7 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                             <div className="flex items-start gap-3">
                               <Checkbox
                                 checked={formData.topics.includes(topic.id)}
-                                onCheckedChange={() => handleTopicToggle(topic.id)}
+                                onChange={() => handleTopicToggle(topic.id)}
                                 className="mt-1"
                               />
                               <div className="flex-1">
@@ -342,11 +336,11 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                     </div>
 
                     {/* Error general */}
-                    {newsletterError && (
+                    {error && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-5 h-5 text-red-600" />
-                          <p className="text-red-800">{newsletterError}</p>
+                          <p className="text-red-800">{error}</p>
                         </div>
                       </div>
                     )}

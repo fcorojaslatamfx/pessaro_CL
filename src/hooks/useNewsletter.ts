@@ -24,6 +24,7 @@ export const useNewsletter = () => {
     setSuccess(false);
 
     try {
+      // Normalizar los datos para compatibilidad
       const normalizedData: SubscriptionData = {
         email: data.email,
         name: 'name' in data ? data.name || 'Usuario' : 'Usuario',
@@ -59,6 +60,7 @@ export const useNewsletter = () => {
 
         if (updateError) throw updateError;
 
+        // Enviar email de confirmación para actualización
         try {
           await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
             body: {
@@ -69,8 +71,10 @@ export const useNewsletter = () => {
           });
         } catch (emailError) {
           console.error('Error sending newsletter update confirmation:', emailError);
+          // No bloquear el proceso si falla el email
         }
 
+        setSuccess(true);
       } else {
         // Crear nueva suscripción
         const { error: insertError } = await supabase
@@ -87,6 +91,7 @@ export const useNewsletter = () => {
 
         if (insertError) throw insertError;
 
+        // Enviar email de confirmación automático
         try {
           await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
             body: {
@@ -97,15 +102,11 @@ export const useNewsletter = () => {
           });
         } catch (emailError) {
           console.error('Error sending newsletter confirmation:', emailError);
+          // No bloquear el proceso si falla el email
         }
+
+        setSuccess(true);
       }
-
-      // BUG CORREGIDO: antes solo hacía setSuccess(true) pero NO retornaba nada.
-      // El popup evaluaba `result?.success` que era siempre `undefined`,
-      // por lo que nunca mostraba la pantalla de éxito ni cerraba el modal.
-      setSuccess(true);
-      return { success: true };
-
     } catch (err: any) {
       console.error('Newsletter subscription error:', err);
       setError(err.message || 'Error al procesar la suscripción');
