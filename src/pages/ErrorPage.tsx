@@ -414,9 +414,10 @@ const ErrorPage: React.FC = () => {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
-  );
-};
-};
+
+      </div>  {/* ← cierre de "w-full max-w-4xl" */}
+    </div>    {/* ← cierre de "min-h-screen" */}
+  );          {/* ← cierre del return */}
+};            {/* ← cierre del componente */}
 
 export default ErrorPage;
