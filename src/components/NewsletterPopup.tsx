@@ -376,6 +376,8 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
                     <div className="text-xs text-muted-foreground text-center pt-4 border-t">
                       <p>
                         Al suscribirte, aceptas recibir emails de Pessaro Capital. 
+                        Los emails estarán relacionados con la información seleccionada.
+                        Ocasioanlmente se enviará emails de marketing.
                         Puedes cancelar tu suscripción en cualquier momento. 
                         Respetamos tu privacidad y nunca compartimos tu información.
                       </p>
