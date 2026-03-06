@@ -141,25 +141,30 @@ async function handleOtpVerification(formData: any): Promise<Response> {
       </html>
     `
 
-    const res = await fetch('https://api.resend.com/emails', {
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: getFromEmail(),
+        from: 'onboarding@resend.dev',
         to: formData.email,
         subject: `${formData.otpCode} es tu código de verificación — Pessaro Capital`,
         html: emailBody,
-        text: `Tu código de verificación de Pessaro Capital es: ${formData.otpCode}\n\nEste código expira en 10 minutos.\n\nSi no solicitaste este código, ignora este mensaje.`
+        text: `Tu código de verificación: ${formData.otpCode}. Expira en 10 minutos.`
       })
     })
 
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('Resend error:', err)
-      throw new Error(`Resend error: ${err}`)
+    const resendBody = await resendRes.json()
+    console.log('Resend OTP response:', JSON.stringify(resendBody))
+
+    if (!resendRes.ok) {
+      console.error('Resend OTP error:', JSON.stringify(resendBody))
+      return new Response(
+        JSON.stringify({ success: false, error: `Error Resend: ${resendBody?.message || resendRes.status}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     return new Response(

@@ -1,19 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  Mail, 
-  Phone, 
-  User, 
-  CheckCircle2, 
-  AlertCircle,
-  Newspaper,
-  TrendingUp,
-  DollarSign,
-  Globe,
-  BarChart3,
-  Wallet,
-  Bitcoin
+import {
+  X, Mail, Phone, User, CheckCircle2, AlertCircle,
+  Loader2, BarChart3, DollarSign, Package, Wallet,
+  Bitcoin, Newspaper, Globe, MoreHorizontal, ChevronRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,164 +17,84 @@ interface NewsletterPopupProps {
   onClose: () => void;
 }
 
+type Step = 'topics' | 'form' | 'success';
+
+const TOPIC_OPTIONS = [
+  { id: 'mercados',      label: 'Noticias de Mercado', description: 'Últimas noticias del mundo financiero',     icon: <Newspaper      className="w-4 h-4" /> },
+  { id: 'politica',      label: 'Política Económica',  description: 'Bancos centrales y decisiones de gobierno', icon: <Globe          className="w-4 h-4" /> },
+  { id: 'acciones',      label: 'Acciones',            description: 'Análisis de empresas y sectores',           icon: <BarChart3       className="w-4 h-4" /> },
+  { id: 'divisas',       label: 'Divisas / Forex',     description: 'Pares de divisas y análisis técnico',       icon: <DollarSign     className="w-4 h-4" /> },
+  { id: 'materias',      label: 'Materias Primas',     description: 'Oro, petróleo y commodities',               icon: <Package        className="w-4 h-4" /> },
+  { id: 'etf',           label: 'ETF',                 description: 'Fondos cotizados y diversificación',        icon: <Wallet         className="w-4 h-4" /> },
+  { id: 'criptomonedas', label: 'Criptomonedas',       description: 'Bitcoin, Ethereum y altcoins',              icon: <Bitcoin        className="w-4 h-4" /> },
+  { id: 'otros',         label: 'Otros',               description: 'Contenido general y tendencias globales',   icon: <MoreHorizontal className="w-4 h-4" /> },
+];
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+const isValidPhone = (v: string) => /^\+?[\d\s\-().]{7,20}$/.test(v.trim());
+const isValidName  = (v: string) => v.trim().length >= 2;
+
 const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    topics: [] as string[]
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const { subscribe, loading, error: hookError } = useNewsletter();
 
-  const { subscribe, loading, error } = useNewsletter();
+  const [step, setStep]       = useState<Step>('topics');
+  const [topics, setTopics]   = useState<string[]>([]);
+  const [name, setName]       = useState('');
+  const [email, setEmail]     = useState('');
+  const [phone, setPhone]     = useState('');
+  const [errors, setErrors]   = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const topicOptions = [
-    {
-      id: 'noticias',
-      label: 'Noticias Financieras',
-      description: 'Últimas noticias del mundo financiero',
-      icon: <Newspaper className="w-5 h-5" />
-    },
-    {
-      id: 'politica',
-      label: 'Política Económica',
-      description: 'Decisiones de bancos centrales y gobiernos',
-      icon: <Globe className="w-5 h-5" />
-    },
-    {
-      id: 'mercados',
-      label: 'Análisis de Mercados',
-      description: 'Tendencias y oportunidades de mercado',
-      icon: <TrendingUp className="w-5 h-5" />
-    },
-    {
-      id: 'acciones',
-      label: 'Acciones',
-      description: 'Análisis de empresas y sectores',
-      icon: <BarChart3 className="w-5 h-5" />
-    },
-    {
-      id: 'divisas',
-      label: 'Divisas (Forex)',
-      description: 'Pares de divisas y análisis técnico',
-      icon: <DollarSign className="w-5 h-5" />
-    },
-    {
-      id: 'etf',
-      label: 'ETF',
-      description: 'Fondos cotizados y diversificación',
-      icon: <Wallet className="w-5 h-5" />
-    },
-    {
-      id: 'criptomonedas',
-      label: 'Criptomonedas',
-      description: 'Bitcoin, Ethereum y altcoins',
-      icon: <Bitcoin className="w-5 h-5" />
-    }
-  ];
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'El número de contacto es requerido';
-    }
-
-    if (formData.topics.length === 0) {
-      newErrors.topics = 'Seleccione al menos un tema de interés';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const subscriptionData = {
-        email: formData.email,
-        name: formData.name,
-        phone: formData.phone,
-        topics: formData.topics,
-        source: 'newsletter_popup'
-      };
-
-      const result = await subscribe(subscriptionData);
-
-      if (!error) {
-        setSuccess(true);
-        setTimeout(() => {
-          onClose();
-          setSuccess(false);
-          setFormData({ name: '', email: '', phone: '', topics: [] });
-        }, 2000);
-      }
-    } catch (err) {
-      console.error('Error subscribing:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  const handleTopicToggle = (topicId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      topics: prev.topics.includes(topicId)
-        ? prev.topics.filter(id => id !== topicId)
-        : [...prev.topics, topicId]
-    }));
-    if (errors.topics) {
-      setErrors(prev => ({ ...prev, topics: '' }));
-    }
+  const resetAll = () => {
+    setStep('topics'); setTopics([]); setName(''); setEmail(''); setPhone(''); setErrors({});
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
-      setFormData({ name: '', email: '', phone: '', topics: [] });
-      setErrors({});
-      setSuccess(false);
+    if (submitting) return;
+    onClose();
+    setTimeout(resetAll, 300);
+  };
+
+  const toggleTopic = (id: string) => {
+    setTopics(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+    setErrors(p => ({ ...p, topics: '' }));
+  };
+
+  const validateForm = () => {
+    const e: Record<string, string> = {};
+    if (!isValidName(name))    e.name    = 'Ingresa tu nombre completo.';
+    if (!isValidEmail(email))  e.email   = 'Ingresa un email válido.';
+    if (!isValidPhone(phone))  e.phone   = 'Ingresa un teléfono válido (mín. 7 dígitos).';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setSubmitting(true);
+    try {
+      await subscribe({ email, name, phone, topics, source: 'newsletter_popup' });
+      setStep('success');
+      setTimeout(() => handleClose(), 3500);
+    } catch (err) {
+      console.error('Newsletter error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const stepNum: Record<Step, number> = { topics: 1, form: 2, success: 2 };
+  const stepLabel: Record<Step, string> = { topics: 'Temas de interés', form: 'Tus datos', success: '' };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
-          {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={handleClose}
           />
-
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -192,196 +102,208 @@ const NewsletterPopup: React.FC<NewsletterPopupProps> = ({ isOpen, onClose }) =>
             className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
           >
             <Card className="shadow-2xl">
-              <CardHeader className="relative">
+              <div className="h-1.5 w-full rounded-t-xl bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-500" />
+
+              <CardHeader className="relative pb-3">
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClose}
+                  variant="ghost" size="sm" onClick={handleClose}
                   className="absolute right-2 top-2 h-8 w-8 p-0"
-                  disabled={isSubmitting}
+                  disabled={submitting}
                 >
                   <X className="w-4 h-4" />
                 </Button>
-                
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-primary" />
+
+                <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl">
+                  <div className="w-11 h-11 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-primary" />
                   </div>
-                  Suscríbete a Nuestro Newsletter
+                  {step === 'success' ? '¡Suscripción confirmada!' : 'Newsletter Exclusivo'}
                 </CardTitle>
-                <p className="text-muted-foreground">
-                  Recibe análisis exclusivos y actualizaciones de mercado personalizadas según tus intereses
-                </p>
+
+                {step !== 'success' && (
+                  <p className="text-muted-foreground text-sm">
+                    Recibe análisis exclusivos y actualizaciones de mercado personalizadas
+                  </p>
+                )}
+
+                {step !== 'success' && (
+                  <div className="flex items-center gap-1.5 pt-1">
+                    {(['topics', 'form'] as Step[]).map((s, i) => (
+                      <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${stepNum[step] >= i + 1 ? 'bg-primary' : 'bg-muted'}`} />
+                    ))}
+                    <span className="text-xs text-muted-foreground ml-1 shrink-0">
+                      Paso {stepNum[step]}/2 — {stepLabel[step]}
+                    </span>
+                  </div>
+                )}
               </CardHeader>
 
               <CardContent>
-                {success ? (
+
+                {/* ── ÉXITO ── */}
+                {step === 'success' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     className="text-center py-8"
                   >
                     <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">¡Información Recepcionada!</h3>
-                    <p className="text-muted-foreground">
-                      Su información fue recepcionada con éxito.
+                    <h3 className="text-xl font-bold mb-1">¡Bienvenido/a, {name.split(' ')[0]}!</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Suscripción confirmada. Recibirás noticias en <span className="font-semibold">{email}</span>
                     </p>
-                  </motion.div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Información Personal */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Información Personal</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="name">Nombre Completo *</Label>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              id="name"
-                              placeholder="Tu nombre completo"
-                              value={formData.name}
-                              onChange={(e) => handleInputChange('name', e.target.value)}
-                              className={`pl-10 ${errors.name ? 'border-red-500' : ''}`}
-                            />
-                          </div>
-                          {errors.name && (
-                            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <Label htmlFor="phone">Número de Contacto *</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              id="phone"
-                              placeholder="+56 9 1234 5678"
-                              value={formData.phone}
-                              onChange={(e) => handleInputChange('phone', e.target.value)}
-                              className={`pl-10 ${errors.phone ? 'border-red-500' : ''}`}
-                            />
-                          </div>
-                          {errors.phone && (
-                            <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="email">Email *</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="tu@email.com"
-                            value={formData.email}
-                            onChange={(e) => handleInputChange('email', e.target.value)}
-                            className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
-                          />
-                        </div>
-                        {errors.email && (
-                          <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                        )}
-                      </div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {topics.map(id => {
+                        const t = TOPIC_OPTIONS.find(o => o.id === id)!;
+                        return (
+                          <span key={id} className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {t.label}
+                          </span>
+                        );
+                      })}
                     </div>
+                  </motion.div>
+                )}
 
-                    {/* Temas de Interés */}
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">Temas de Interés *</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Selecciona los temas sobre los que te gustaría recibir información
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {topicOptions.map((topic) => (
-                          <div
-                            key={topic.id}
-                            className={`border rounded-lg p-4 cursor-pointer transition-all hover:bg-muted/50 ${
-                              formData.topics.includes(topic.id)
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border'
-                            }`}
-                            onClick={() => handleTopicToggle(topic.id)}
-                          >
-                            <div className="flex items-start gap-3">
-                              <Checkbox
-                                checked={formData.topics.includes(topic.id)}
-                                onCheckedChange={() => handleTopicToggle(topic.id)}
-                                className="mt-1"
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div className="text-primary">
-                                    {topic.icon}
-                                  </div>
-                                  <span className="font-medium">{topic.label}</span>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {topic.description}
-                                </p>
+                {/* ── STEP 1: TEMAS ── */}
+                {step === 'topics' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Selecciona los temas sobre los que te gustaría recibir información.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {TOPIC_OPTIONS.map(t => (
+                        <div
+                          key={t.id}
+                          onClick={() => toggleTopic(t.id)}
+                          className={`border rounded-lg p-3.5 cursor-pointer transition-all hover:bg-muted/50 ${
+                            topics.includes(t.id) ? 'border-primary bg-primary/5' : 'border-border'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Checkbox
+                              checked={topics.includes(t.id)}
+                              onCheckedChange={() => toggleTopic(t.id)}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-primary shrink-0">{t.icon}</span>
+                                <span className="font-medium text-sm">{t.label}</span>
                               </div>
+                              <p className="text-xs text-muted-foreground">{t.description}</p>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
+                    </div>
+                    {errors.topics && <p className="text-red-500 text-sm">{errors.topics}</p>}
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        if (topics.length === 0) { setErrors({ topics: 'Selecciona al menos un tema.' }); return; }
+                        setStep('form');
+                      }}
+                    >
+                      Continuar <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
 
-                      {errors.topics && (
-                        <p className="text-red-500 text-sm">{errors.topics}</p>
-                      )}
+                {/* ── STEP 2: DATOS ── */}
+                {step === 'form' && (
+                  <div className="space-y-5">
+                    <p className="text-sm text-muted-foreground">
+                      Completa tus datos para finalizar la suscripción.
+                    </p>
+
+                    <div>
+                      <Label htmlFor="nl-name">Nombre Completo <span className="text-primary">*</span></Label>
+                      <div className="relative mt-1">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="nl-name"
+                          placeholder="Ej: Juan Pérez"
+                          value={name}
+                          onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
+                          className={`pl-9 ${errors.name ? 'border-red-500' : ''}`}
+                        />
+                      </div>
+                      {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                     </div>
 
-                    {/* Error general */}
-                    {error && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5 text-red-600" />
-                          <p className="text-red-800">{error}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="nl-email">Email <span className="text-primary">*</span></Label>
+                        <div className="relative mt-1">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="nl-email"
+                            type="email"
+                            placeholder="tu@email.com"
+                            value={email}
+                            onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
+                            className={`pl-9 ${errors.email ? 'border-red-500' : ''}`}
+                          />
                         </div>
+                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="nl-phone">Teléfono <span className="text-primary">*</span></Label>
+                        <div className="relative mt-1">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="nl-phone"
+                            type="tel"
+                            placeholder="+56 9 1234 5678"
+                            value={phone}
+                            onChange={e => {
+                              setPhone(e.target.value.replace(/[^\d\s\-+().]/g, '').slice(0, 20));
+                              setErrors(p => ({ ...p, phone: '' }));
+                            }}
+                            className={`pl-9 ${errors.phone ? 'border-red-500' : ''}`}
+                          />
+                        </div>
+                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {topics.map(id => {
+                        const t = TOPIC_OPTIONS.find(o => o.id === id)!;
+                        return (
+                          <span key={id} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {t.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    {hookError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                        <p className="text-red-800 text-sm">{hookError}</p>
                       </div>
                     )}
 
-                    {/* Botones */}
-                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleClose}
-                        disabled={isSubmitting}
-                        className="flex-1"
-                      >
-                        Cancelar
+                    <div className="flex gap-3">
+                      <Button variant="outline" onClick={() => setStep('topics')} className="flex-1" disabled={submitting}>
+                        ← Volver
                       </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting || loading}
-                        className="flex-1"
-                      >
-                        {isSubmitting || loading ? (
-                          'Suscribiendo...'
-                        ) : (
-                          <>
-                            <Mail className="w-4 h-4 mr-2" />
-                            Suscribirse
-                          </>
-                        )}
+                      <Button onClick={handleSubmit} disabled={submitting || loading} className="flex-1">
+                        {submitting || loading
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Suscribiendo...</>
+                          : <><Mail className="w-4 h-4 mr-2" />Suscribirme</>
+                        }
                       </Button>
                     </div>
 
-                    {/* Información de privacidad */}
-                    <div className="text-xs text-muted-foreground text-center pt-4 border-t">
-                      <p>
-                        Al suscribirte, aceptas recibir emails de Pessaro Capital. 
-                        Puedes cancelar tu suscripción en cualquier momento. 
-                        Respetamos tu privacidad y nunca compartimos tu información.
-                      </p>
-                    </div>
-                  </form>
+                    <p className="text-xs text-muted-foreground text-center border-t pt-3">
+                      Al suscribirte, aceptas recibir emails de Pessaro Capital. Puedes cancelar en cualquier momento.
+                      Respetamos tu privacidad y nunca compartimos tu información.
+                    </p>
+                  </div>
                 )}
+
               </CardContent>
             </Card>
           </motion.div>

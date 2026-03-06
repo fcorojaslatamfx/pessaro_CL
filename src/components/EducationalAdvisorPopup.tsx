@@ -46,31 +46,27 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
     interestedTopics: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [isSuccess, setIsSuccess]       = useState(false);
+  const [errors, setErrors]             = useState<Partial<FormData>>({});
 
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
 
-    if (!formData.fullName.trim()) {
+    if (!formData.fullName.trim())
       newErrors.fullName = 'El nombre completo es requerido';
-    }
 
-    if (!formData.email.trim()) {
+    if (!formData.email.trim())
       newErrors.email = 'El correo electrónico es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = 'Ingrese un correo electrónico válido';
-    }
 
-    if (!formData.phone.trim()) {
+    if (!formData.phone.trim())
       newErrors.phone = 'El número de móvil es requerido';
-    } else if (!/^[+]?[\d\s\-()]{8,}$/.test(formData.phone)) {
+    else if (!/^[+]?[\d\s\-()]{8,}$/.test(formData.phone))
       newErrors.phone = 'Ingrese un número de teléfono válido';
-    }
 
-    if (formData.interestedTopics.length === 0) {
+    if (formData.interestedTopics.length === 0)
       newErrors.interestedTopics = ['Seleccione al menos un tema de interés'];
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,7 +75,7 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
   const handleTopicChange = (topic: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      interestedTopics: checked 
+      interestedTopics: checked
         ? [...prev.interestedTopics, topic]
         : prev.interestedTopics.filter(t => t !== topic)
     }));
@@ -87,43 +83,30 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
-
     try {
-      // Enviar datos a Supabase usando Edge Function
-      const { data, error } = await supabase.functions.invoke('send_confirmation_email_updated_2026_02_09', {
+      const { error } = await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
         body: {
-          type: 'educational_advisor',
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          interestedTopics: formData.interestedTopics,
-          message: `Solicitud de contacto con asesor educativo. Temas de interés: ${formData.interestedTopics.join(', ')}`
+          formType: 'educational_advisor',
+          formData: {
+            fullName: formData.fullName,
+            email:    formData.email,
+            phone:    formData.phone,
+            topics:   formData.interestedTopics,
+          },
+          userEmail: formData.email
         }
       });
 
-      if (error) {
-        console.error('Error enviando solicitud:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       setIsSuccess(true);
-      
-      // Cerrar popup después de 3 segundos
       setTimeout(() => {
         onClose();
         setIsSuccess(false);
-        setFormData({
-          fullName: '',
-          email: '',
-          phone: '',
-          interestedTopics: []
-        });
+        setFormData({ fullName: '', email: '', phone: '', interestedTopics: [] });
       }, 3000);
 
     } catch (error) {
@@ -135,17 +118,11 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
-      setFormData({
-        fullName: '',
-        email: '',
-        phone: '',
-        interestedTopics: []
-      });
-      setErrors({});
-      setIsSuccess(false);
-    }
+    if (isSubmitting) return;
+    onClose();
+    setFormData({ fullName: '', email: '', phone: '', interestedTopics: [] });
+    setErrors({});
+    setIsSuccess(false);
   };
 
   return (
@@ -159,7 +136,7 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={handleClose}
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -180,8 +157,7 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                 </div>
               </div>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="ghost" size="sm"
                 onClick={handleClose}
                 disabled={isSubmitting}
                 className="rounded-full"
@@ -203,7 +179,8 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                   </div>
                   <h3 className="text-xl font-bold mb-2">¡Solicitud Enviada!</h3>
                   <p className="text-muted-foreground mb-4">
-                    Su solicitud ha sido recibida exitosamente. Un asesor educativo se pondrá en contacto con usted dentro de las próximas 24 horas.
+                    Su solicitud ha sido recibida exitosamente. Un asesor educativo se pondrá en
+                    contacto con usted dentro de las próximas 24 horas.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     También recibirá un correo de confirmación en breve.
@@ -211,23 +188,22 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+
                   {/* Información Personal */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Información Personal</h3>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Nombre Completo *</Label>
                       <Input
                         id="fullName"
                         type="text"
                         value={formData.fullName}
-                        onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                        onChange={e => setFormData(p => ({ ...p, fullName: e.target.value }))}
                         placeholder="Ingrese su nombre completo"
                         className={errors.fullName ? 'border-red-500' : ''}
                       />
-                      {errors.fullName && (
-                        <p className="text-sm text-red-500">{errors.fullName}</p>
-                      )}
+                      {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -236,13 +212,11 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
                         placeholder="ejemplo@correo.com"
                         className={errors.email ? 'border-red-500' : ''}
                       />
-                      {errors.email && (
-                        <p className="text-sm text-red-500">{errors.email}</p>
-                      )}
+                      {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -251,13 +225,11 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                         id="phone"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
                         placeholder="+56 9 1234 5678"
                         className={errors.phone ? 'border-red-500' : ''}
                       />
-                      {errors.phone && (
-                        <p className="text-sm text-red-500">{errors.phone}</p>
-                      )}
+                      {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
                     </div>
                   </div>
 
@@ -269,25 +241,22 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                         Seleccione los temas sobre los que le gustaría recibir orientación educativa:
                       </p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {tradingTopics.map((topic) => (
+                      {tradingTopics.map(topic => (
                         <div key={topic} className="flex items-center space-x-2">
                           <Checkbox
                             id={topic}
                             checked={formData.interestedTopics.includes(topic)}
-                            onCheckedChange={(checked) => handleTopicChange(topic, checked as boolean)}
+                            onCheckedChange={checked => handleTopicChange(topic, checked as boolean)}
                           />
-                          <Label 
-                            htmlFor={topic} 
-                            className="text-sm font-normal cursor-pointer"
-                          >
+                          <Label htmlFor={topic} className="text-sm font-normal cursor-pointer">
                             {topic}
                           </Label>
                         </div>
                       ))}
                     </div>
-                    
+
                     {errors.interestedTopics && (
                       <p className="text-sm text-red-500">Seleccione al menos un tema de interés</p>
                     )}
@@ -308,29 +277,20 @@ const EducationalAdvisorPopup: React.FC<EducationalAdvisorPopupProps> = ({ isOpe
                   {/* Botones */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleClose}
-                      disabled={isSubmitting}
+                      type="button" variant="outline"
+                      onClick={handleClose} disabled={isSubmitting}
                       className="flex-1"
                     >
                       Cancelar
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Enviando...
-                        </>
-                      ) : (
-                        'Solicitar Asesoría'
-                      )}
+                    <Button type="submit" disabled={isSubmitting} className="flex-1">
+                      {isSubmitting
+                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando...</>
+                        : 'Solicitar Asesoría'
+                      }
                     </Button>
                   </div>
+
                 </form>
               )}
             </div>

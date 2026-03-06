@@ -15,7 +15,7 @@ import RiskProfileModal from '@/components/RiskProfileModal';
 import LoginMenu from '@/components/LoginMenu';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { useAuth } from '@/hooks/useAuth';
-import { isLoginDomain, isLoginRoute, isDevelopment, getMainSiteUrl, getAdminUrl } from '@/lib/domains';
+import { isLoginDomain, isLoginRoute, isDevelopment, getMainSiteUrl } from '@/lib/domains';
 import LoginLayout from '@/components/LoginLayout';
 import { useTrackNavigation } from '@/hooks/useTrackNavigation';
 import { useWorkWithUs } from '@/hooks/useWorkWithUs';
@@ -426,11 +426,11 @@ export function Layout({ children }: LayoutProps) {
               <button 
                 onClick={() => {
                   if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
-                    window.open(getAdminUrl(ROUTE_PATHS.WYCKOFF_DASHBOARD), '_blank');
+                    navigate(ROUTE_PATHS.WYCKOFF_DASHBOARD);
                   } else if (user) {
                     alert('Acceso restringido: Solo usuarios internos pueden acceder al Dashboard Wyckoff');
                   } else {
-                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
+                    navigate(ROUTE_PATHS.INTERNAL_LOGIN);
                   }
                 }}
                 className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
@@ -446,11 +446,11 @@ export function Layout({ children }: LayoutProps) {
               <button 
                 onClick={() => {
                   if (user && (user.role === 'interno' || user.role === 'admin' || user.role === 'super_admin')) {
-                    window.open(getAdminUrl(ROUTE_PATHS.CMS_DASHBOARD), '_blank');
+                    navigate(ROUTE_PATHS.CMS_DASHBOARD);
                   } else if (user) {
                     alert('Acceso restringido: Solo usuarios internos y administradores pueden acceder al CMS');
                   } else {
-                    window.open(getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN), '_blank');
+                    navigate(ROUTE_PATHS.INTERNAL_LOGIN);
                   }
                 }}
                 className="text-xs opacity-70 hover:opacity-100 hover:text-green-400 transition-all cursor-pointer"
@@ -465,7 +465,7 @@ export function Layout({ children }: LayoutProps) {
               {/* Super Admin - Destacado como botón especial */}
               {user && user.role === 'super_admin' && (
                 <Button
-                  onClick={() => window.open(getAdminUrl(ROUTE_PATHS.SUPER_ADMIN_PANEL), '_blank')}
+                  onClick={() => navigate(ROUTE_PATHS.SUPER_ADMIN_PANEL)}
                   size="sm"
                   className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 h-auto font-medium shadow-lg"
                 >

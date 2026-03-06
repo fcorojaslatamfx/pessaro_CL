@@ -1,4 +1,84 @@
-import { useState } from 'react';
+// Agrega este import al inicio del archivo (junto a los demás)
+import { supabase } from '@/integrations/supabase/client';
+
+
+// ─── Reemplaza la función sendOTP completa ────────────────────────────────────
+const sendOTP = async () => {
+  if (!validateForm()) return;
+  setSubmitting(true);
+
+  try {
+    const code = genOTP();
+
+    // Enviar OTP por email vía Supabase Edge Function
+    const { error } = await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
+      body: {
+        formType: 'otp_verification',
+        formData: {
+          name,
+          email,
+          phone,
+          otpCode: code,
+        },
+        userEmail: email,
+      }
+    });
+
+    if (error) throw error;
+
+    // Guardar código en estado solo después de confirmar envío exitoso
+    setOtpCode(code);
+    setStep('otp');
+    startResendCd();
+
+  } catch (err: any) {
+    console.error('Error enviando OTP:', err);
+    setErrors(p => ({
+      ...p,
+      email: 'No se pudo enviar el código. Verifica tu email e intenta de nuevo.'
+    }));
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
+// ─── Reemplaza resendOTP también ──────────────────────────────────────────────
+const resendOTP = async () => {
+  if (resendCd > 0) return;
+  setOtpLoading(true);
+
+  try {
+    const code = genOTP();
+
+    const { error } = await supabase.functions.invoke('unified_forms_complete_2026_02_25_20_30', {
+      body: {
+        formType: 'otp_verification',
+        formData: {
+          name,
+          email,
+          phone,
+          otpCode: code,
+        },
+        userEmail: email,
+      }
+    });
+
+    if (error) throw error;
+
+    setOtpCode(code);
+    setOtpInputs(['', '', '', '', '', '']);
+    setOtpError('');
+    startResendCd();
+    inputRefs.current[0]?.focus();
+
+  } catch (err: any) {
+    console.error('Error reenviando OTP:', err);
+    setOtpError('No se pudo reenviar el código. Intenta de nuevo.');
+  } finally {
+    setOtpLoading(false);
+  }
+};import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubscriptionData {

@@ -150,127 +150,68 @@ export default function App() {
                     />
                     
                     {/* DOMINIO DE GESTIÓN (LOGIN / CMS) */}
+                    {/* FIX: rutas con paths explícitos — el segundo <Route path="/*"> nunca matchea en RR v6 */}
+
+                    {/* — Auth público — */}
+                    <Route path={ROUTE_PATHS.SUPER_ADMIN_LOGIN} element={<LoginLayout><SuperAdminLogin /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.INTERNAL_LOGIN}    element={<LoginLayout><InternalLogin /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC}  element={<LoginLayout><AccessDiagnostic /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SETUP}          element={<LoginLayout><Setup /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_LOGIN}          element={<LoginLayout><Login /></LoginLayout>} />
+
+                    {/* — Rutas protegidas Super Admin — */}
                     <Route
-                      path="/*"
+                      path={ROUTE_PATHS.SUPER_ADMIN_PANEL}
                       element={
                         <LoginLayout>
-                          <Routes>
-                            {/* Authentication Routes */}
-                            <Route path={ROUTE_PATHS.SUPER_ADMIN_LOGIN} element={<SuperAdminLogin />} />
-                            <Route path={ROUTE_PATHS.INTERNAL_LOGIN} element={<InternalLogin />} />
-                            <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC} element={<AccessDiagnostic />} />
-                            <Route path={ROUTE_PATHS.CMS_SETUP} element={<Setup />} />
-                            <Route path={ROUTE_PATHS.CMS_LOGIN} element={<Login />} />
-                            
-                            {/* RUTAS PROTEGIDAS - SUPER ADMIN */}
-                            <Route 
-                              path={ROUTE_PATHS.SUPER_ADMIN_PANEL} 
-                              element={
-                                <ProtectedRoute requiredRoles="super_admin">
-                                  <SuperAdminPanel />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            
-                            {/* RUTAS PROTEGIDAS - INTERNAL USERS */}
-                            <Route 
-                              path={ROUTE_PATHS.INTERNAL_DASHBOARD} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <InternalDashboard />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            
-                            {/* WYCKOFF DASHBOARD - INTERNAL ONLY */}
-                            <Route 
-                              path={ROUTE_PATHS.WYCKOFF_DASHBOARD} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <WyckoffDashboard />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            
-                            {/* CMS DASHBOARD - MAIN */}
-                            <Route 
-                              path={ROUTE_PATHS.CMS_DASHBOARD} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <Dashboard />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            
-                            {/* CMS MANAGER ROUTES - ALL PROTECTED */}
-                            <Route 
-                              path="/cms/pages" 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <PageContentManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path="/cms/faqs" 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <FAQManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_BLOG} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <BlogManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_TEAM} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <TeamManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_SERVICES} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <ServicesManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_INSTRUMENTS} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <InstrumentsManager />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_MEDIA} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <MediaLibrary />
-                                </ProtectedRoute>
-                              } 
-                            />
-                            <Route 
-                              path={ROUTE_PATHS.CMS_SETTINGS} 
-                              element={
-                                <ProtectedRoute requiredRoles="interno,super_admin">
-                                  <Settings />
-                                </ProtectedRoute>
-                              } 
-                            />
-                          </Routes>
+                          <ProtectedRoute requiredRoles="super_admin">
+                            <SuperAdminPanel />
+                          </ProtectedRoute>
                         </LoginLayout>
                       }
                     />
+
+                    {/* — Rutas protegidas usuarios internos — */}
+                    <Route
+                      path={ROUTE_PATHS.INTERNAL_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <InternalDashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.WYCKOFF_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <WyckoffDashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
+
+                    {/* — CMS Dashboard y managers — */}
+                    <Route
+                      path={ROUTE_PATHS.CMS_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <Dashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
+                    <Route path="/cms/pages"   element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><PageContentManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path="/cms/faqs"    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><FAQManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_BLOG}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><BlogManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_TEAM}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><TeamManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SERVICES}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><ServicesManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_INSTRUMENTS} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><InstrumentsManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_MEDIA}       element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><MediaLibrary /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SETTINGS}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><Settings /></ProtectedRoute></LoginLayout>} />
                     
                     {/* Catch-all route for 404 errors */}
                     <Route path="*" element={<ErrorPage />} />

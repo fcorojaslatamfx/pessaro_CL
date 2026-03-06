@@ -102,3 +102,6 @@ uploaded_files/
 # --- Documentation ---
 docs/
 
+
+.vercel
+.env*.local
