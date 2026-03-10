@@ -29,7 +29,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     checkAuth();
-
+    
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -48,7 +48,7 @@ export const useAuth = () => {
     try {
       setLoading(true);
       const { data: { user: authUser } } = await supabase.auth.getUser();
-
+      
       if (authUser) {
         await loadUserWithRole(authUser);
       }
@@ -72,7 +72,7 @@ export const useAuth = () => {
 
       if (functionError || !response?.success) {
         console.error('Error verifying user:', functionError || response?.error);
-
+        
         // Fallback: intentar con el método anterior
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles_2026_02_08_22_02')
@@ -82,22 +82,7 @@ export const useAuth = () => {
 
         if (roleError) {
           console.error('Error loading user role:', roleError);
-          // FIX #1: En lugar de solo setear error y retornar (dejando user en null),
-          // seteamos el usuario con información mínima disponible de Supabase Auth.
-          // Esto evita que la redirección post-login quede bloqueada.
-          setError('Error cargando rol de usuario. Intente nuevamente.');
-          setUser({
-            id: authUser.id,
-            email: authUser.email || '',
-            role: 'interno', // rol mínimo por defecto para no bloquear el flujo
-          });
-          return;
-        }
-
-        // FIX #3: Si el rol es super_admin, este hook no debe procesarlo.
-        // El super_admin es manejado exclusivamente por useSuperAdmin.
-        if (roleData.role === 'super_admin') {
-          console.warn('useAuth: super_admin detectado, ignorando. Usar useSuperAdmin en su lugar.');
+          setError('Error cargando rol de usuario');
           return;
         }
 
@@ -109,7 +94,7 @@ export const useAuth = () => {
             .select('*')
             .eq('user_id', authUser.id)
             .single();
-
+          
           profile = profileData;
         }
 
@@ -124,13 +109,7 @@ export const useAuth = () => {
 
       // Usar datos de la Edge Function
       const userData = response.data.user;
-
-      // FIX #3: Si la Edge Function devuelve super_admin, no procesar aquí.
-      if (userData.role === 'super_admin') {
-        console.warn('useAuth: super_admin detectado via Edge Function, ignorando. Usar useSuperAdmin.');
-        return;
-      }
-
+      
       // Obtener perfil adicional si es cliente
       let profile = null;
       if (userData.role === 'cliente') {
@@ -139,7 +118,7 @@ export const useAuth = () => {
           .select('*')
           .eq('user_id', userData.id)
           .single();
-
+        
         profile = profileData;
       }
 
@@ -176,13 +155,6 @@ export const useAuth = () => {
         return { success: false, error: error.message };
       }
 
-      // FIX #1: Cargar el rol inmediatamente tras el login exitoso,
-      // sin esperar solo al onAuthStateChange, para garantizar que
-      // user esté seteado antes de que el componente intente redirigir.
-      if (data.user) {
-        await loadUserWithRole(data.user);
-      }
-
       return { success: true, user: data.user };
     } catch (error) {
       const errorMessage = 'Error inesperado durante el login';
@@ -205,7 +177,7 @@ export const useAuth = () => {
 
   const hasRole = (requiredRoles: string | string[]) => {
     if (!user) return false;
-
+    
     const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
     return roles.includes(user.role);
   };

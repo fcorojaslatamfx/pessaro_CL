@@ -13,7 +13,7 @@ const LoginDomainHeader: React.FC = () => {
   const adminLinks = [
     {
       path: '/cms/login',
-      label: 'CMS',
+      label: 'Acceso Staff',
       icon: <Settings className="w-4 h-4" />
     },
     {

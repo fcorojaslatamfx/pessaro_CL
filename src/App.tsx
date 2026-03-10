@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { ROUTE_PATHS } from '@/lib/index';
@@ -154,7 +154,7 @@ export default function App() {
 
                     {/* — Auth público — */}
                     <Route path={ROUTE_PATHS.SUPER_ADMIN_LOGIN} element={<LoginLayout><SuperAdminLogin /></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.INTERNAL_LOGIN}    element={<LoginLayout><InternalLogin /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.INTERNAL_LOGIN}    element={<Navigate to={ROUTE_PATHS.CMS_LOGIN} replace />} />
                     <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC}  element={
                       <LoginLayout>
                         <ProtectedRoute requiredRoles="super_admin,admin">
