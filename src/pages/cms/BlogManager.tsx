@@ -326,7 +326,7 @@ export default function BlogManager() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Imagen de Portada</Label>
-                  <div className="relative aspect-video rounded-md border-2 border-dashed border-border overflow-hidden bg-muted/30 group">
+                  <div className="relative aspect-video rounded-md border-2 border-dashed border-border overflow-hidden bg-muted/30">
                     {editingPost?.cover_image ? (
                       <>
                         <img 
@@ -336,9 +336,11 @@ export default function BlogManager() {
                         />
                         <button 
                           onClick={() => setEditingPost(prev => ({ ...prev!, cover_image: '' }))}
-                          className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-destructive text-destructive-foreground text-xs font-medium shadow-md hover:bg-destructive/90 transition-colors"
+                          title="Eliminar imagen"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3 h-3" />
+                          Eliminar
                         </button>
                       </>
                     ) : (
@@ -346,10 +348,12 @@ export default function BlogManager() {
                         <MediaUploader 
                           onFileSelect={(file) => setEditingPost(prev => ({ ...prev!, cover_image: file.url }))}
                           accept="image/*"
+                          maxSize={50 * 1024 * 1024}
                         />
                       </div>
                     )}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">Máximo 50MB. Formatos: JPG, PNG, WebP, GIF</p>
                 </div>
 
                 <div className="space-y-2">

@@ -13,13 +13,13 @@ import { cn } from "@/lib/utils";
 interface MediaUploaderProps {
   onFileSelect?: (file: MediaFile) => void;
   accept?: string;
-  maxSize?: number; // en bytes, default 5MB
+  maxSize?: number; // en bytes, default 50MB
 }
 
 export function MediaUploader({ 
   onFileSelect, 
   accept = "image/*,video/*,application/pdf", 
-  maxSize = 5 * 1024 * 1024 
+  maxSize = 50 * 1024 * 1024 
 }: MediaUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);

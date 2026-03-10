@@ -332,7 +332,7 @@ export default function TeamManager() {
                     <MediaUploader 
                       onFileSelect={handleImageSelect}
                       accept="image/*"
-                      maxSize={2 * 1024 * 1024}
+                      maxSize={50 * 1024 * 1024}
                     />
                   </div>
                 </div>
