@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield, Users, Settings, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Settings, BarChart3 } from 'lucide-react';
 import { PESSARO_LOGO_HEADER } from '@/lib/index';
 import { getMainDomainUrl } from '@/lib/domains';
 import { Button } from '@/components/ui/button';
@@ -11,16 +11,6 @@ import { Button } from '@/components/ui/button';
  */
 const LoginDomainHeader: React.FC = () => {
   const adminLinks = [
-    {
-      path: '/super-admin-login',
-      label: 'Super Admin',
-      icon: <Shield className="w-4 h-4" />
-    },
-    {
-      path: '/login-interno',
-      label: 'Usuarios Internos',
-      icon: <Users className="w-4 h-4" />
-    },
     {
       path: '/cms/login',
       label: 'CMS',

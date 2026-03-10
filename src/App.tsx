@@ -155,7 +155,13 @@ export default function App() {
                     {/* — Auth público — */}
                     <Route path={ROUTE_PATHS.SUPER_ADMIN_LOGIN} element={<LoginLayout><SuperAdminLogin /></LoginLayout>} />
                     <Route path={ROUTE_PATHS.INTERNAL_LOGIN}    element={<LoginLayout><InternalLogin /></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC}  element={<LoginLayout><AccessDiagnostic /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC}  element={
+                      <LoginLayout>
+                        <ProtectedRoute requiredRoles="super_admin,admin">
+                          <AccessDiagnostic />
+                        </ProtectedRoute>
+                      </LoginLayout>
+                    } />
                     <Route path={ROUTE_PATHS.CMS_SETUP}          element={<LoginLayout><Setup /></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_LOGIN}          element={<LoginLayout><Login /></LoginLayout>} />
 
