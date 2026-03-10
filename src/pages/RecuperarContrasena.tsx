@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, CheckCircle, AlertCircle, Loader2, Key, Eye, EyeOff, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,45 +22,51 @@ const RecuperarContrasena: React.FC = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Detectar token de recovery en el hash o query params al cargar la página
+  // Siempre limpiar timeout al desmontar
   useEffect(() => {
-    const extractTokenFromUrl = () => {
-      // Supabase envía el token en el hash: #access_token=...&refresh_token=...&type=recovery
-      const hash = window.location.hash;
-      const hashParams = new URLSearchParams(hash.replace('#', ''));
-
-      // También verificar query params como fallback
-      const queryParams = new URLSearchParams(window.location.search);
-
-      const token = hashParams.get('access_token') || queryParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-      const type = hashParams.get('type') || queryParams.get('type');
-
-      if (token && type === 'recovery') {
-        setAccessToken(token);
-        setStep('reset');
-
-        // Establecer la sesión en Supabase con los tokens
-        if (refreshToken) {
-          supabase.auth.setSession({
-            access_token: token,
-            refresh_token: refreshToken
-          }).catch(console.error);
-        }
-
-        // Limpiar URL para no exponer tokens
-        window.history.replaceState(null, '', window.location.pathname);
-        return;
-      }
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
     };
+  }, []);
 
-    extractTokenFromUrl();
+  // Detectar token de recovery en el hash o query params
+  useEffect(() => {
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.replace('#', ''));
+    const queryParams = new URLSearchParams(window.location.search);
 
-    // También escuchar el evento PASSWORD_RECOVERY de Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY' && session?.access_token) {
+    const token = hashParams.get('access_token') || queryParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+    const type = hashParams.get('type') || queryParams.get('type');
+
+    if (token && type === 'recovery') {
+      setAccessToken(token);
+
+      // Establecer sesión y esperar confirmación
+      if (refreshToken) {
+        supabase.auth.setSession({
+          access_token: token,
+          refresh_token: refreshToken
+        }).then(({ error }) => {
+          if (!error) setSessionReady(true);
+          else console.error('Error setting session:', error);
+        });
+      } else {
+        setSessionReady(true);
+      }
+
+      setStep('reset');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    // Escuchar evento PASSWORD_RECOVERY de Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && session) {
         setAccessToken(session.access_token);
+        setSessionReady(true);
         setStep('reset');
         window.history.replaceState(null, '', window.location.pathname);
       }
@@ -79,15 +85,26 @@ const RecuperarContrasena: React.FC = () => {
     return { isValid: errors.length === 0, errors };
   };
 
+  const safeSetLoading = (value: boolean) => {
+    setIsLoading(value);
+    if (value) {
+      // Timeout de seguridad: nunca más de 15 segundos cargando
+      loadingTimeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        setError('La operación tardó demasiado. Por favor intente nuevamente.');
+      }, 15000);
+    } else {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    }
+  };
+
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
-
-    if (!email.trim()) {
-      setError('El correo electrónico es obligatorio.');
-      return;
-    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
@@ -95,32 +112,31 @@ const RecuperarContrasena: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
+    safeSetLoading(true);
     try {
-      // Usar la Edge Function personalizada que envía el email con Resend
+      // Intentar con Edge Function primero
       const { data, error: fnError } = await supabase.functions.invoke(
         'password_recovery_fixed_2026_02_23_19_30',
         { body: { action: 'request_reset', email: email.toLowerCase().trim() } }
       );
 
-      if (fnError) throw new Error(fnError.message);
-      if (!data?.success) throw new Error(data?.error || 'Error al enviar el correo');
+      if (!fnError && data?.success) {
+        setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
+        return;
+      }
 
+      // Fallback: Supabase nativo
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim(),
+        { redirectTo: `${window.location.origin}/recuperar-contrasena` }
+      );
+
+      if (authError) throw authError;
       setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
     } catch (err: any) {
-      // Fallback: usar Supabase nativo si la Edge Function falla
-      try {
-        const { error: authError } = await supabase.auth.resetPasswordForEmail(
-          email.toLowerCase().trim(),
-          { redirectTo: `${window.location.origin}/recuperar-contrasena` }
-        );
-        if (authError) throw authError;
-        setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
-      } catch (fallbackErr: any) {
-        setError(fallbackErr.message || 'Error al enviar el correo de recuperación.');
-      }
+      setError(err.message || 'Error al enviar el correo de recuperación.');
     } finally {
-      setIsLoading(false);
+      safeSetLoading(false);
     }
   };
 
@@ -130,42 +146,54 @@ const RecuperarContrasena: React.FC = () => {
     setMessage('');
 
     const { isValid, errors } = validatePasswordStrength(password);
-    if (!isValid) {
-      setError(errors.join(', '));
-      return;
-    }
+    if (!isValid) { setError(errors.join(', ')); return; }
+    if (password !== confirmPassword) { setError('Las contraseñas no coinciden.'); return; }
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
+    safeSetLoading(true);
 
-    if (!accessToken) {
-      setError('Token de recuperación inválido. Por favor solicite un nuevo enlace.');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      // Intentar actualizar directamente con la sesión activa de Supabase
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      let success = false;
 
-      if (updateError) {
-        // Fallback: usar la Edge Function
+      // Método 1: updateUser con la sesión activa (más directo)
+      const updateResult = await Promise.race([
+        supabase.auth.updateUser({ password }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 8000)
+        )
+      ]);
+
+      if ('data' in updateResult && !updateResult.error) {
+        success = true;
+      } else if ('error' in updateResult && updateResult.error) {
+        throw updateResult.error;
+      }
+
+      if (!success && accessToken) {
+        // Método 2: Edge Function con el token
         const { data, error: fnError } = await supabase.functions.invoke(
           'password_recovery_fixed_2026_02_23_19_30',
           { body: { action: 'update_password', access_token: accessToken, password } }
         );
         if (fnError) throw new Error(fnError.message);
         if (!data?.success) throw new Error(data?.error || 'Error al actualizar contraseña');
+        success = true;
       }
 
-      setStep('success');
-      setTimeout(() => navigate(ROUTE_PATHS.SUPER_ADMIN_LOGIN), 3000);
+      if (success) {
+        safeSetLoading(false);
+        setStep('success');
+        setTimeout(() => navigate(ROUTE_PATHS.SUPER_ADMIN_LOGIN), 3000);
+      }
     } catch (err: any) {
-      setError(err.message || 'Error al actualizar la contraseña. El enlace puede haber expirado.');
-    } finally {
-      setIsLoading(false);
+      safeSetLoading(false);
+      const msg = err.message || '';
+      if (msg === 'timeout') {
+        setError('La operación tardó demasiado. El enlace puede haber expirado. Solicite uno nuevo.');
+      } else if (msg.includes('expired') || msg.includes('invalid')) {
+        setError('El enlace de recuperación ha expirado. Por favor solicite uno nuevo.');
+      } else {
+        setError(msg || 'Error al actualizar la contraseña. Intente solicitar un nuevo enlace.');
+      }
     }
   };
 
@@ -193,7 +221,7 @@ const RecuperarContrasena: React.FC = () => {
               </CardTitle>
               <CardDescription className="text-gray-500">
                 {step === 'success'
-                  ? 'Su contraseña fue actualizada correctamente. Redirigiendo...'
+                  ? 'Su contraseña fue actualizada. Redirigiendo al login...'
                   : step === 'reset'
                   ? 'Ingrese y confirme su nueva contraseña'
                   : 'Ingrese su correo para recibir un enlace de recuperación'}
@@ -201,7 +229,6 @@ const RecuperarContrasena: React.FC = () => {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Mensajes */}
               {message && (
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
@@ -299,7 +326,6 @@ const RecuperarContrasena: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Indicadores de validación en tiempo real */}
                   {password && (
                     <div className="text-xs space-y-1">
                       {validatePasswordStrength(password).errors.map((err, i) => (
@@ -331,23 +357,33 @@ const RecuperarContrasena: React.FC = () => {
                       <><Key className="mr-2 h-4 w-4" />Actualizar Contraseña</>
                     )}
                   </Button>
+
+                  {/* Opción para solicitar nuevo enlace si hay problemas */}
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setStep('request'); setError(''); setPassword(''); setConfirmPassword(''); }}
+                      className="text-xs text-gray-400 hover:text-blue-700 underline transition-colors"
+                    >
+                      ¿Enlace expirado? Solicitar uno nuevo
+                    </button>
+                  </div>
                 </form>
               )}
 
               {/* Paso 3: Éxito */}
               {step === 'success' && (
-                <div className="text-center py-4">
-                  <p className="text-gray-600 mb-4">Será redirigido al login en unos segundos...</p>
+                <div className="text-center py-4 space-y-4">
+                  <p className="text-gray-600">Será redirigido al login en unos segundos...</p>
                   <Button
                     onClick={() => navigate(ROUTE_PATHS.SUPER_ADMIN_LOGIN)}
                     className="bg-blue-800 hover:bg-blue-900 text-white"
                   >
-                    Ir al Login
+                    Ir al Login ahora
                   </Button>
                 </div>
               )}
 
-              {/* Navegación */}
               {step !== 'success' && (
                 <div className="text-center">
                   <Link
