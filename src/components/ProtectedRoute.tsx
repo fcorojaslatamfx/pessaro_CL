@@ -52,8 +52,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     />;
   }
 
+  // Normalizar requiredRoles: si viene como "interno,super_admin" convertir a array
+  const normalizedRoles = typeof requiredRoles === 'string'
+    ? requiredRoles.split(',').map(r => r.trim()).filter(Boolean)
+    : requiredRoles;
+
   // Si se requieren roles específicos, verificar
-  if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
+  if (normalizedRoles.length > 0 && !hasRole(normalizedRoles)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div
@@ -74,7 +79,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </p>
             <p className="text-sm text-muted-foreground">
               Roles requeridos: <span className="font-medium">
-                {Array.isArray(requiredRoles) ? requiredRoles.join(', ') : requiredRoles}
+                {normalizedRoles.join(', ')}
               </span>
             </p>
           </div>
