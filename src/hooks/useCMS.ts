@@ -239,7 +239,7 @@ export function useCMS() {
       queryKey: ['site-settings'],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('site_settings')
+          .from('cms_site_settings_2026_02_23_17_38')
           .select('*');
         if (error) throw error;
         return data as SiteSetting[];
@@ -248,7 +248,7 @@ export function useCMS() {
     useUpdate: () => useMutation({
       mutationFn: async (setting: Partial<SiteSetting>) => {
         const { data, error } = await supabase
-          .from('site_settings')
+          .from('cms_site_settings_2026_02_23_17_38')
           .upsert(setting)
           .select()
           .single();
