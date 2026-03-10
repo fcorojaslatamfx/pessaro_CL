@@ -26,7 +26,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const { signIn, error: authError } = useAuth();
+  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -75,11 +75,11 @@ export function LoginForm() {
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="grid gap-4">
-            {(authError || localError) && (
+            {localError && (
               <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {localError || authError}
+                  {localError}
                 </AlertDescription>
               </Alert>
             )}
