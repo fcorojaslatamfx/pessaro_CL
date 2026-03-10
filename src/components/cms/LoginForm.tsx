@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { ROUTE_PATHS } from '@/lib/index';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -105,6 +107,12 @@ export function LoginForm() {
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
+                <Link
+                  to={ROUTE_PATHS.RECUPERAR_CONTRASENA}
+                  className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

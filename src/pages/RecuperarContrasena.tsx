@@ -6,13 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ROUTE_PATHS } from '@/lib/index';
 import { supabase } from '@/integrations/supabase/client';
 
 const RecuperarContrasena: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<'request' | 'reset' | 'success'>('request');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,48 +21,57 @@ const RecuperarContrasena: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  // Detectar token propio en query params: /recuperar-contrasena?token=xxx
+  // Detectar token de recovery en el hash o query params al cargar la página
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      setResetToken(token);
-      // Validar token con la Edge Function
-      validateToken(token);
-      // Limpiar URL
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  }, []);
+    const extractTokenFromUrl = () => {
+      // Supabase envía el token en el hash: #access_token=...&refresh_token=...&type=recovery
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.replace('#', ''));
 
-  const validateToken = async (token: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        'password_recovery_fixed_2026_02_23_19_30',
-        { body: { action: 'validate_token', reset_token: token } }
-      );
-      if (fnError || !data?.success) {
-        setError(data?.error || 'El enlace es inválido o ha expirado. Solicite uno nuevo.');
-        setStep('request');
-      } else {
+      // También verificar query params como fallback
+      const queryParams = new URLSearchParams(window.location.search);
+
+      const token = hashParams.get('access_token') || queryParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+      const type = hashParams.get('type') || queryParams.get('type');
+
+      if (token && type === 'recovery') {
+        setAccessToken(token);
         setStep('reset');
+
+        // Establecer la sesión en Supabase con los tokens
+        if (refreshToken) {
+          supabase.auth.setSession({
+            access_token: token,
+            refresh_token: refreshToken
+          }).catch(console.error);
+        }
+
+        // Limpiar URL para no exponer tokens
+        window.history.replaceState(null, '', window.location.pathname);
+        return;
       }
-    } catch {
-      setError('Error al validar el enlace. Solicite uno nuevo.');
-      setStep('request');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    extractTokenFromUrl();
+
+    // También escuchar el evento PASSWORD_RECOVERY de Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && session?.access_token) {
+        setAccessToken(session.access_token);
+        setStep('reset');
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const validatePasswordStrength = (pwd: string): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
-    if (pwd.length < 8) errors.push('Mínimo 8 caracteres');
-    if (!/[A-Z]/.test(pwd)) errors.push('Al menos una mayúscula');
-    if (!/[a-z]/.test(pwd)) errors.push('Al menos una minúscula');
-    if (!/[0-9]/.test(pwd)) errors.push('Al menos un número');
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push('Al menos un carácter especial');
+    if (pwd.length < 6) errors.push('Mínimo 6 caracteres');
     return { isValid: errors.length === 0, errors };
   };
 
@@ -71,6 +79,11 @@ const RecuperarContrasena: React.FC = () => {
     e.preventDefault();
     setError('');
     setMessage('');
+
+    if (!email.trim()) {
+      setError('El correo electrónico es obligatorio.');
+      return;
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
@@ -80,6 +93,7 @@ const RecuperarContrasena: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Usar la Edge Function personalizada que envía el email con Resend
       const { data, error: fnError } = await supabase.functions.invoke(
         'password_recovery_fixed_2026_02_23_19_30',
         { body: { action: 'request_reset', email: email.toLowerCase().trim() } }
@@ -88,10 +102,19 @@ const RecuperarContrasena: React.FC = () => {
       if (fnError) throw new Error(fnError.message);
       if (!data?.success) throw new Error(data?.error || 'Error al enviar el correo');
 
-      setMessage('✅ Enlace enviado. Revise su correo (también la carpeta de spam).');
-      setEmail('');
+      setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
     } catch (err: any) {
-      setError(err.message || 'Error al enviar el correo de recuperación.');
+      // Fallback: usar Supabase nativo si la Edge Function falla
+      try {
+        const { error: authError } = await supabase.auth.resetPasswordForEmail(
+          email.toLowerCase().trim(),
+          { redirectTo: `${window.location.origin}/recuperar-contrasena` }
+        );
+        if (authError) throw authError;
+        setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Error al enviar el correo de recuperación.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -100,26 +123,43 @@ const RecuperarContrasena: React.FC = () => {
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
 
     const { isValid, errors } = validatePasswordStrength(password);
-    if (!isValid) { setError(errors.join(', ')); return; }
-    if (password !== confirmPassword) { setError('Las contraseñas no coinciden.'); return; }
-    if (!resetToken) { setError('Token inválido. Solicite un nuevo enlace.'); return; }
+    if (!isValid) {
+      setError(errors.join(', '));
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    if (!accessToken) {
+      setError('Token de recuperación inválido. Por favor solicite un nuevo enlace.');
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        'password_recovery_fixed_2026_02_23_19_30',
-        { body: { action: 'update_password', reset_token: resetToken, password } }
-      );
+      // Intentar actualizar directamente con la sesión activa de Supabase
+      const { error: updateError } = await supabase.auth.updateUser({ password });
 
-      if (fnError) throw new Error(fnError.message);
-      if (!data?.success) throw new Error(data?.error || 'Error al actualizar contraseña');
+      if (updateError) {
+        // Fallback: usar la Edge Function
+        const { data, error: fnError } = await supabase.functions.invoke(
+          'password_recovery_fixed_2026_02_23_19_30',
+          { body: { action: 'update_password', access_token: accessToken, password } }
+        );
+        if (fnError) throw new Error(fnError.message);
+        if (!data?.success) throw new Error(data?.error || 'Error al actualizar contraseña');
+      }
 
       setStep('success');
-      setTimeout(() => navigate(ROUTE_PATHS.SUPER_ADMIN_LOGIN), 3000);
+      setTimeout(() => navigate(ROUTE_PATHS.CMS_LOGIN), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al actualizar la contraseña.');
+      setError(err.message || 'Error al actualizar la contraseña. El enlace puede haber expirado.');
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +189,7 @@ const RecuperarContrasena: React.FC = () => {
               </CardTitle>
               <CardDescription className="text-gray-500">
                 {step === 'success'
-                  ? 'Su contraseña fue actualizada. Redirigiendo al login...'
+                  ? 'Su contraseña fue actualizada correctamente. Redirigiendo...'
                   : step === 'reset'
                   ? 'Ingrese y confirme su nueva contraseña'
                   : 'Ingrese su correo para recibir un enlace de recuperación'}
@@ -157,12 +197,7 @@ const RecuperarContrasena: React.FC = () => {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {isLoading && step === 'request' && !message && (
-                <div className="flex justify-center py-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-700" />
-                </div>
-              )}
-
+              {/* Mensajes */}
               {message && (
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
@@ -222,13 +257,17 @@ const RecuperarContrasena: React.FC = () => {
                         className="h-12 pr-10"
                         required
                       />
-                      <Button type="button" variant="ghost" size="sm"
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         className="absolute right-0 top-0 h-12 px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}>
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
                         {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-400">Mínimo 8 caracteres: mayúsculas, minúsculas, números y símbolos</p>
+                    <p className="text-xs text-gray-400">Mínimo 6 caracteres</p>
                   </div>
 
                   <div className="space-y-2">
@@ -244,14 +283,19 @@ const RecuperarContrasena: React.FC = () => {
                         className="h-12 pr-10"
                         required
                       />
-                      <Button type="button" variant="ghost" size="sm"
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         className="absolute right-0 top-0 h-12 px-3 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
                         {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                       </Button>
                     </div>
                   </div>
 
+                  {/* Indicadores de validación en tiempo real */}
                   {password && (
                     <div className="text-xs space-y-1">
                       {validatePasswordStrength(password).errors.map((err, i) => (
@@ -270,7 +314,9 @@ const RecuperarContrasena: React.FC = () => {
                     type="submit"
                     className="w-full h-12 bg-blue-800 hover:bg-blue-900 text-white font-semibold"
                     disabled={
-                      isLoading || !password || !confirmPassword ||
+                      isLoading ||
+                      !password ||
+                      !confirmPassword ||
                       !validatePasswordStrength(password).isValid ||
                       password !== confirmPassword
                     }
@@ -281,32 +327,29 @@ const RecuperarContrasena: React.FC = () => {
                       <><Key className="mr-2 h-4 w-4" />Actualizar Contraseña</>
                     )}
                   </Button>
-
-                  <div className="text-center pt-1">
-                    <button type="button"
-                      onClick={() => { setStep('request'); setError(''); setPassword(''); setConfirmPassword(''); setResetToken(null); }}
-                      className="text-xs text-gray-400 hover:text-blue-700 underline transition-colors">
-                      ¿Enlace expirado? Solicitar uno nuevo
-                    </button>
-                  </div>
                 </form>
               )}
 
               {/* Paso 3: Éxito */}
               {step === 'success' && (
-                <div className="text-center py-4 space-y-4">
-                  <p className="text-gray-600">Será redirigido al login en unos segundos...</p>
-                  <Button onClick={() => navigate(ROUTE_PATHS.SUPER_ADMIN_LOGIN)}
-                    className="bg-blue-800 hover:bg-blue-900 text-white">
-                    Ir al Login ahora
+                <div className="text-center py-4">
+                  <p className="text-gray-600 mb-4">Será redirigido al login en unos segundos...</p>
+                  <Button
+                    onClick={() => navigate(ROUTE_PATHS.CMS_LOGIN)}
+                    className="bg-blue-800 hover:bg-blue-900 text-white"
+                  >
+                    Ir al Login
                   </Button>
                 </div>
               )}
 
+              {/* Navegación */}
               {step !== 'success' && (
                 <div className="text-center">
-                  <Link to={ROUTE_PATHS.SUPER_ADMIN_LOGIN}
-                    className="inline-flex items-center text-sm text-gray-400 hover:text-blue-800 transition-colors">
+                  <Link
+                    to={ROUTE_PATHS.CMS_LOGIN}
+                    className="inline-flex items-center text-sm text-gray-400 hover:text-blue-800 transition-colors"
+                  >
                     <ArrowLeft className="mr-1 h-4 w-4" />
                     Volver al Login
                   </Link>
@@ -316,9 +359,15 @@ const RecuperarContrasena: React.FC = () => {
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }} className="mt-6 text-center">
-          <p className="text-white/70 text-sm">¿Necesita ayuda? Contacte al administrador del sistema</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-6 text-center"
+        >
+          <p className="text-white/70 text-sm">
+            ¿Necesita ayuda? Contacte al administrador del sistema
+          </p>
         </motion.div>
       </div>
     </div>
