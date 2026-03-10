@@ -101,7 +101,7 @@ export const resetPassword = async (email: string): Promise<ResetPasswordResult>
     }
 
     // Configurar la URL de redirección
-    const redirectUrl = getLoginDomainUrl('/super-admin-login?reset=true');
+    const redirectUrl = getLoginDomainUrl('/recuperar-contrasena');
 
     // Enviar email de reset usando Supabase
     const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {

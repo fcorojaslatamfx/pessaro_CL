@@ -105,6 +105,7 @@ export const getLoginDomainUrl = (path: string = ''): string => {
 export const LOGIN_ONLY_ROUTES = [
   '/super-admin-login',
   '/super-admin-panel',
+  '/recuperar-contrasena',
   '/login-interno',
   '/dashboard-interno',
   '/wyckoff-dashboard',

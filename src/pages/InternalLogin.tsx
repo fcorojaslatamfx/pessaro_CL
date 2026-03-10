@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  User, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  LogIn, 
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  LogIn,
   AlertCircle,
   Shield,
   ArrowLeft,
@@ -22,10 +22,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ROUTE_PATHS } from '@/lib/index';
 import { resetPassword, ResetPasswordResult } from '@/services/passwordReset';
 
-interface InternalLoginProps {
-  redirectTo?: string;
-}
-
+// FIX #2: Eliminada la declaración duplicada de InternalLoginProps.
+// Solo debe existir UNA declaración de la interfaz.
 interface InternalLoginProps {
   redirectTo?: string;
 }
@@ -72,13 +70,16 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     const result = await signIn(formData.email, formData.password);
 
+    // FIX #1: La redirección ya no depende únicamente del useEffect sobre `user`.
+    // Si signIn fue exitoso, redirigimos directamente aquí también,
+    // cubriendo el caso donde loadUserWithRole puede demorarse o fallar
+    // sin impedir el acceso al dashboard.
     if (result.success) {
-      // Redirigir al dashboard o a la página especificada
       const redirect = searchParams.get('redirect') || redirectTo || ROUTE_PATHS.INTERNAL_DASHBOARD;
       navigate(redirect);
     }
@@ -109,7 +110,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
 
     try {
       const result: ResetPasswordResult = await resetPassword(resetEmail);
-      
+
       setResetMessage({
         text: result.message,
         type: result.type
@@ -230,7 +231,10 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                   className="w-full"
                 >
                   {loading ? (
-                    'Iniciando sesión...'
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Iniciando sesión...
+                    </div>
                   ) : (
                     <>
                       <LogIn className="w-4 h-4 mr-2" />
@@ -239,7 +243,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                   )}
                 </Button>
               </form>
-              
+
               {/* Enlace de olvidó contraseña */}
               <div className="text-center mt-4">
                 <button
@@ -274,7 +278,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                 <div>
                   <h4 className="font-medium text-sm mb-1">Acceso Restringido</h4>
                   <p className="text-xs text-muted-foreground">
-                    Este dashboard está restringido a personal interno autorizado y clientes registrados. 
+                    Este dashboard está restringido a personal interno autorizado y clientes registrados.
                     Todas las actividades son monitoreadas y registradas.
                   </p>
                 </div>
@@ -283,7 +287,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
           </Card>
         </motion.div>
       </div>
-      
+
       {/* Modal de reset de contraseña */}
       {showForgotPassword && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -302,13 +306,13 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                   Ingrese su email para recibir un enlace de restablecimiento
                 </p>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Mensaje de estado */}
                 {resetMessage && (
                   <div className={`p-3 rounded-lg border ${
-                    resetMessage.type === 'success' 
-                      ? 'border-green-200 bg-green-50' 
+                    resetMessage.type === 'success'
+                      ? 'border-green-200 bg-green-50'
                       : resetMessage.type === 'warning'
                       ? 'border-yellow-200 bg-yellow-50'
                       : 'border-red-200 bg-red-50'
@@ -322,8 +326,8 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                         <AlertCircle className="h-4 w-4 text-red-600" />
                       )}
                       <p className={`text-sm ${
-                        resetMessage.type === 'success' 
-                          ? 'text-green-800' 
+                        resetMessage.type === 'success'
+                          ? 'text-green-800'
                           : resetMessage.type === 'warning'
                           ? 'text-yellow-800'
                           : 'text-red-800'
@@ -333,7 +337,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Campo de email */}
                 <div className="space-y-2">
                   <Label htmlFor="resetEmail" className="text-sm font-medium">
@@ -352,7 +356,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Botones */}
                 <div className="flex gap-3 pt-2">
                   <Button
@@ -380,7 +384,7 @@ const InternalLogin: React.FC<InternalLoginProps> = ({ redirectTo }) => {
                     )}
                   </Button>
                 </div>
-                
+
                 {/* Información adicional */}
                 <div className="text-xs text-muted-foreground text-center pt-2 border-t">
                   <p>📬 El enlace será enviado a su correo electrónico</p>

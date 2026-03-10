@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Shield, 
-  Eye, 
-  EyeOff, 
-  Lock, 
-  User, 
-  AlertTriangle, 
-  CheckCircle, 
-  Info, 
-  Wifi, 
+import {
+  Shield,
+  Eye,
+  EyeOff,
+  Lock,
+  User,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Wifi,
   WifiOff,
   Loader2
 } from 'lucide-react';
@@ -28,81 +28,83 @@ import { resetPassword, isResetPasswordFlow, clearResetParams, ResetPasswordResu
 // Función para mejorar los mensajes de error con contexto específico
 const getImprovedErrorMessage = (errorMessage: string): { message: string; type: 'error' | 'warning' | 'info' } => {
   const message = errorMessage.toLowerCase();
-  
+
   if (message.includes('invalid login credentials') || message.includes('credenciales incorrectas')) {
     return {
       message: '❌ Credenciales incorrectas. Verifique su email y contraseña de super administrador.',
       type: 'error'
     };
   }
-  
+
   if (message.includes('email not confirmed') || message.includes('email no confirmado')) {
     return {
       message: '⚠️ Email no confirmado. Verifique su bandeja de entrada y confirme su cuenta.',
       type: 'warning'
     };
   }
-  
+
   if (message.includes('too many requests') || message.includes('demasiados intentos')) {
     return {
       message: '🚫 Demasiados intentos de acceso. Espere 15 minutos antes de intentar nuevamente.',
       type: 'error'
     };
   }
-  
+
   if (message.includes('user not found') || message.includes('usuario no encontrado')) {
     return {
       message: '❌ Usuario no encontrado. Verifique que el email de super admin sea correcto.',
       type: 'error'
     };
   }
-  
+
   if (message.includes('network') || message.includes('conexión') || message.includes('connection')) {
     return {
       message: '🌐 Error de conexión. Verifique su conexión a internet e intente nuevamente.',
       type: 'warning'
     };
   }
-  
+
   if (message.includes('database') || message.includes('base de datos')) {
     return {
       message: '🔧 Error de base de datos. El sistema está experimentando problemas técnicos.',
       type: 'error'
     };
   }
-  
+
   if (message.includes('unauthorized') || message.includes('no autorizado') || message.includes('acceso denegado')) {
     return {
       message: '🔒 Acceso denegado. Este panel es exclusivo para super administradores.',
       type: 'error'
     };
   }
-  
+
   if (message.includes('timeout') || message.includes('tiempo agotado')) {
     return {
       message: '⏱️ Tiempo de espera agotado. El servidor tardó demasiado en responder.',
       type: 'warning'
     };
   }
-  
+
   if (message.includes('cuenta desactivada') || message.includes('account disabled')) {
     return {
       message: '⛔ Cuenta desactivada. Contacte al administrador del sistema.',
       type: 'error'
     };
   }
-  
+
   // Mensaje genérico mejorado
   return {
-    message: errorMessage.startsWith('❌') || errorMessage.startsWith('⚠️') || errorMessage.startsWith('🔒') 
-      ? errorMessage 
+    message: errorMessage.startsWith('❌') || errorMessage.startsWith('⚠️') || errorMessage.startsWith('🔒')
+      ? errorMessage
       : `⚠️ ${errorMessage}`,
     type: 'error'
   };
 };
 
 const SuperAdminLogin: React.FC = () => {
-  const [email, setEmail] = useState('admin@pessarocapital.com');
+  // FIX #5: Email vacío por defecto en lugar de pre-seteado con un valor fijo.
+  // Esto evita confusión al usuario y reduce riesgo de seguridad.
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,7 +121,7 @@ const SuperAdminLogin: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
-  
+
   const { signIn, createSuperAdmin, checkSuperAdminExists, isSuperAdmin, user } = useSuperAdmin();
   const navigate = useNavigate();
 
@@ -128,11 +130,11 @@ const SuperAdminLogin: React.FC = () => {
     const checkConnection = () => {
       setConnectionStatus(navigator.onLine ? 'online' : 'offline');
     };
-    
+
     checkConnection();
     window.addEventListener('online', checkConnection);
     window.addEventListener('offline', checkConnection);
-    
+
     return () => {
       window.removeEventListener('online', checkConnection);
       window.removeEventListener('offline', checkConnection);
@@ -145,15 +147,20 @@ const SuperAdminLogin: React.FC = () => {
       if (connectionStatus === 'online') {
         try {
           const result = await checkSuperAdminExists();
-          if (result.success && !result.superAdminExists) {
+          // FIX #4: Solo mostrar "crear admin" si la función fue exitosa
+          // Y explícitamente confirmó que NO existe super admin.
+          // Si hay error en la llamada (result.success === false), no mostrar el form de creación
+          // para evitar confusión cuando el admin ya existe pero la función falla.
+          if (result.success === true && result.superAdminExists === false) {
             setShowCreateAdmin(true);
           }
         } catch (error) {
+          // Error silencioso: no mostrar form de creación si no se puede verificar
           console.error('Error checking super admin:', error);
         }
       }
     };
-    
+
     checkExistingAdmin();
   }, [connectionStatus, checkSuperAdminExists]);
 
@@ -186,34 +193,34 @@ const SuperAdminLogin: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Verificar conexión
     if (connectionStatus === 'offline') {
       setError('🌐 Sin conexión a internet. Verifique su conexión y vuelva a intentar.');
       return;
     }
-    
+
     // Validaciones previas
     if (!email.trim()) {
       setError('❌ El email es obligatorio.');
       return;
     }
-    
+
     if (!password.trim()) {
       setError('❌ La contraseña es obligatoria.');
       return;
     }
-    
+
     if (!email.includes('@')) {
       setError('❌ Formato de email inválido.');
       return;
     }
-    
+
     if (password.length < 6) {
       setError('❌ La contraseña debe tener al menos 6 caracteres.');
       return;
     }
-    
+
     // Verificar límite de intentos y tiempo
     const now = Date.now();
     if (loginAttempts >= 5) {
@@ -225,18 +232,18 @@ const SuperAdminLogin: React.FC = () => {
         setLoginAttempts(0); // Resetear si ya pasó el tiempo
       }
     }
-    
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const result = await signIn(email.trim(), password);
-      
+
       if (result.success) {
         setSuccess(result.message || '✅ Inicio de sesión exitoso.');
         setLoginAttempts(0); // Resetear intentos en caso de éxito
-        
+
         // Verificar si requiere cambio de contraseña
         if (result.user) {
           try {
@@ -246,7 +253,7 @@ const SuperAdminLogin: React.FC = () => {
                 userId: result.user.id
               }
             });
-            
+
             if (!checkError && checkData.success && checkData.requiresPasswordChange) {
               setLoggedInUserId(result.user.id);
               setRequiresPasswordChange(true);
@@ -255,9 +262,10 @@ const SuperAdminLogin: React.FC = () => {
             }
           } catch (checkErr) {
             console.error('Error checking first login:', checkErr);
+            // Si falla la verificación, continuar con redirección normal
           }
         }
-        
+
         // Si no requiere cambio de contraseña, redirigir normalmente
         setTimeout(() => {
           navigate('/super-admin-panel');
@@ -283,18 +291,20 @@ const SuperAdminLogin: React.FC = () => {
       setError('🌐 Sin conexión a internet. Verifique su conexión y vuelva a intentar.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const result = await createSuperAdmin();
-      
+
       if (result.success) {
         setSuccess(result.message || '✅ Super administrador creado exitosamente. Ya puede iniciar sesión con las credenciales por defecto.');
         setShowCreateAdmin(false);
         setPassword('@pessaro2026'); // Autocompletar contraseña por defecto
+        // FIX #5: Solo setear el email de admin por defecto al crear uno nuevo
+        setEmail('admin@pessarocapital.com');
       } else {
         const improvedError = getImprovedErrorMessage(result.error || 'Error desconocido');
         setError(improvedError.message);
@@ -321,7 +331,7 @@ const SuperAdminLogin: React.FC = () => {
     setShowPasswordChangeModal(false);
     setRequiresPasswordChange(false);
     setSuccess('✅ Contraseña actualizada exitosamente. Redirigiendo al panel...');
-    
+
     setTimeout(() => {
       navigate('/super-admin-panel');
     }, 2000);
@@ -350,7 +360,7 @@ const SuperAdminLogin: React.FC = () => {
 
     try {
       const result: ResetPasswordResult = await resetPassword(resetEmail);
-      
+
       setResetMessage({
         text: result.message,
         type: result.type
@@ -399,7 +409,7 @@ const SuperAdminLogin: React.FC = () => {
             <p className="text-muted-foreground">
               Acceso restringido - Solo personal autorizado
             </p>
-            
+
             {/* Indicador de conexión */}
             <div className="flex items-center justify-center gap-2 mt-2">
               {connectionStatus === 'online' ? (
@@ -426,8 +436,8 @@ const SuperAdminLogin: React.FC = () => {
                 <AlertDescription className="text-yellow-800">
                   <div className="space-y-2">
                     <p>No se ha detectado un super administrador en el sistema.</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       className="w-full bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200"
                       onClick={handleCreateSuperAdmin}
@@ -595,7 +605,7 @@ const SuperAdminLogin: React.FC = () => {
               </div>
             </div>
 
-            {/* Credenciales por defecto (solo mostrar si se creó admin) */}
+            {/* Credenciales por defecto (solo mostrar después de crear admin) */}
             {showCreateAdmin && (
               <div className="pt-4 border-t border-border">
                 <div className="text-center text-xs text-muted-foreground space-y-1">
@@ -624,7 +634,7 @@ const SuperAdminLogin: React.FC = () => {
           </p>
         </motion.div>
       </motion.div>
-      
+
       {/* Modal de cambio de contraseña obligatorio */}
       {showPasswordChangeModal && (
         <PasswordChangeModal
@@ -634,7 +644,7 @@ const SuperAdminLogin: React.FC = () => {
           onCancel={handleCancelPasswordChange}
         />
       )}
-      
+
       {/* Modal de reset de contraseña */}
       {showForgotPassword && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -653,13 +663,13 @@ const SuperAdminLogin: React.FC = () => {
                   Ingrese su email para recibir un enlace de restablecimiento
                 </p>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Mensaje de estado */}
                 {resetMessage && (
                   <Alert className={`${
-                    resetMessage.type === 'success' 
-                      ? 'border-green-200 bg-green-50' 
+                    resetMessage.type === 'success'
+                      ? 'border-green-200 bg-green-50'
                       : resetMessage.type === 'warning'
                       ? 'border-yellow-200 bg-yellow-50'
                       : 'border-red-200 bg-red-50'
@@ -672,8 +682,8 @@ const SuperAdminLogin: React.FC = () => {
                       <AlertTriangle className="h-4 w-4 text-red-600" />
                     )}
                     <AlertDescription className={`${
-                      resetMessage.type === 'success' 
-                        ? 'text-green-800' 
+                      resetMessage.type === 'success'
+                        ? 'text-green-800'
                         : resetMessage.type === 'warning'
                         ? 'text-yellow-800'
                         : 'text-red-800'
@@ -682,7 +692,7 @@ const SuperAdminLogin: React.FC = () => {
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 {/* Campo de email */}
                 <div className="space-y-2">
                   <Label htmlFor="resetEmail" className="text-sm font-medium">
@@ -701,7 +711,7 @@ const SuperAdminLogin: React.FC = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Botones */}
                 <div className="flex gap-3 pt-2">
                   <Button
@@ -729,7 +739,7 @@ const SuperAdminLogin: React.FC = () => {
                     )}
                   </Button>
                 </div>
-                
+
                 {/* Información adicional */}
                 <div className="text-xs text-muted-foreground text-center pt-2 border-t">
                   <p>📬 El enlace será enviado a su correo electrónico</p>
