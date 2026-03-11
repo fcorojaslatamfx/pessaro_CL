@@ -41,13 +41,26 @@ export function useCMS() {
     }),
     useUpsert: () => useMutation({
       mutationFn: async (post: Partial<BlogPost>) => {
-        const { data, error } = await supabase
-          .from('cms_blog_posts_2026_02_23_17_38')
-          .upsert(post)
-          .select()
-          .single();
-        if (error) throw error;
-        return data as BlogPost;
+        // Si tiene id => UPDATE, si no => INSERT
+        if (post.id) {
+          const { id, created_at, ...updateData } = post as any;
+          const { data, error } = await supabase
+            .from('cms_blog_posts_2026_02_23_17_38')
+            .update(updateData)
+            .eq('id', id)
+            .select()
+            .single();
+          if (error) throw error;
+          return data as BlogPost;
+        } else {
+          const { data, error } = await supabase
+            .from('cms_blog_posts_2026_02_23_17_38')
+            .insert(post)
+            .select()
+            .single();
+          if (error) throw error;
+          return data as BlogPost;
+        }
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
     }),
