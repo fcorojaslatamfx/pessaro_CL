@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Clock, User, Search, TrendingUp } from 'lucide-react';
-import { blogPosts } from '@/data/index';
 import { IMAGES } from '@/assets/images';
 import { BlogPost } from '@/lib/index';
 import { useContactPopup } from '@/hooks/useContactPopup';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
+import { useBlogPublic } from '@/hooks/useBlogPublic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RiskProfileModal from '@/components/RiskProfileModal';
@@ -19,10 +19,11 @@ const Blog = () => {
   
   const { openPopup } = useContactPopup();
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
+  const { posts: allPosts, isLoading: postsLoading } = useBlogPublic();
 
   const categories = ['Todos', 'Trading', 'Mercados', 'Análisis', 'Educación', 'Criptomonedas'];
 
-  const filteredPosts = blogPosts.filter(post => {
+  const filteredPosts = allPosts.filter(post => {
     const matchesCategory = selectedCategory === 'Todos' || post.category === selectedCategory;
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,7 +185,21 @@ const Blog = () => {
       {/* Blog Posts Grid */}
       <section className="py-24 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {filteredPosts.length === 0 ? (
+          {postsLoading ? (
+            <div className="grid grid-responsive-blog gap-mobile-lg">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-card border border-border/40 rounded-2xl overflow-hidden animate-pulse">
+                  <div className="aspect-video bg-muted" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-2 bg-muted rounded w-16" />
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                    <div className="h-3 bg-muted rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredPosts.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg">
                 No se encontraron artículos que coincidan con tu búsqueda.

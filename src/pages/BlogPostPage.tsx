@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Calendar, User, Tag, Share2, ChevronRight, BookOpen } from 'lucide-react';
-import { blogPosts } from '@/data/index';
 import { BlogPost } from '@/lib/index';
+import { useBlogPost } from '@/hooks/useBlogPublic';
 import { Button } from '@/components/ui/button';
 import SocialShare from '@/components/SocialShare';
 import NewsletterPopup from '@/components/NewsletterPopup';
@@ -73,40 +73,28 @@ const renderContent = (content: string) => {
 const BlogPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [post, setPost] = useState<BlogPost | null>(null);
-  const [related, setRelated] = useState<BlogPost[]>([]);
   const [showNewsletter, setShowNewsletter] = useState(false);
 
-  useEffect(() => {
-    const found = blogPosts.find(p => p.id === slug);
-    if (!found) {
-      navigate('/blog', { replace: true });
-      return;
-    }
-    setPost(found);
-    // Artículos relacionados: misma categoría, distintos al actual, máx 3
-    const rel = blogPosts
-      .filter(p => p.id !== slug && p.category === found.category)
-      .slice(0, 3);
-    // Si hay menos de 3, completar con otros
-    if (rel.length < 3) {
-      const extra = blogPosts
-        .filter(p => p.id !== slug && p.category !== found.category)
-        .slice(0, 3 - rel.length);
-      setRelated([...rel, ...extra]);
-    } else {
-      setRelated(rel);
-    }
-    // Scroll al top al cargar
-    window.scrollTo(0, 0);
-  }, [slug]);
+  const { post, isLoading, prevPost, nextPost, related } = useBlogPost(slug);
 
-  if (!post) return null;
+  // Scroll al top al cambiar de artículo
+  useEffect(() => { window.scrollTo(0, 0); }, [slug]);
+
+  // Redirigir si no existe y ya terminó de cargar
+  useEffect(() => {
+    if (!isLoading && !post) navigate('/blog', { replace: true });
+  }, [isLoading, post]);
+
+  if (isLoading || !post) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-3">
+        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-muted-foreground">Cargando artículo...</p>
+      </div>
+    </div>
+  );
 
   const catColor = categoryColors[post.category] || 'bg-accent/10 text-accent border-accent/20';
-  const postIndex = blogPosts.findIndex(p => p.id === slug);
-  const prevPost = postIndex > 0 ? blogPosts[postIndex - 1] : null;
-  const nextPost = postIndex < blogPosts.length - 1 ? blogPosts[postIndex + 1] : null;
 
   return (
     <div className="flex flex-col w-full">
