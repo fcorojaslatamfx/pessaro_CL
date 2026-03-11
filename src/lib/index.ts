@@ -9,6 +9,7 @@ export const ROUTE_PATHS = {
   INSTRUMENTOS: '/instrumentos',
   EDUCACION: '/educacion',
   BLOG: '/blog',
+  BLOG_POST: '/blog/:slug',
   NOSOTROS: '/nosotros',
   CONTACTO: '/contacto',
   // Client Portal

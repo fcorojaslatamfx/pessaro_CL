@@ -42,6 +42,7 @@ const Servicios = lazy(() => import('@/pages/Servicios'));
 const Instrumentos = lazy(() => import('@/pages/Instrumentos'));
 const Educacion = lazy(() => import('@/pages/Educacion'));
 const Blog = lazy(() => import('@/pages/Blog'));
+const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const Nosotros = lazy(() => import('@/pages/Nosotros'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
@@ -113,6 +114,7 @@ export default function App() {
                             
                             {/* Blog & Market Analysis Section */}
                             <Route path={ROUTE_PATHS.BLOG} element={<Blog />} />
+                            <Route path={ROUTE_PATHS.BLOG_POST} element={<BlogPostPage />} />
                             
                             {/* Corporate Identity Section */}
                             <Route path={ROUTE_PATHS.NOSOTROS} element={<Nosotros />} />

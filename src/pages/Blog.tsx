@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, User, Search, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Clock, User, Search, TrendingUp } from 'lucide-react';
 import { blogPosts } from '@/data/index';
 import { IMAGES } from '@/assets/images';
 import { BlogPost } from '@/lib/index';
@@ -10,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RiskProfileModal from '@/components/RiskProfileModal';
 import NewsletterPopup from '@/components/NewsletterPopup';
-import SocialShare from '@/components/SocialShare';
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
@@ -266,16 +266,13 @@ const categoryColors: Record<string, string> = {
 };
 
 const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: number }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const catColor = categoryColors[post.category] || 'bg-accent/10 text-accent border-accent/20';
   const num = String((cardIndex ?? 0) + 1).padStart(2, '0');
 
   return (
-    <div
+    <Link
+      to={`/blog/${post.id}`}
       className="group relative flex flex-col bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-500 hover:border-accent/50 hover:shadow-2xl hover:shadow-accent/5 hover:-translate-y-1"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image with overlay */}
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
@@ -284,20 +281,19 @@ const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: numb
           alt={post.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
 
-        {/* Article number — top left */}
+        {/* Article number */}
         <div className="absolute top-4 left-4 font-mono text-xs font-bold text-white/40 tracking-widest select-none">
           #{num}
         </div>
 
-        {/* Category pill — top right */}
+        {/* Category pill */}
         <div className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full border backdrop-blur-md ${catColor}`}>
           {post.category}
         </div>
 
-        {/* Read time — bottom right */}
+        {/* Read time */}
         <div className="absolute bottom-4 right-4 flex items-center gap-1.5 text-xs text-white/70 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
           <Clock className="w-3 h-3" />
           {post.readTime} min
@@ -306,7 +302,6 @@ const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: numb
 
       {/* Content */}
       <div className="flex flex-col flex-grow p-5">
-        {/* Separator line accent */}
         <div className="w-8 h-0.5 bg-accent rounded-full mb-4 transition-all duration-500 group-hover:w-16" />
 
         <h3 className="text-lg font-bold text-foreground leading-snug mb-3 line-clamp-2 group-hover:text-accent transition-colors duration-300">
@@ -317,7 +312,6 @@ const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: numb
           {post.excerpt}
         </p>
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {post.tags.slice(0, 3).map((tag) => (
             <span key={tag} className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/50">
@@ -326,7 +320,6 @@ const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: numb
           ))}
         </div>
 
-        {/* Footer */}
         <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
@@ -340,86 +333,12 @@ const BlogPostCard = ({ post, index: cardIndex }: { post: BlogPost; index?: numb
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <SocialShare post={post} />
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-            >
-              {isExpanded ? 'Cerrar' : 'Leer'}
-            </button>
-          </div>
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/20 group-hover:bg-accent group-hover:text-accent-foreground transition-all duration-200 shrink-0">
+            Leer →
+          </span>
         </div>
       </div>
-      
-      {/* Expanded Content */}
-      {isExpanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="px-6 pb-6"
-        >
-          <div className="prose prose-sm max-w-none text-foreground">
-            {post.content.split('\n\n').map((paragraph, index) => {
-              if (paragraph.startsWith('## ')) {
-                return (
-                  <h3 key={index} className="text-lg font-bold text-accent mt-6 mb-3">
-                    {paragraph.replace('## ', '')}
-                  </h3>
-                );
-              }
-              if (paragraph.startsWith('### ')) {
-                return (
-                  <h4 key={index} className="text-base font-semibold text-foreground mt-4 mb-2">
-                    {paragraph.replace('### ', '')}
-                  </h4>
-                );
-              }
-              if (paragraph.startsWith('- ')) {
-                const items = paragraph.split('\n').filter(item => item.startsWith('- '));
-                return (
-                  <ul key={index} className="list-disc list-inside space-y-1 my-3">
-                    {items.map((item, i) => (
-                      <li key={i} className="text-muted-foreground">
-                        {item.replace('- ', '')}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
-              if (paragraph.match(/^\d+\./)) {
-                const items = paragraph.split('\n').filter(item => item.match(/^\d+\./));
-                return (
-                  <ol key={index} className="list-decimal list-inside space-y-1 my-3">
-                    {items.map((item, i) => (
-                      <li key={i} className="text-muted-foreground">
-                        {item.replace(/^\d+\.\s*/, '')}
-                      </li>
-                    ))}
-                  </ol>
-                );
-              }
-              return (
-                <p key={index} className="text-muted-foreground leading-relaxed my-3">
-                  {paragraph}
-                </p>
-              );
-            })}
-            
-            {/* Compartir en redes sociales */}
-            <div className="border-t border-border/40 pt-4 mt-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">
-                  ¿Te gustó este artículo? ¡Compártelo!
-                </span>
-                <SocialShare post={post} className="" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </div>
+    </Link>
   );
 };
 
