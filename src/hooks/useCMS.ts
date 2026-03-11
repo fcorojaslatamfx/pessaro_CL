@@ -19,7 +19,7 @@ export function useCMS() {
       queryKey: ['blog-posts'],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('blog_posts')
+          .from('cms_blog_posts_2026_02_23_17_38')
           .select('*')
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -30,7 +30,7 @@ export function useCMS() {
       queryKey: ['blog-post', id],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('blog_posts')
+          .from('cms_blog_posts_2026_02_23_17_38')
           .select('*')
           .eq('id', id)
           .single();
@@ -42,7 +42,7 @@ export function useCMS() {
     useUpsert: () => useMutation({
       mutationFn: async (post: Partial<BlogPost>) => {
         const { data, error } = await supabase
-          .from('blog_posts')
+          .from('cms_blog_posts_2026_02_23_17_38')
           .upsert(post)
           .select()
           .single();
@@ -54,7 +54,7 @@ export function useCMS() {
     useDelete: () => useMutation({
       mutationFn: async (id: string) => {
         const { error } = await supabase
-          .from('blog_posts')
+          .from('cms_blog_posts_2026_02_23_17_38')
           .delete()
           .eq('id', id);
         if (error) throw error;
@@ -69,7 +69,7 @@ export function useCMS() {
       queryKey: ['team-members'],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('team_members')
+          .from('cms_team_members_2026_02_23_17_38')
           .select('*')
           .order('order', { ascending: true });
         if (error) throw error;
@@ -79,7 +79,7 @@ export function useCMS() {
     useUpsert: () => useMutation({
       mutationFn: async (member: Partial<TeamMember>) => {
         const { data, error } = await supabase
-          .from('team_members')
+          .from('cms_team_members_2026_02_23_17_38')
           .upsert(member)
           .select()
           .single();
@@ -91,7 +91,7 @@ export function useCMS() {
     useDelete: () => useMutation({
       mutationFn: async (id: string) => {
         const { error } = await supabase
-          .from('team_members')
+          .from('cms_team_members_2026_02_23_17_38')
           .delete()
           .eq('id', id);
         if (error) throw error;
@@ -106,7 +106,7 @@ export function useCMS() {
       queryKey: ['services'],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('services')
+          .from('cms_services_2026_02_23_17_38')
           .select('*')
           .order('order', { ascending: true });
         if (error) throw error;
@@ -116,7 +116,7 @@ export function useCMS() {
     useUpsert: () => useMutation({
       mutationFn: async (service: Partial<Service>) => {
         const { data, error } = await supabase
-          .from('services')
+          .from('cms_services_2026_02_23_17_38')
           .upsert(service)
           .select()
           .single();
@@ -133,7 +133,7 @@ export function useCMS() {
       queryKey: ['trading-instruments'],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('trading_instruments')
+          .from('cms_instruments_2026_02_23_17_38')
           .select('*')
           .order('order', { ascending: true });
         if (error) throw error;
@@ -143,7 +143,7 @@ export function useCMS() {
     useUpsert: () => useMutation({
       mutationFn: async (instrument: Partial<TradingInstrument>) => {
         const { data, error } = await supabase
-          .from('trading_instruments')
+          .from('cms_instruments_2026_02_23_17_38')
           .upsert(instrument)
           .select()
           .single();
@@ -155,7 +155,7 @@ export function useCMS() {
     useDelete: () => useMutation({
       mutationFn: async (id: string) => {
         const { error } = await supabase
-          .from('trading_instruments')
+          .from('cms_instruments_2026_02_23_17_38')
           .delete()
           .eq('id', id);
         if (error) throw error;
@@ -169,7 +169,7 @@ export function useCMS() {
     useFiles: (folder?: string) => useQuery({
       queryKey: ['media-files', folder],
       queryFn: async () => {
-        let query = supabase.from('media_files').select('*').order('created_at', { ascending: false });
+        let query = supabase.from('cms_media_files_2026_02_23_17_38').select('*').order('created_at', { ascending: false });
         if (folder) query = query.eq('folder', folder);
         const { data, error } = await query;
         if (error) throw error;
@@ -193,7 +193,7 @@ export function useCMS() {
           .getPublicUrl(filePath);
 
         const { data: mediaData, error: dbError } = await supabase
-          .from('media_files')
+          .from('cms_media_files_2026_02_23_17_38')
           .insert({
             name: file.name,
             url: publicUrl,
@@ -213,7 +213,7 @@ export function useCMS() {
     useDelete: () => useMutation({
       mutationFn: async (id: string) => {
         const { data: file } = await supabase
-          .from('media_files')
+          .from('cms_media_files_2026_02_23_17_38')
           .select('url')
           .eq('id', id)
           .single();
@@ -224,7 +224,7 @@ export function useCMS() {
         }
 
         const { error } = await supabase
-          .from('media_files')
+          .from('cms_media_files_2026_02_23_17_38')
           .delete()
           .eq('id', id);
         if (error) throw error;
@@ -265,7 +265,7 @@ export function useCMS() {
       queryKey: ['page-content', pageKey],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from('page_content')
+          .from('cms_page_content_2026_02_23_17_38')
           .select('*')
           .eq('page_key', pageKey);
         if (error) throw error;
@@ -275,7 +275,7 @@ export function useCMS() {
     useUpdateSection: () => useMutation({
       mutationFn: async (section: Partial<PageContent>) => {
         const { data, error } = await supabase
-          .from('page_content')
+          .from('cms_page_content_2026_02_23_17_38')
           .upsert(section)
           .select()
           .single();
