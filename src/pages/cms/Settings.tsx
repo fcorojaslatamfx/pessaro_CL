@@ -56,8 +56,9 @@ export default function Settings() {
       
       const promises = categorySettings.map((s) => {
         return updateSetting.mutateAsync({
-          id: s.id,
-          setting_value: formData[s.setting_key],
+          ...s,                              // incluir todos los campos requeridos
+          setting_value: formData[s.setting_key] ?? s.setting_value,
+          updated_at: new Date().toISOString(),
         });
       });
 
