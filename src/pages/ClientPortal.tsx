@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useClientRegistration } from '@/hooks/useClientRegistration';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -42,7 +41,6 @@ const ClientPortal: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
   
-  const { getClientData, getClientPositions, getClientHistory } = useClientRegistration();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,24 +59,32 @@ const ClientPortal: React.FC = () => {
 
       setUser(user);
 
-      // Cargar datos del cliente
-      const [clientResult, positionsResult, historyResult] = await Promise.all([
-        getClientData(),
-        getClientPositions(),
-        getClientHistory(10)
-      ]);
+      // Cargar perfil directamente desde Supabase (sin RPC)
+      const { data: profileData, error: profileError } = await supabase
+        .from('client_profiles_2026_02_08_22_02')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      if (clientResult.success) {
-        setClientData(clientResult);
+      if (profileError || !profileData) {
+        console.error('Error cargando perfil:', profileError);
+        setLoading(false);
+        return;
       }
 
-      if (positionsResult.success) {
-        setPositions(positionsResult.positions || []);
-      }
+      // Cargar cuenta de trading
+      const { data: accountData } = await supabase
+        .from('trading_accounts_2026_02_08_22_02')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('account_type', 'standard')
+        .single();
 
-      if (historyResult.success) {
-        setHistory(historyResult.history || []);
-      }
+      setClientData({
+        success: true,
+        profile: profileData,
+        account: accountData || null
+      });
 
     } catch (error) {
       console.error('Error loading client data:', error);
