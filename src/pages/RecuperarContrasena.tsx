@@ -21,52 +21,40 @@ const RecuperarContrasena: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  // Token propio del sistema de recovery (hex 64 chars desde query param ?token=)
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
-  // Detectar token de recovery en el hash o query params al cargar la página
+  // Detectar token de recovery en query params al cargar la página
   useEffect(() => {
     const extractTokenFromUrl = () => {
-      // Supabase envía el token en el hash: #access_token=...&refresh_token=...&type=recovery
-      const hash = window.location.hash;
-      const hashParams = new URLSearchParams(hash.replace('#', ''));
-
-      // También verificar query params como fallback
       const queryParams = new URLSearchParams(window.location.search);
+      const token = queryParams.get('token');
 
-      const token = hashParams.get('access_token') || queryParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-      const type = hashParams.get('type') || queryParams.get('type');
-
-      if (token && type === 'recovery') {
-        setAccessToken(token);
+      if (token) {
+        setResetToken(token);
         setStep('reset');
-
-        // Establecer la sesión en Supabase con los tokens
-        if (refreshToken) {
-          supabase.auth.setSession({
-            access_token: token,
-            refresh_token: refreshToken
-          }).catch(console.error);
-        }
-
-        // Limpiar URL para no exponer tokens
+        // Limpiar URL para no exponer el token
         window.history.replaceState(null, '', window.location.pathname);
         return;
+      }
+
+      // Fallback: detectar token nativo de Supabase en el hash (por si acaso)
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.replace('#', ''));
+      const accessTokenHash = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      if (accessTokenHash && type === 'recovery') {
+        // Token nativo de Supabase — usar setSession para que updateUser funcione
+        const refreshToken = hashParams.get('refresh_token') || '';
+        supabase.auth.setSession({ access_token: accessTokenHash, refresh_token: refreshToken })
+          .catch(console.error);
+        setResetToken('__supabase_native__');
+        setStep('reset');
+        window.history.replaceState(null, '', window.location.pathname);
       }
     };
 
     extractTokenFromUrl();
-
-    // También escuchar el evento PASSWORD_RECOVERY de Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY' && session?.access_token) {
-        setAccessToken(session.access_token);
-        setStep('reset');
-        window.history.replaceState(null, '', window.location.pathname);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const validatePasswordStrength = (pwd: string): { isValid: boolean; errors: string[] } => {
@@ -93,7 +81,8 @@ const RecuperarContrasena: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Usar la Edge Function personalizada que envía el email con Resend
+      // Usar SOLO la Edge Function personalizada (Resend). Sin fallback a Supabase nativo
+      // para evitar enviar doble email al usuario.
       const { data, error: fnError } = await supabase.functions.invoke(
         'password_recovery_fixed_2026_02_23_19_30',
         { body: { action: 'request_reset', email: email.toLowerCase().trim() } }
@@ -104,17 +93,7 @@ const RecuperarContrasena: React.FC = () => {
 
       setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
     } catch (err: any) {
-      // Fallback: usar Supabase nativo si la Edge Function falla
-      try {
-        const { error: authError } = await supabase.auth.resetPasswordForEmail(
-          email.toLowerCase().trim(),
-          { redirectTo: `${window.location.origin}/recuperar-contrasena` }
-        );
-        if (authError) throw authError;
-        setMessage('Se ha enviado un enlace de recuperación a su correo. Revise también la carpeta de spam.');
-      } catch (fallbackErr: any) {
-        setError(fallbackErr.message || 'Error al enviar el correo de recuperación.');
-      }
+      setError(err.message || 'Error al enviar el correo de recuperación.');
     } finally {
       setIsLoading(false);
     }
@@ -136,25 +115,21 @@ const RecuperarContrasena: React.FC = () => {
       return;
     }
 
-    if (!accessToken) {
+    if (!resetToken) {
       setError('Token de recuperación inválido. Por favor solicite un nuevo enlace.');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Intentar actualizar directamente con la sesión activa de Supabase
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      // Llamar SIEMPRE a la Edge Function con el reset_token propio del sistema
+      const { data, error: fnError } = await supabase.functions.invoke(
+        'password_recovery_fixed_2026_02_23_19_30',
+        { body: { action: 'update_password', reset_token: resetToken, password } }
+      );
 
-      if (updateError) {
-        // Fallback: usar la Edge Function
-        const { data, error: fnError } = await supabase.functions.invoke(
-          'password_recovery_fixed_2026_02_23_19_30',
-          { body: { action: 'update_password', access_token: accessToken, password } }
-        );
-        if (fnError) throw new Error(fnError.message);
-        if (!data?.success) throw new Error(data?.error || 'Error al actualizar contraseña');
-      }
+      if (fnError) throw new Error(fnError.message);
+      if (!data?.success) throw new Error(data?.error || 'Error al actualizar contraseña');
 
       setStep('success');
       setTimeout(() => navigate(ROUTE_PATHS.CMS_LOGIN), 3000);
