@@ -144,7 +144,11 @@ export const isLoginRoute = (path: string): boolean => {
 
 // Función para verificar si una ruta debe estar en el dominio principal
 export const isMainRoute = (path: string): boolean => {
-  return MAIN_ONLY_ROUTES.some(route => path === route || (route === '/' && path === ''));
+  return MAIN_ONLY_ROUTES.some(route => 
+    path === route || 
+    (route === '/' && path === '') ||
+    (route !== '/' && path.startsWith(route + '/'))
+  );
 };
 
 // Función para redirigir al dominio correcto con lógica ESTRICTA
