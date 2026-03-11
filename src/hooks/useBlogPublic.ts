@@ -80,30 +80,37 @@ export function useBlogPublic() {
  * 2. Luego en estáticos
  */
 export function useBlogPost(slug: string | undefined) {
-  const { data: dbPost, isLoading } = useQuery({
+  const { data: dbPost, isLoading, isError } = useQuery({
     queryKey: ['blog-post-public', slug],
     queryFn: async () => {
       if (!slug) return null;
-      // Buscar por slug primero, luego por id
+      // Formato correcto de PostgREST para .or() con valores string
       const { data, error } = await supabase
         .from('cms_blog_posts_2026_02_23_17_38')
         .select('*')
-        .or(`slug.eq.${slug},id.eq.${slug}`)
+        .or(`slug.eq."${slug}",id.eq."${slug}"`)
         .eq('status', 'published')
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        console.warn('useBlogPost DB error (using static fallback):', error.message);
+        return null; // No lanzar error — usar fallback estático
+      }
       return data ? dbToStaticFormat(data as DBBlogPost) : null;
     },
     enabled: !!slug,
     staleTime: 1000 * 60 * 2,
+    retry: false, // No reintentar — ir directo al fallback
   });
 
-  // Fallback a estáticos si no está en BD
+  // Fallback a estáticos si no está en BD o si la query falló
   const staticPost = slug
     ? staticBlogPosts.find(p => p.id === slug) ?? null
     : null;
 
-  const post = isLoading ? null : (dbPost ?? staticPost);
+  // post = resultado BD si existe, sino estático, nil si aún cargando y no hay estático
+  const post = isLoading
+    ? (staticPost ?? null)  // Si hay estático disponible de inmediato, usarlo sin esperar BD
+    : (dbPost ?? staticPost);
 
   // Para prev/next: usar los estáticos como base (los de BD no tienen orden global fácil)
   const allStatic = staticBlogPosts;

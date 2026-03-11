@@ -80,12 +80,12 @@ const BlogPostPage: React.FC = () => {
   // Scroll al top al cambiar de artículo
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
 
-  // Redirigir si no existe y ya terminó de cargar
+  // Redirigir solo si terminó de cargar TODO y no hay post en ninguna fuente
   useEffect(() => {
     if (!isLoading && !post) navigate('/blog', { replace: true });
-  }, [isLoading, post]);
+  }, [isLoading, post, navigate]);
 
-  if (isLoading || !post) return (
+  if (!post) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-3">
         <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />

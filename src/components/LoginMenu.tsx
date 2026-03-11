@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, User, BarChart3, Settings, LogIn, Shield, ArrowRight } from 'lucide-react';
+import { ChevronDown, User, Shield, ArrowRight, LayoutDashboard } from 'lucide-react';
 import { ROUTE_PATHS } from '@/lib/index';
 import { Button } from '@/components/ui/button';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
@@ -37,18 +36,28 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
 
   const menuItems = [
     {
+      label: 'Portal Cliente',
+      icon: <LayoutDashboard className="w-4 h-4" />,
+      href: getMainSiteUrl(ROUTE_PATHS.CLIENT_PORTAL),
+      description: 'Accede a tu cuenta',
+      external: true,
+      highlight: true,
+    },
+    {
       label: 'Registro de Usuario',
       icon: <User className="w-4 h-4" />,
       href: getMainSiteUrl(ROUTE_PATHS.CLIENT_REGISTER),
-      description: 'Registro de cliente',
-      external: true
+      description: 'Crear nueva cuenta',
+      external: true,
+      highlight: false,
     },
     {
-      label: 'Dashboard',
-      icon: <BarChart3 className="w-4 h-4" />,
+      label: 'Acceso Staff',
+      icon: <Shield className="w-4 h-4" />,
       href: getAdminUrl(ROUTE_PATHS.INTERNAL_LOGIN),
-      description: 'Acceso al dashboard',
-      external: true
+      description: 'Solo personal autorizado',
+      external: true,
+      highlight: false,
     }
   ];
 
@@ -75,7 +84,7 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-white border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-60 bg-white border border-border rounded-lg shadow-lg z-50 overflow-hidden"
           >
             <div className="py-2">
               {menuItems.map((item, index) => (
@@ -88,23 +97,34 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
                     setIsOpen(false);
                     onMenuItemClick?.();
                   }}
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group"
+                  className={`flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group ${
+                    item.highlight ? 'bg-[#00C077]/5 border-b border-[#00C077]/10' : ''
+                  }`}
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#24d594]/10 text-[#24d594] group-hover:bg-[#24d594]/20 transition-colors">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                    item.highlight
+                      ? 'bg-[#00C077]/15 text-[#00C077] group-hover:bg-[#00C077]/25'
+                      : 'bg-[#24d594]/10 text-[#24d594] group-hover:bg-[#24d594]/20'
+                  }`}>
                     {item.icon}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{item.label}</div>
+                    <div className={`font-medium ${item.highlight ? 'text-[#00C077]' : ''}`}>
+                      {item.label}
+                    </div>
                     <div className="text-xs text-muted-foreground">{item.description}</div>
                   </div>
+                  {item.highlight && (
+                    <ArrowRight className="w-3 h-3 text-[#00C077] opacity-60" />
+                  )}
                 </a>
               ))}
             </div>
             
-            {/* Separador y footer */}
+            {/* Footer */}
             <div className="border-t border-border bg-muted/30 px-4 py-3">
               <p className="text-xs text-muted-foreground text-center">
-                Acceso para usuarios autorizados
+                Pessaro Capital © 2026
               </p>
             </div>
           </motion.div>

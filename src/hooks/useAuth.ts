@@ -34,7 +34,7 @@ export const useAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          await loadUserWithRole(session.user);
+          await loadUserWithRole(session.user, true); // true = redirigir tras login
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
         }
@@ -60,7 +60,26 @@ export const useAuth = () => {
     }
   };
 
-  const loadUserWithRole = async (authUser: any) => {
+  const redirectByRole = (role: string) => {
+    const currentPath = window.location.pathname;
+    if (role === 'cliente') {
+      // Clientes siempre van al portal cliente
+      navigate('/portal-cliente', { replace: true });
+    } else if (['super_admin', 'admin', 'interno'].includes(role)) {
+      // Staff: si ya está en una ruta /cms/* no redirigir (ya está en el lugar correcto)
+      // Si viene del login, ir al dashboard
+      if (currentPath === '/cms/login' || currentPath === '/cms/login/') {
+        navigate('/cms/dashboard', { replace: true });
+      }
+      // Si está en otra ruta (ej. la app principal), ir al dashboard
+      else if (!currentPath.startsWith('/cms')) {
+        navigate('/cms/dashboard', { replace: true });
+      }
+      // Si ya está en /cms/*, no hacer nada (ya está navegando internamente)
+    }
+  };
+
+  const loadUserWithRole = async (authUser: any, redirectAfterLogin = false) => {
     try {
       // Usar la nueva Edge Function para verificar usuario
       const { data: response, error: functionError } = await supabase.functions.invoke('user_access_management_2026_02_09', {
@@ -104,6 +123,11 @@ export const useAuth = () => {
           role: roleData.role,
           profile
         });
+
+        // Redirigir según rol solo si viene de un login fresco
+        if (redirectAfterLogin) {
+          redirectByRole(roleData.role);
+        }
         return;
       }
 
@@ -133,6 +157,11 @@ export const useAuth = () => {
         lastLogin: userData.lastLogin,
         permissions: userData.rolePermissions
       });
+
+      // Redirigir según rol solo si viene de un login fresco
+      if (redirectAfterLogin) {
+        redirectByRole(userData.role);
+      }
 
     } catch (error) {
       console.error('Error loading user data:', error);
