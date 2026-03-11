@@ -6,6 +6,7 @@ import { blogPosts } from '@/data/index';
 import { BlogPost } from '@/lib/index';
 import { Button } from '@/components/ui/button';
 import SocialShare from '@/components/SocialShare';
+import NewsletterPopup from '@/components/NewsletterPopup';
 
 const categoryColors: Record<string, string> = {
   'Trading':        'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -74,6 +75,7 @@ const BlogPostPage: React.FC = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [related, setRelated] = useState<BlogPost[]>([]);
+  const [showNewsletter, setShowNewsletter] = useState(false);
 
   useEffect(() => {
     const found = blogPosts.find(p => p.id === slug);
@@ -293,11 +295,13 @@ const BlogPostPage: React.FC = () => {
                   <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                     Estrategias de trading y análisis de mercado directo en tu correo.
                   </p>
-                  <Link to="/#newsletter">
-                    <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs">
-                      Suscribirse gratis
-                    </Button>
-                  </Link>
+                  <Button
+                    size="sm"
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
+                    onClick={() => setShowNewsletter(true)}
+                  >
+                    Suscribirse gratis
+                  </Button>
                 </div>
               </div>
             </aside>
@@ -328,6 +332,11 @@ const BlogPostPage: React.FC = () => {
           </div>
         </section>
       )}
+
+      <NewsletterPopup
+        isOpen={showNewsletter}
+        onClose={() => setShowNewsletter(false)}
+      />
     </div>
   );
 };
