@@ -134,6 +134,7 @@ export const MAIN_ONLY_ROUTES = [
   '/nosotros',
   '/contacto',
   '/portal-cliente',
+  '/portal-cliente/dashboard',
   '/registro-cliente',
 ] as const;
 

@@ -63,8 +63,8 @@ export const useAuth = () => {
   const redirectByRole = (role: string) => {
     const currentPath = window.location.pathname;
     if (role === 'cliente') {
-      // Clientes siempre van al portal cliente
-      navigate('/portal-cliente', { replace: true });
+      // Clientes siempre van al dashboard del portal cliente
+      navigate('/portal-cliente/dashboard', { replace: true });
     } else if (['super_admin', 'admin', 'interno'].includes(role)) {
       // Staff: si ya está en una ruta /cms/* no redirigir (ya está en el lugar correcto)
       // Si viene del login, ir al dashboard

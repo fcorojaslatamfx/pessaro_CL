@@ -55,7 +55,7 @@ const ClientPortal: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        navigate('/');
+        navigate('/portal-cliente', { replace: true });
         return;
       }
 
@@ -89,7 +89,7 @@ const ClientPortal: React.FC = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/');
+    navigate('/portal-cliente', { replace: true });
   };
 
   const formatCurrency = (amount: number) => {

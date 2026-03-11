@@ -45,6 +45,7 @@ const Blog = lazy(() => import('@/pages/Blog'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const Nosotros = lazy(() => import('@/pages/Nosotros'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
+const ClientLogin = lazy(() => import('@/pages/ClientLogin'));
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 const ClientRegister = lazy(() => import('@/pages/ClientRegister'));
 const RecuperarContrasena = lazy(() => import('@/pages/RecuperarContrasena'));
@@ -135,8 +136,14 @@ export default function App() {
                             <Route path={ROUTE_PATHS.INTEGRATION_VERIFICATION} element={<IntegrationVerificationPage />} />
                             
                             {/* Client Portal Section */}
+                            {/* Login público para clientes */}
                             <Route 
                               path={ROUTE_PATHS.CLIENT_PORTAL} 
+                              element={<ClientLogin />}
+                            />
+                            {/* Dashboard del portal (protegido) */}
+                            <Route 
+                              path="/portal-cliente/dashboard" 
                               element={
                                 <ProtectedRoute requiredRoles="cliente">
                                   <ClientPortal />
