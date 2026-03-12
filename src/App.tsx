@@ -14,9 +14,6 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { WhatsAppProvider } from '@/hooks/useWhatsApp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// --- PORTAL LAYOUT (nuevo) ---
-import PortalLayout from '@/components/PortalLayout';
-
 // --- LOADER DE PÁGINA ---
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -84,6 +81,7 @@ const queryClient = new QueryClient({
  * App Component
  * Root component of Pessaro Capital platform.
  * Configures the design system providers, router, and layout orchestration.
+ * © 2026 Pessaro Capital. All rights reserved.
  */
 export default function App() {
   return (
@@ -96,109 +94,144 @@ export default function App() {
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <DomainGuard>
+                  {/* WEBSITE PRINCIPAL */}
                   <Routes>
-                    {/* ---------------------------
-                        RUTAS DEL PORTAL (SIN Layout GLOBAL)
-                        --------------------------- */}
-                    <Route path="/portal-cliente/login" element={<ClientLogin />} />
-                    <Route path="/portal-cliente/*" element={<PortalLayout />}>
-                      <Route index element={<ClientPortal />} />
-                      <Route path="dashboard" element={<ClientPortal />} />
-                      {/* Añade aquí rutas internas del portal si las tienes */}
-                    </Route>
-
-                    {/* ---------------------------
-                        SITIO PÚBLICO envuelto por Layout
-                        --------------------------- */}
                     <Route
                       path="/*"
                       element={
                         <Layout>
                           <Routes>
+                            {/* Main Landing & Home Section */}
                             <Route path={ROUTE_PATHS.HOME} element={<Home />} />
+                            
+                            {/* Financial Services Section */}
                             <Route path={ROUTE_PATHS.SERVICIOS} element={<Servicios />} />
+                            
+                            {/* Market Instruments Section */}
                             <Route path={ROUTE_PATHS.INSTRUMENTOS} element={<Instrumentos />} />
+                            
+                            {/* Educational Resources Section */}
                             <Route path={ROUTE_PATHS.EDUCACION} element={<Educacion />} />
+                            
+                            {/* Blog & Market Analysis Section */}
                             <Route path={ROUTE_PATHS.BLOG} element={<Blog />} />
                             <Route path={ROUTE_PATHS.BLOG_POST} element={<BlogPostPage />} />
+                            
+                            {/* Corporate Identity Section */}
                             <Route path={ROUTE_PATHS.NOSOTROS} element={<Nosotros />} />
+                            
+                            {/* Client Support & Contact Section */}
                             <Route path={ROUTE_PATHS.CONTACTO} element={<Contacto />} />
+                            
+                            {/* Client Registration */}
                             <Route path={ROUTE_PATHS.CLIENT_REGISTER} element={<ClientRegister />} />
+                            
+                            {/* Password Recovery */}
                             <Route path={ROUTE_PATHS.RECUPERAR_CONTRASENA} element={<RecuperarContrasena />} />
+                            
+                            {/* Test Pages */}
                             <Route path={ROUTE_PATHS.RESEND_TEST} element={<TestResend />} />
                             <Route path={ROUTE_PATHS.RESEND_TEST_COMPLETE} element={<TestResendComplete />} />
                             <Route path={ROUTE_PATHS.SYSTEM_VERIFICATION} element={<SystemVerification />} />
                             <Route path={ROUTE_PATHS.INTEGRATION_VERIFICATION} element={<IntegrationVerificationPage />} />
+                            
+                            {/* Client Portal Section */}
+                            {/* Login público para clientes */}
+                            <Route 
+                              path={ROUTE_PATHS.CLIENT_PORTAL} 
+                              element={<ClientLogin />}
+                            />
+                            {/* Dashboard del portal (ClientPortal maneja auth internamente) */}
+                            <Route 
+                              path="/portal-cliente/dashboard" 
+                              element={<ClientPortal />} 
+                            />
+                            
+                            {/* Error Page */}
                             <Route path={ROUTE_PATHS.ERROR} element={<ErrorPage />} />
                           </Routes>
                         </Layout>
                       }
                     />
+                    
+                    {/* DOMINIO DE GESTIÓN (LOGIN / CMS) */}
+                    {/* FIX: rutas con paths explícitos — el segundo <Route path="/*"> nunca matchea en RR v6 */}
 
-                    {/* ---------------------------
-                        CMS / ADMIN / PROTECTED ROUTES
-                        --------------------------- */}
+                    {/* — Auth público — */}
                     <Route path={ROUTE_PATHS.SUPER_ADMIN_LOGIN} element={<LoginLayout><SuperAdminLogin /></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.INTERNAL_LOGIN} element={<Navigate to={ROUTE_PATHS.CMS_LOGIN} replace />} />
-                    <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC} element={
+                    <Route path={ROUTE_PATHS.INTERNAL_LOGIN}    element={<Navigate to={ROUTE_PATHS.CMS_LOGIN} replace />} />
+                    <Route path={ROUTE_PATHS.ACCESS_DIAGNOSTIC}  element={
                       <LoginLayout>
                         <ProtectedRoute requiredRoles="super_admin,admin">
                           <AccessDiagnostic />
                         </ProtectedRoute>
                       </LoginLayout>
                     } />
-                    <Route path={ROUTE_PATHS.CMS_SETUP} element={<LoginLayout><Setup /></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_LOGIN} element={<LoginLayout><Login /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SETUP}          element={<LoginLayout><Setup /></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_LOGIN}          element={<LoginLayout><Login /></LoginLayout>} />
 
-                    <Route path={ROUTE_PATHS.SUPER_ADMIN_PANEL} element={
-                      <LoginLayout>
-                        <ProtectedRoute requiredRoles="super_admin">
-                          <SuperAdminPanel />
-                        </ProtectedRoute>
-                      </LoginLayout>
-                    } />
+                    {/* — Rutas protegidas Super Admin — */}
+                    <Route
+                      path={ROUTE_PATHS.SUPER_ADMIN_PANEL}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="super_admin">
+                            <SuperAdminPanel />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
 
-                    <Route path={ROUTE_PATHS.INTERNAL_DASHBOARD} element={
-                      <LoginLayout>
-                        <ProtectedRoute requiredRoles="interno,super_admin">
-                          <InternalDashboard />
-                        </ProtectedRoute>
-                      </LoginLayout>
-                    } />
+                    {/* — Rutas protegidas usuarios internos — */}
+                    <Route
+                      path={ROUTE_PATHS.INTERNAL_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <InternalDashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.WYCKOFF_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <WyckoffDashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
 
-                    <Route path={ROUTE_PATHS.WYCKOFF_DASHBOARD} element={
-                      <LoginLayout>
-                        <ProtectedRoute requiredRoles="interno,super_admin">
-                          <WyckoffDashboard />
-                        </ProtectedRoute>
-                      </LoginLayout>
-                    } />
-
-                    <Route path={ROUTE_PATHS.CMS_DASHBOARD} element={
-                      <LoginLayout>
-                        <ProtectedRoute requiredRoles="interno,super_admin">
-                          <Dashboard />
-                        </ProtectedRoute>
-                      </LoginLayout>
-                    } />
-
-                    <Route path="/cms/pages" element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><PageContentManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path="/cms/faqs" element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><FAQManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_BLOG} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><BlogManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_TEAM} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><TeamManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_SERVICES} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><ServicesManager /></ProtectedRoute></LoginLayout>} />
+                    {/* — CMS Dashboard y managers — */}
+                    <Route
+                      path={ROUTE_PATHS.CMS_DASHBOARD}
+                      element={
+                        <LoginLayout>
+                          <ProtectedRoute requiredRoles="interno,super_admin">
+                            <Dashboard />
+                          </ProtectedRoute>
+                        </LoginLayout>
+                      }
+                    />
+                    <Route path="/cms/pages"   element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><PageContentManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path="/cms/faqs"    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><FAQManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_BLOG}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><BlogManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_TEAM}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><TeamManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SERVICES}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><ServicesManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_INSTRUMENTS} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><InstrumentsManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_MEDIA} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><MediaLibrary /></ProtectedRoute></LoginLayout>} />
-                    <Route path={ROUTE_PATHS.CMS_SETTINGS} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><Settings /></ProtectedRoute></LoginLayout>} />
-
-                    {/* Catch-all 404 */}
+                    <Route path={ROUTE_PATHS.CMS_MEDIA}       element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><MediaLibrary /></ProtectedRoute></LoginLayout>} />
+                    <Route path={ROUTE_PATHS.CMS_SETTINGS}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><Settings /></ProtectedRoute></LoginLayout>} />
+                    
+                    {/* Catch-all route for 404 errors */}
                     <Route path="*" element={<ErrorPage />} />
                   </Routes>
                 </DomainGuard>
               </Suspense>
             </ErrorBoundary>
           </BrowserRouter>
-
+          
           {/* Feedback Components */}
           <Toaster />
         </WhatsAppProvider>
