@@ -13,7 +13,8 @@ import {
   TradingViewSymbolOverview,
   TradingViewEconomicCalendar,
   TradingViewMarketScreener,
-  TradingViewTickerTape
+  TradingViewTickerTape,
+  TwelveDataPriceCard
 } from '@/components/TradingViewWidgets';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -261,6 +262,14 @@ const ClientPortal: React.FC = () => {
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/portal-cliente', { replace: true }); };
   const handleRefresh = () => { setLoading(true); setLastRefresh(new Date()); loadAll(); };
 
+  // Inyectar keyframe para spinner de Twelve Data
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+    return () => { try { document.head.removeChild(style); } catch {} };
+  }, []);
+
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
@@ -419,6 +428,12 @@ const ClientPortal: React.FC = () => {
                     </div>
                   </div>
                 </motion.div>
+
+                {/* Precios en tiempo real - Twelve Data */}
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Precios en Tiempo Real</p>
+                  <TwelveDataPriceCard symbols={['EUR/USD','GBP/USD','XAU/USD','BTC/USD']} />
+                </div>
 
                 {/* Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
