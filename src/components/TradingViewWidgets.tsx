@@ -1,247 +1,242 @@
 import React, { useEffect, useRef } from 'react';
 
-interface TradingViewWidgetProps {
-  symbol?: string;
-  width?: string | number;
-  height?: string | number;
-  theme?: 'light' | 'dark';
-  style?: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
-  locale?: string;
-  toolbar_bg?: string;
-  enable_publishing?: boolean;
-  allow_symbol_change?: boolean;
-  container_id?: string;
+// ─── Helper ──────────────────────────────────────────────────────────────────
+// TradingView requiere esta estructura exacta:
+// <div class="tradingview-widget-container">
+//   <div class="tradingview-widget-container__widget"></div>  ← target del script
+//   <script>{ config }</script>
+// </div>
+function useTradingViewScript(
+  containerRef: React.RefObject<HTMLDivElement>,
+  src: string,
+  config: Record<string, any>,
+  deps: any[]
+) {
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Limpiar instancia previa completamente
+    container.innerHTML = '';
+
+    // Crear el div inner que TradingView necesita como target
+    const widget = document.createElement('div');
+    widget.className = 'tradingview-widget-container__widget';
+    widget.style.height = 'calc(100% - 32px)';
+    widget.style.width = '100%';
+    container.appendChild(widget);
+
+    // Crear script con la config
+    const script = document.createElement('script');
+    script.src = src;
+    script.type = 'text/javascript';
+    script.async = true;
+    script.innerHTML = JSON.stringify(config);
+    container.appendChild(script);
+
+    return () => {
+      if (container) container.innerHTML = '';
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 }
 
-// Widget de Gráfico Avanzado
-export const TradingViewAdvancedChart: React.FC<TradingViewWidgetProps> = ({
-  symbol = "EURUSD",
-  width = "100%",
-  height = 610,
-  theme = "light",
-  style = "1",
-  locale = "es",
-  toolbar_bg = "#f1f3f6",
-  enable_publishing = false,
+// ─── Advanced Chart ───────────────────────────────────────────────────────────
+interface AdvancedChartProps {
+  symbol?: string;
+  height?: number;
+  theme?: 'light' | 'dark';
+  allow_symbol_change?: boolean;
+}
+
+export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
+  symbol = 'FX:EURUSD',
+  height = 520,
+  theme = 'dark',
   allow_symbol_change = true,
-  container_id = "tradingview_advanced"
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      // Limpiar contenido previo
-      containerRef.current.innerHTML = '';
-      
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        autosize: false,
-        symbol: symbol,
-        interval: "D",
-        timezone: "Etc/UTC",
-        theme: theme,
-        style: style,
-        locale: locale,
-        toolbar_bg: toolbar_bg,
-        enable_publishing: enable_publishing,
-        allow_symbol_change: allow_symbol_change,
-        calendar: false,
-        support_host: "https://www.tradingview.com",
-        width: width,
-        height: height
-      });
-
-      containerRef.current.appendChild(script);
-    }
-  }, [symbol, width, height, theme, style, locale, toolbar_bg, enable_publishing, allow_symbol_change]);
+  useTradingViewScript(
+    ref,
+    'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',
+    {
+      autosize: true,
+      symbol,
+      interval: 'D',
+      timezone: 'America/Santiago',
+      theme,
+      style: '1',
+      locale: 'es',
+      allow_symbol_change,
+      calendar: false,
+      support_host: 'https://www.tradingview.com',
+    },
+    [symbol, height, theme, allow_symbol_change]
+  );
 
   return (
-    <div className="tradingview-widget-container" style={{ height, width }}>
-      <div ref={containerRef} id={container_id} style={{ height, width }}></div>
-      <div className="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
-      </div>
-    </div>
+    <div
+      className="tradingview-widget-container"
+      ref={ref}
+      style={{ height, width: '100%' }}
+    />
   );
 };
 
-// Widget de Lista de Símbolos
-export const TradingViewSymbolOverview: React.FC<{
-  symbols?: Array<[string, string]>;
-  width?: string | number;
-  height?: string | number;
+// ─── Symbol Overview (mini spark lines) ──────────────────────────────────────
+interface SymbolOverviewProps {
+  height?: number;
   theme?: 'light' | 'dark';
-}> = ({
-  symbols = [
-    ["EURUSD", "EUR/USD"],
-    ["GBPUSD", "GBP/USD"],
-    ["USDJPY", "USD/JPY"],
-    ["USDCHF", "USD/CHF"],
-    ["AUDUSD", "AUD/USD"],
-    ["USDCAD", "USD/CAD"]
-  ],
-  width = "100%",
-  height = 400,
-  theme = "light"
+}
+
+export const TradingViewSymbolOverview: React.FC<SymbolOverviewProps> = ({
+  height = 200,
+  theme = 'dark',
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-      
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        symbols: symbols,
-        chartOnly: false,
-        width: width,
-        height: height,
-        locale: "es",
-        colorTheme: theme,
-        autosize: false,
-        showVolume: false,
-        showMA: false,
-        hideDateRanges: false,
-        hideMarketStatus: false,
-        hideSymbolLogo: false,
-        scalePosition: "right",
-        scaleMode: "Normal",
-        fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
-        fontSize: "10",
-        noTimeScale: false,
-        valuesTracking: "1",
-        changeMode: "price-and-percent",
-        chartType: "area",
-        maLineColor: "#2962FF",
-        maLineWidth: 1,
-        maLength: 9,
-        lineWidth: 2,
-        lineType: 0,
-        dateRanges: [
-          "1d|1",
-          "1m|30",
-          "3m|60",
-          "12m|1D",
-          "60m|1W",
-          "all|1M"
-        ]
-      });
-
-      containerRef.current.appendChild(script);
-    }
-  }, [symbols, width, height, theme]);
+  useTradingViewScript(
+    ref,
+    'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js',
+    {
+      symbols: [
+        ['FX:EURUSD|1D'],
+        ['FX:GBPUSD|1D'],
+        ['OANDA:XAUUSD|1D'],
+        ['BITSTAMP:BTCUSD|1D'],
+      ],
+      chartOnly: false,
+      width: '100%',
+      height,
+      locale: 'es',
+      colorTheme: theme,
+      autosize: true,
+      showVolume: false,
+      chartType: 'area',
+      lineWidth: 2,
+      dateRanges: ['1d|1', '1m|30', '3m|60', '12m|1D'],
+    },
+    [height, theme]
+  );
 
   return (
-    <div className="tradingview-widget-container" style={{ height, width }}>
-      <div ref={containerRef} style={{ height, width }}></div>
-      <div className="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
-      </div>
-    </div>
+    <div
+      className="tradingview-widget-container"
+      ref={ref}
+      style={{ height, width: '100%' }}
+    />
   );
 };
 
-// Widget de Noticias Económicas
-export const TradingViewEconomicCalendar: React.FC<{
-  width?: string | number;
-  height?: string | number;
+// ─── Economic Calendar ────────────────────────────────────────────────────────
+interface CalendarProps {
+  height?: number;
   theme?: 'light' | 'dark';
-}> = ({
-  width = "100%",
-  height = 400,
-  theme = "light"
+}
+
+export const TradingViewEconomicCalendar: React.FC<CalendarProps> = ({
+  height = 600,
+  theme = 'dark',
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-      
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        colorTheme: theme,
-        isTransparent: false,
-        width: width,
-        height: height,
-        locale: "es",
-        importanceFilter: "-1,0,1",
-        countryFilter: "us,eu,jp,gb,ch,au,ca,nz,cn"
-      });
-
-      containerRef.current.appendChild(script);
-    }
-  }, [width, height, theme]);
+  useTradingViewScript(
+    ref,
+    'https://s3.tradingview.com/external-embedding/embed-widget-events.js',
+    {
+      colorTheme: theme,
+      isTransparent: true,
+      width: '100%',
+      height,
+      locale: 'es',
+      importanceFilter: '-1,0,1,2',
+      countryFilter: 'us,eu,jp,gb,ch,au,ca,cn,cl',
+    },
+    [height, theme]
+  );
 
   return (
-    <div className="tradingview-widget-container" style={{ height, width }}>
-      <div ref={containerRef} style={{ height, width }}></div>
-      <div className="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
-      </div>
-    </div>
+    <div
+      className="tradingview-widget-container"
+      ref={ref}
+      style={{ height, width: '100%' }}
+    />
   );
 };
 
-// Widget de Screener de Mercado
-export const TradingViewMarketScreener: React.FC<{
-  width?: string | number;
-  height?: string | number;
+// ─── Market Screener ──────────────────────────────────────────────────────────
+interface ScreenerProps {
+  height?: number;
   theme?: 'light' | 'dark';
   market?: 'forex' | 'crypto' | 'america' | 'europe' | 'asia';
-}> = ({
-  width = "100%",
-  height = 490,
-  theme = "light",
-  market = "forex"
+}
+
+export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
+  height = 500,
+  theme = 'dark',
+  market = 'forex',
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-      
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-screener.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        width: width,
-        height: height,
-        defaultColumn: "overview",
-        defaultScreen: market,
-        market: market,
-        showToolbar: true,
-        colorTheme: theme,
-        locale: "es"
-      });
-
-      containerRef.current.appendChild(script);
-    }
-  }, [width, height, theme, market]);
+  useTradingViewScript(
+    ref,
+    'https://s3.tradingview.com/external-embedding/embed-widget-screener.js',
+    {
+      width: '100%',
+      height,
+      defaultColumn: 'overview',
+      defaultScreen: market === 'forex' ? 'general' : market,
+      market,
+      showToolbar: true,
+      colorTheme: theme,
+      locale: 'es',
+      isTransparent: true,
+    },
+    [height, theme, market]
+  );
 
   return (
-    <div className="tradingview-widget-container" style={{ height, width }}>
-      <div ref={containerRef} style={{ height, width }}></div>
-      <div className="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
-      </div>
-    </div>
+    <div
+      className="tradingview-widget-container"
+      ref={ref}
+      style={{ height, width: '100%' }}
+    />
+  );
+};
+
+// ─── Ticker Tape (barra top opcional) ────────────────────────────────────────
+export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
+  theme = 'dark',
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useTradingViewScript(
+    ref,
+    'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',
+    {
+      symbols: [
+        { proName: 'FX:EURUSD', title: 'EUR/USD' },
+        { proName: 'FX:GBPUSD', title: 'GBP/USD' },
+        { proName: 'FX:USDJPY', title: 'USD/JPY' },
+        { proName: 'OANDA:XAUUSD', title: 'XAU/USD' },
+        { proName: 'BITSTAMP:BTCUSD', title: 'BTC/USD' },
+        { proName: 'OANDA:SPX500USD', title: 'S&P 500' },
+      ],
+      showSymbolLogo: true,
+      colorTheme: theme,
+      isTransparent: true,
+      displayMode: 'adaptive',
+      locale: 'es',
+    },
+    [theme]
+  );
+
+  return (
+    <div
+      className="tradingview-widget-container"
+      ref={ref}
+      style={{ width: '100%', height: 46 }}
+    />
   );
 };

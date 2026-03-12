@@ -12,7 +12,8 @@ import {
   TradingViewAdvancedChart,
   TradingViewSymbolOverview,
   TradingViewEconomicCalendar,
-  TradingViewMarketScreener
+  TradingViewMarketScreener,
+  TradingViewTickerTape
 } from '@/components/TradingViewWidgets';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -378,6 +379,12 @@ const ClientPortal: React.FC = () => {
               <span style={{ fontSize: 11, color: '#ffa502', fontWeight: 600 }}>CLIENTE PREMIUM</span>
             </div>
           </div>
+        </div>
+
+
+        {/* Ticker en tiempo real */}
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
+          <TradingViewTickerTape theme="dark" />
         </div>
 
         <div style={{ padding: '28px 32px' }}>
