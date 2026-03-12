@@ -141,14 +141,10 @@ export default function App() {
                               path={ROUTE_PATHS.CLIENT_PORTAL} 
                               element={<ClientLogin />}
                             />
-                            {/* Dashboard del portal (protegido) */}
+                            {/* Dashboard del portal (ClientPortal maneja auth internamente) */}
                             <Route 
                               path="/portal-cliente/dashboard" 
-                              element={
-                                <ProtectedRoute requiredRoles="cliente">
-                                  <ClientPortal />
-                                </ProtectedRoute>
-                              } 
+                              element={<ClientPortal />} 
                             />
                             
                             {/* Error Page */}

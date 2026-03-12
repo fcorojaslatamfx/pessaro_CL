@@ -44,12 +44,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <AuthLoader />;
   }
 
-  // Si no hay usuario, redirigir al login interno con la ruta actual como parámetro
+  // Si no hay usuario, redirigir al fallbackPath (o al login interno por defecto)
   if (!user) {
-    return <Navigate 
-      to={`${ROUTE_PATHS.INTERNAL_LOGIN}?redirect=${encodeURIComponent(location.pathname)}`} 
-      replace 
-    />;
+    const loginRedirect = fallbackPath !== '/'
+      ? fallbackPath  // ej: /portal-cliente para clientes
+      : `${ROUTE_PATHS.INTERNAL_LOGIN}?redirect=${encodeURIComponent(location.pathname)}`;
+    return <Navigate to={loginRedirect} replace />;
   }
 
   // Normalizar requiredRoles: si viene como "interno,super_admin" convertir a array
