@@ -62,6 +62,7 @@ export default function BlogManager() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPost, setEditingPost] = useState<Partial<BlogPost> | null>(null);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   // Initial state for a new post
   const emptyPost: Partial<BlogPost> = {
@@ -71,16 +72,18 @@ export default function BlogManager() {
     excerpt: '',
     status: 'draft',
     category: 'Análisis',
-    cover_image: '',
+    featured_image: '',
     tags: [],
   };
 
   const handleEdit = (post: BlogPost) => {
+    setSlugManuallyEdited(true); // post existente: no sobreescribir su slug
     setEditingPost(post);
     setIsEditorOpen(true);
   };
 
   const handleAddNew = () => {
+    setSlugManuallyEdited(false); // post nuevo: generar slug automáticamente
     setEditingPost(emptyPost);
     setIsEditorOpen(true);
   };
@@ -117,13 +120,25 @@ export default function BlogManager() {
     post.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Auto-generate slug from title if not manually edited
+  // Convierte título en slug, maneja tildes y caracteres especiales del español
+  const generateSlug = (title: string): string => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')                        // descompone tildes: á → a + ́
+      .replace(/[\u0300-\u036f]/g, '')         // elimina los diacríticos
+      .replace(/ñ/g, 'n')
+      .replace(/ü/g, 'u')
+      .replace(/[^a-z0-9\s-]/g, '')           // elimina caracteres especiales
+      .trim()
+      .replace(/\s+/g, '-')                   // espacios → guiones
+      .replace(/-+/g, '-')                    // guiones múltiples → uno
+      .replace(/^-+|-+$/g, '');              // elimina guiones al inicio/fin
+  };
+
+  // Auto-generate slug from title — siempre, salvo que el usuario lo haya editado manualmente
   useEffect(() => {
-    if (editingPost && !editingPost.id && editingPost.title && !editingPost.slug) {
-      const slug = editingPost.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+    if (editingPost?.title && !slugManuallyEdited) {
+      const slug = generateSlug(editingPost.title);
       setEditingPost(prev => prev ? { ...prev, slug } : null);
     }
   }, [editingPost?.title]);
@@ -194,9 +209,9 @@ export default function BlogManager() {
                         <TableRow key={post.id} className="hover:bg-muted/30 transition-colors group">
                           <TableCell>
                             <div className="w-12 h-12 rounded bg-muted overflow-hidden">
-                              {post.cover_image ? (
+                              {post.featured_image ? (
                                 <img 
-                                  src={post.cover_image} 
+                                  src={post.featured_image} 
                                   alt={post.title} 
                                   className="w-full h-full object-cover" 
                                 />
@@ -327,15 +342,15 @@ export default function BlogManager() {
                 <div className="space-y-2">
                   <Label>Imagen de Portada</Label>
                   <div className="relative aspect-video rounded-md border-2 border-dashed border-border overflow-hidden bg-muted/30">
-                    {editingPost?.cover_image ? (
+                    {editingPost?.featured_image ? (
                       <>
                         <img 
-                          src={editingPost.cover_image} 
+                          src={editingPost.featured_image} 
                           alt="Preview" 
                           className="w-full h-full object-cover"
                         />
                         <button 
-                          onClick={() => setEditingPost(prev => ({ ...prev!, cover_image: '' }))}
+                          onClick={() => setEditingPost(prev => ({ ...prev!, featured_image: '' }))}
                           className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-destructive text-destructive-foreground text-xs font-medium shadow-md hover:bg-destructive/90 transition-colors"
                           title="Eliminar imagen"
                         >
@@ -346,7 +361,7 @@ export default function BlogManager() {
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full p-4 text-center">
                         <MediaUploader 
-                          onFileSelect={(file) => setEditingPost(prev => ({ ...prev!, cover_image: file.url }))}
+                          onFileSelect={(file) => setEditingPost(prev => ({ ...prev!, featured_image: file.url }))}
                           accept="image/*"
                           maxSize={50 * 1024 * 1024}
                         />
@@ -357,12 +372,36 @@ export default function BlogManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="slug">URL Slug</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="slug">URL Slug</Label>
+                    {!slugManuallyEdited && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        ✦ Auto-generado desde el título
+                      </span>
+                    )}
+                    {slugManuallyEdited && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSlugManuallyEdited(false);
+                          if (editingPost?.title) {
+                            setEditingPost(prev => prev ? { ...prev, slug: generateSlug(prev.title || '') } : null);
+                          }
+                        }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        ↺ Regenerar desde título
+                      </button>
+                    )}
+                  </div>
                   <Input
                     id="slug"
                     placeholder="el-futuro-del-trading"
                     value={editingPost?.slug || ''}
-                    onChange={(e) => setEditingPost(prev => ({ ...prev!, slug: e.target.value }))}
+                    onChange={(e) => {
+                      setSlugManuallyEdited(true);
+                      setEditingPost(prev => ({ ...prev!, slug: e.target.value }));
+                    }}
                     className="font-mono text-sm"
                   />
                 </div>

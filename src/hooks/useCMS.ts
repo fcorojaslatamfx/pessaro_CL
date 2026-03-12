@@ -41,26 +41,13 @@ export function useCMS() {
     }),
     useUpsert: () => useMutation({
       mutationFn: async (post: Partial<BlogPost>) => {
-        // Si tiene id => UPDATE, si no => INSERT
-        if (post.id) {
-          const { id, created_at, ...updateData } = post as any;
-          const { data, error } = await supabase
-            .from('cms_blog_posts_2026_02_23_17_38')
-            .update(updateData)
-            .eq('id', id)
-            .select()
-            .single();
-          if (error) throw error;
-          return data as BlogPost;
-        } else {
-          const { data, error } = await supabase
-            .from('cms_blog_posts_2026_02_23_17_38')
-            .insert(post)
-            .select()
-            .single();
-          if (error) throw error;
-          return data as BlogPost;
-        }
+        const { data, error } = await supabase
+          .from('cms_blog_posts_2026_02_23_17_38')
+          .upsert(post)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as BlogPost;
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
     }),
@@ -91,16 +78,13 @@ export function useCMS() {
     }),
     useUpsert: () => useMutation({
       mutationFn: async (member: Partial<TeamMember>) => {
-        if (member.id) {
-          const { id, created_at, ...updateData } = member as any;
-          const { data, error } = await supabase.from('cms_team_members_2026_02_23_17_38').update(updateData).eq('id', id).select().single();
-          if (error) throw error;
-          return data as TeamMember;
-        } else {
-          const { data, error } = await supabase.from('cms_team_members_2026_02_23_17_38').insert(member).select().single();
-          if (error) throw error;
-          return data as TeamMember;
-        }
+        const { data, error } = await supabase
+          .from('cms_team_members_2026_02_23_17_38')
+          .upsert(member)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as TeamMember;
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-members'] })
     }),
@@ -131,16 +115,13 @@ export function useCMS() {
     }),
     useUpsert: () => useMutation({
       mutationFn: async (service: Partial<Service>) => {
-        if (service.id) {
-          const { id, created_at, ...updateData } = service as any;
-          const { data, error } = await supabase.from('cms_services_2026_02_23_17_38').update(updateData).eq('id', id).select().single();
-          if (error) throw error;
-          return data as Service;
-        } else {
-          const { data, error } = await supabase.from('cms_services_2026_02_23_17_38').insert(service).select().single();
-          if (error) throw error;
-          return data as Service;
-        }
+        const { data, error } = await supabase
+          .from('cms_services_2026_02_23_17_38')
+          .upsert(service)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as Service;
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['services'] })
     })
@@ -161,16 +142,13 @@ export function useCMS() {
     }),
     useUpsert: () => useMutation({
       mutationFn: async (instrument: Partial<TradingInstrument>) => {
-        if (instrument.id) {
-          const { id, created_at, ...updateData } = instrument as any;
-          const { data, error } = await supabase.from('cms_instruments_2026_02_23_17_38').update(updateData).eq('id', id).select().single();
-          if (error) throw error;
-          return data as TradingInstrument;
-        } else {
-          const { data, error } = await supabase.from('cms_instruments_2026_02_23_17_38').insert(instrument).select().single();
-          if (error) throw error;
-          return data as TradingInstrument;
-        }
+        const { data, error } = await supabase
+          .from('cms_instruments_2026_02_23_17_38')
+          .upsert(instrument)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as TradingInstrument;
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['trading-instruments'] })
     }),
@@ -205,13 +183,13 @@ export function useCMS() {
         const filePath = `${folder}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('media')
+          .from('media-library-2026-01-30-20-41')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('media')
+          .from('media-library-2026-01-30-20-41')
           .getPublicUrl(filePath);
 
         const { data: mediaData, error: dbError } = await supabase
@@ -241,8 +219,8 @@ export function useCMS() {
           .single();
         
         if (file) {
-          const path = file.url.split('/storage/v1/object/public/media/')[1];
-          if (path) await supabase.storage.from('media').remove([path]);
+          const path = file.url.split('/storage/v1/object/public/media-library-2026-01-30-20-41/')[1];
+          if (path) await supabase.storage.from('media-library-2026-01-30-20-41').remove([path]);
         }
 
         const { error } = await supabase
@@ -269,25 +247,13 @@ export function useCMS() {
     }),
     useUpdate: () => useMutation({
       mutationFn: async (setting: Partial<SiteSetting>) => {
-        if (setting.id) {
-          const { id, created_at, ...updateData } = setting as any;
-          const { data, error } = await supabase
-            .from('cms_site_settings_2026_02_23_17_38')
-            .update(updateData)
-            .eq('id', id)
-            .select()
-            .single();
-          if (error) throw error;
-          return data as SiteSetting;
-        } else {
-          const { data, error } = await supabase
-            .from('cms_site_settings_2026_02_23_17_38')
-            .insert(setting)
-            .select()
-            .single();
-          if (error) throw error;
-          return data as SiteSetting;
-        }
+        const { data, error } = await supabase
+          .from('cms_site_settings_2026_02_23_17_38')
+          .upsert(setting)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as SiteSetting;
       },
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['site-settings'] })
     })
@@ -308,16 +274,13 @@ export function useCMS() {
     }),
     useUpdateSection: () => useMutation({
       mutationFn: async (section: Partial<PageContent>) => {
-        if (section.id) {
-          const { id, created_at, ...updateData } = section as any;
-          const { data, error } = await supabase.from('cms_page_content_2026_02_23_17_38').update(updateData).eq('id', id).select().single();
-          if (error) throw error;
-          return data as PageContent;
-        } else {
-          const { data, error } = await supabase.from('cms_page_content_2026_02_23_17_38').insert(section).select().single();
-          if (error) throw error;
-          return data as PageContent;
-        }
+        const { data, error } = await supabase
+          .from('cms_page_content_2026_02_23_17_38')
+          .upsert(section)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as PageContent;
       },
       onSuccess: (_, variables) => queryClient.invalidateQueries({ queryKey: ['page-content', variables.page_key] })
     })
