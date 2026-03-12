@@ -75,7 +75,7 @@ export default function InstrumentsManager() {
       spread: '0.1',
       leverage: '1:30',
       is_popular: false,
-      order: 0,
+      order_index: 0,
     });
     setIsModalOpen(true);
   };
@@ -309,7 +309,7 @@ export default function InstrumentsManager() {
                   id="order"
                   type="number"
                   value={editingInstrument?.order || 0}
-                  onChange={(e) => setEditingInstrument(prev => ({ ...prev!, order: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setEditingInstrument(prev => ({ ...prev!, order_index: parseInt(e.target.value) || 0 }))}
                 />
               </div>
 

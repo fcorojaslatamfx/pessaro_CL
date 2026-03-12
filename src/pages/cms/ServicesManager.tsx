@@ -45,7 +45,7 @@ const serviceSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
   description: z.string().min(10, 'La descripción debe ser más detallada'),
-  icon: z.string().min(1, 'El nombre del icono es requerido'),
+  icon_name: z.string().min(1, 'El nombre del icono es requerido'),
   order: z.number().int().default(0),
   features: z.array(z.string().min(1, 'La característica no puede estar vacía'))
 });
@@ -66,7 +66,7 @@ export default function ServicesManager() {
       title: '',
       description: '',
       icon: 'BarChart3',
-      order: 0,
+      order_index: 0,
       features: ['']
     }
   });
@@ -84,7 +84,7 @@ export default function ServicesManager() {
         title: service.title,
         description: service.description,
         icon: service.icon,
-        order: service.order,
+        order_index: service.order_index,
         features: service.features || ['']
       });
     } else {
@@ -93,7 +93,7 @@ export default function ServicesManager() {
         title: '',
         description: '',
         icon: 'BarChart3',
-        order: (allServices?.length || 0) + 1,
+        order_index: (allServices?.length || 0) + 1,
         features: ['']
       });
     }
@@ -143,7 +143,7 @@ export default function ServicesManager() {
                       </div>
                       <div>
                         <CardTitle className="text-xl">{service.title}</CardTitle>
-                        <Badge variant="outline" className="mt-1">Orden: {service.order}</Badge>
+                        <Badge variant="outline" className="mt-1">Orden: {service.order_index}</Badge>
                       </div>
                     </div>
                     <Button 
@@ -216,7 +216,7 @@ export default function ServicesManager() {
                     placeholder="Ej: TrendingUp" 
                     {...form.register('icon')} 
                   />
-                  {form.formState.errors.icon && (
+                  {form.formState.errors.icon_name && (
                     <p className="text-xs text-destructive">{form.formState.errors.icon.message}</p>
                   )}
                 </div>

@@ -63,7 +63,7 @@ export default function MediaLibrary() {
   };
 
   const filteredFiles = files?.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    file.original_name || file.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const isImage = (type: string) => type.startsWith("image/");
@@ -147,16 +147,16 @@ export default function MediaLibrary() {
                         {viewMode === "grid" ? (
                           <FileCard 
                             file={file} 
-                            onCopy={() => handleCopyUrl(file.url)} 
+                            onCopy={() => handleCopyUrl(file.file_path)} 
                             onDelete={() => handleDelete(file.id)} 
-                            isImage={isImage(file.file_type)}
+                            isImage={isImage(file.mime_type)}
                           />
                         ) : (
                           <FileRow 
                             file={file} 
-                            onCopy={() => handleCopyUrl(file.url)} 
+                            onCopy={() => handleCopyUrl(file.file_path)} 
                             onDelete={() => handleDelete(file.id)} 
-                            isImage={isImage(file.file_type)}
+                            isImage={isImage(file.mime_type)}
                             formatSize={formatFileSize}
                           />
                         )}
@@ -195,26 +195,26 @@ function FileCard({
       <div className="aspect-square flex items-center justify-center bg-muted/30 overflow-hidden">
         {isImage ? (
           <img 
-            src={file.url} 
-            alt={file.name} 
+            src={file.file_path} 
+            alt={file.original_name || file.filename} 
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <FileText className="h-10 w-10" />
-            <span className="text-[10px] uppercase font-bold">{file.file_type.split('/')[1]}</span>
+            <span className="text-[10px] uppercase font-bold">{file.mime_type.split('/')[1]}</span>
           </div>
         )}
       </div>
       
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4">
-        <p className="text-xs font-medium text-center line-clamp-2 mb-2">{file.name}</p>
+        <p className="text-xs font-medium text-center line-clamp-2 mb-2">{file.original_name || file.filename}</p>
         <div className="flex gap-2">
           <Button size="icon" variant="secondary" className="h-8 w-8" onClick={onCopy} title="Copiar URL">
             <Copy className="h-4 w-4" />
           </Button>
           <Button size="icon" variant="secondary" className="h-8 w-8" asChild title="Ver">
-            <a href={file.url} target="_blank" rel="noreferrer">
+            <a href={file.file_path} target="_blank" rel="noreferrer">
               <ExternalLink className="h-4 w-4" />
             </a>
           </Button>
@@ -244,15 +244,15 @@ function FileRow({
     <Card className="flex items-center gap-4 p-3 hover:bg-muted/50 transition-colors border-border">
       <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
         {isImage ? (
-          <img src={file.url} alt={file.name} className="h-full w-full object-cover" />
+          <img src={file.file_path} alt={file.original_name || file.filename} className="h-full w-full object-cover" />
         ) : (
           <FileText className="h-6 w-6 text-muted-foreground" />
         )}
       </div>
       
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{file.name}</p>
-        <p className="text-xs text-muted-foreground">{formatSize(file.size)} • {new Date(file.created_at).toLocaleDateString()}</p>
+        <p className="text-sm font-medium truncate">{file.original_name || file.filename}</p>
+        <p className="text-xs text-muted-foreground">{formatSize(file.file_size)} • {new Date(file.created_at).toLocaleDateString()}</p>
       </div>
 
       <div className="flex items-center gap-1">
@@ -260,7 +260,7 @@ function FileRow({
           <Copy className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="icon" asChild>
-          <a href={file.url} target="_blank" rel="noreferrer">
+          <a href={file.file_path} target="_blank" rel="noreferrer">
             <ExternalLink className="h-4 w-4" />
           </a>
         </Button>

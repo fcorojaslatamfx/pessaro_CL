@@ -64,7 +64,7 @@ export default function TeamManager() {
       image_url: '',
       linkedin_url: '',
       twitter_url: '',
-      order: (members?.length || 0) + 1
+      order_index: (members?.length || 0) + 1
     });
     setIsEditing(true);
   };
@@ -115,8 +115,8 @@ export default function TeamManager() {
     
     try {
       await Promise.all([
-        upsertMutation.mutateAsync({ ...member, order: targetMember.order }),
-        upsertMutation.mutateAsync({ ...targetMember, order: member.order })
+        upsertMutation.mutateAsync({ ...member, order_index: targetMember.order_index }),
+        upsertMutation.mutateAsync({ ...targetMember, order_index: member.order_index })
       ]);
       toast.success('Orden actualizado');
     } catch (error) {
@@ -259,7 +259,7 @@ export default function TeamManager() {
                         </a>
                       )}
                       <Badge variant="outline" className="ml-auto">
-                        Orden: {member.order}
+                        Orden: {member.order_index}
                       </Badge>
                     </CardFooter>
                   </Card>
@@ -358,8 +358,8 @@ export default function TeamManager() {
                     <label className="text-sm font-medium">Orden de Visualización</label>
                     <Input 
                       type="number"
-                      value={currentMember?.order || 0}
-                      onChange={(e) => setCurrentMember(prev => prev ? { ...prev, order: parseInt(e.target.value) } : null)}
+                      value={currentMember?.order_index || 0}
+                      onChange={(e) => setCurrentMember(prev => prev ? { ...prev, order_index: parseInt(e.target.value) } : null)}
                     />
                   </div>
                 </div>
