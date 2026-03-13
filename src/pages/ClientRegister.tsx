@@ -24,8 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useClientRegistration } from '@/hooks/useClientRegistration';
 import { ROUTE_PATHS } from '@/lib/index';
 
-
 const ClientRegister: React.FC = () => {
+  useSEO(PAGE_SEO.registro);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -151,8 +152,6 @@ const ClientRegister: React.FC = () => {
   };
 
   const handleInputChange = (field: string, value: any) => {
-  useSEO(PAGE_SEO.registro);
-
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));

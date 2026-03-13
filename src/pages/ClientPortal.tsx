@@ -4,8 +4,7 @@ import {
   LayoutDashboard, TrendingUp, BarChart2, BookOpen,
   LogOut, ChevronRight, Clock, Target, Shield, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Minus, BookMarked, Zap,
-  User, CreditCard, Activity, RefreshCw, Lock, Star,
-  Settings, X, Eye, EyeOff, Check, Pencil, Save, Phone, AlertCircle
+  User, CreditCard, Activity, RefreshCw, Lock, Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -14,8 +13,7 @@ import {
   TradingViewSymbolOverview,
   TradingViewEconomicCalendar,
   TradingViewMarketScreener,
-  TradingViewTickerTape,
-  TwelveDataPriceCard
+  TradingViewTickerTape
 } from '@/components/TradingViewWidgets';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -44,26 +42,6 @@ interface MarketAnalysis {
   published_at: string;
 }
 
-
-// ─── Dashboard Preferences ───────────────────────────────────────────────────
-interface DashboardPrefs {
-  showPrices: boolean;
-  showAnalysis: boolean;
-  showArticles: boolean;
-  showMiniChart: boolean;
-  defaultSymbol: string;
-  marketView: 'forex' | 'crypto' | 'america';
-}
-
-const DEFAULT_PREFS: DashboardPrefs = {
-  showPrices: true,
-  showAnalysis: true,
-  showArticles: true,
-  showMiniChart: true,
-  defaultSymbol: 'FX:EURUSD',
-  marketView: 'forex',
-};
-
 // ─── Constants ───────────────────────────────────────────────────────────────
 const formatCurrency = (amount: number, currency = 'USD') =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency }).format(amount);
@@ -87,9 +65,8 @@ const categoryColors: Record<string, string> = {
 
 const NAV = [
   { id: 'overview',  label: 'Resumen',    Icon: LayoutDashboard },
-  { id: 'chart',     label: 'Gráfico',    Icon: TrendingUp      },
-  { id: 'screener',  label: 'Screener',   Icon: BarChart2       },
-  { id: 'analysis',  label: 'Análisis',   Icon: Target          },
+  { id: 'markets',   label: 'Mercados',   Icon: TrendingUp      },
+  { id: 'analysis',  label: 'Análisis',   Icon: BarChart2       },
   { id: 'articles',  label: 'Exclusivos', Icon: BookOpen        },
   { id: 'calendar',  label: 'Calendario', Icon: Activity        },
   { id: 'account',   label: 'Mi Cuenta',  Icon: User            },
@@ -254,25 +231,8 @@ const ClientPortal: React.FC = () => {
   const [analysis, setAnalysis] = useState<MarketAnalysis[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-  const [showSettings, setShowSettings] = useState(false);
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone: '' });
-  const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle');
-  const [prefs, setPrefs] = useState<DashboardPrefs>(() => {
-    try {
-      const saved = sessionStorage.getItem('pessaro_dashboard_prefs');
-      return saved ? { ...DEFAULT_PREFS, ...JSON.parse(saved) } : DEFAULT_PREFS;
-    } catch { return DEFAULT_PREFS; }
-  });
+  const [showAdvisorPopup, setShowAdvisorPopup] = useState(false);
   const navigate = useNavigate();
-
-  const updatePref = <K extends keyof DashboardPrefs>(key: K, value: DashboardPrefs[K]) => {
-    setPrefs(prev => {
-      const next = { ...prev, [key]: value };
-      try { sessionStorage.setItem('pessaro_dashboard_prefs', JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
 
   useEffect(() => { loadAll(); }, []);
 
@@ -289,14 +249,7 @@ const ClientPortal: React.FC = () => {
         supabase.from('client_market_analysis_2026_03_11').select('*').eq('is_published', true).order('published_at', { ascending: false }),
       ]);
 
-      if (profileRes.data) {
-        setClientData({ profile: profileRes.data, account: accountRes.data || null });
-        setEditForm({
-          first_name: profileRes.data.first_name || '',
-          last_name: profileRes.data.last_name || '',
-          phone: profileRes.data.phone || '',
-        });
-      }
+      if (profileRes.data) setClientData({ profile: profileRes.data, account: accountRes.data || null });
       if (articlesRes.data) setArticles(articlesRes.data as Article[]);
       if (analysisRes.data) setAnalysis(analysisRes.data as MarketAnalysis[]);
     } catch (err) {
@@ -308,33 +261,6 @@ const ClientPortal: React.FC = () => {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/portal-cliente', { replace: true }); };
   const handleRefresh = () => { setLoading(true); setLastRefresh(new Date()); loadAll(); };
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    setSaveStatus('saving');
-    try {
-      const { error } = await supabase
-        .from('client_profiles_2026_02_08_22_02')
-        .update({
-          first_name: editForm.first_name.trim(),
-          last_name: editForm.last_name.trim(),
-          phone: editForm.phone.trim() || null,
-        })
-        .eq('user_id', user.id);
-      if (error) throw error;
-      // Actualizar estado local
-      setClientData((prev: any) => ({
-        ...prev,
-        profile: { ...prev.profile, ...editForm }
-      }));
-      setSaveStatus('saved');
-      setEditingProfile(false);
-      setTimeout(() => setSaveStatus('idle'), 2500);
-    } catch (e) {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    }
-  };
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -403,41 +329,24 @@ const ClientPortal: React.FC = () => {
           })}
         </nav>
 
-        <div style={{ padding: '12px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          {/* Usuario */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
-            background: 'rgba(255,255,255,0.03)', borderRadius: 10, marginBottom: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
-              color: '#fff', flexShrink: 0 }}>
+        <div style={{ padding: '16px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
               {profile.first_name?.[0]?.toUpperCase() || 'C'}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {profile.first_name} {profile.last_name}
-              </p>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9' }}>{profile.first_name}</p>
               <p style={{ fontSize: 10, color: '#636e72' }}>{account?.account_number || 'N/A'}</p>
             </div>
           </div>
-          {/* Estado activo */}
-          <div style={{ fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.08)',
-            border: '1px solid rgba(0,208,132,0.2)',
-            padding: '3px 10px', borderRadius: 20, display: 'inline-block', textTransform: 'uppercase',
-            letterSpacing: '0.06em', marginBottom: 8 }}>● Activo</div>
-          {/* Cerrar sesión — siempre visible */}
-          <button
-            onClick={handleSignOut}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '9px 12px', borderRadius: 8,
-              border: '1px solid rgba(255,71,87,0.4)',
-              background: 'rgba(255,71,87,0.1)',
-              color: '#ff6b81', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              transition: 'all 0.15s' }}
-            onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = 'rgba(255,71,87,0.2)'; }}
-            onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'rgba(255,71,87,0.1)'; }}
-          >
-            <LogOut size={14} />
-            Cerrar Sesión
+          <div style={{ fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.1)',
+            padding: '2px 8px', borderRadius: 20, display: 'inline-block', textTransform: 'uppercase',
+            letterSpacing: '0.06em', marginBottom: 10 }}>● Activo</div>
+          <button onClick={handleSignOut} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,71,87,0.3)',
+            background: 'rgba(255,71,87,0.08)', color: '#ff6b81', cursor: 'pointer', fontSize: 12 }}>
+            <LogOut size={14} />Cerrar sesión
           </button>
         </div>
       </aside>
@@ -445,20 +354,10 @@ const ClientPortal: React.FC = () => {
       {/* ── Main ───────────────────────────────────────────────────────────── */}
       <main style={{ marginLeft: 220, flex: 1 }}>
         
-        {/* ── Ticker tape — PRIMERA FILA, sticky top:0, altura fija para evitar CLS ── */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 60,
-          height: 46, minHeight: 46, overflow: 'hidden',
-          background: '#0d0f17',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}>
-          <TradingViewTickerTape theme="dark" />
-        </div>
-
-        {/* ── Topbar — sticky debajo del ticker ── */}
-        <div style={{ padding: '14px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+        {/* Topbar */}
+        <div style={{ padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'rgba(13,15,23,0.96)', backdropFilter: 'blur(12px)', position: 'sticky', top: 46, zIndex: 50 }}>
+          background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
           <div>
             <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
               {NAV.find(n => n.id === activeTab)?.label}
@@ -475,13 +374,6 @@ const ClientPortal: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <RefreshCw size={14} />
             </motion.button>
-            <motion.button whileTap={{ scale: 0.92 }} onClick={() => setShowSettings(true)}
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
-                background: showSettings ? 'rgba(108,92,231,0.2)' : 'rgba(255,255,255,0.04)',
-                color: showSettings ? '#a29bfe' : '#a4b0be', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Settings size={14} />
-            </motion.button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,165,2,0.1)',
               border: '1px solid rgba(255,165,2,0.2)', borderRadius: 8, padding: '6px 12px' }}>
               <Star size={12} color="#ffa502" fill="#ffa502" />
@@ -490,6 +382,11 @@ const ClientPortal: React.FC = () => {
           </div>
         </div>
 
+
+        {/* Ticker en tiempo real */}
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
+          <TradingViewTickerTape theme="dark" />
+        </div>
 
         <div style={{ padding: '28px 32px' }}>
           <AnimatePresence mode="wait">
@@ -524,15 +421,7 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Precios en tiempo real */}
-                {prefs.showPrices && (
-                  <div style={{ marginBottom: 20 }}>
-                    <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Precios en Tiempo Real · actualiza c/30s</p>
-                    <TwelveDataPriceCard symbols={['EUR/USD', 'GBP/USD', 'XAU/USD', 'BTC/USD']} />
-                  </div>
-                )}
-
-                {/* Stats cuenta */}
+                {/* Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
                   <StatCard label="Balance" value={formatCurrency(account?.balance || 0)} sub="Saldo total" Icon={CreditCard} accent="#6c5ce7" delay={0.05} />
                   <StatCard label="Equity" value={formatCurrency(account?.equity || 0)} sub="Valor de cuenta" Icon={TrendingUp} accent="#0984e3" delay={0.1} />
@@ -542,7 +431,7 @@ const ClientPortal: React.FC = () => {
 
                 {/* Quick panels */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
-                  {prefs.showAnalysis && <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Análisis Reciente</h3>
                       <button onClick={() => setActiveTab('analysis')} style={{ fontSize: 11, color: '#6c5ce7',
@@ -567,9 +456,9 @@ const ClientPortal: React.FC = () => {
                       );
                     })}
                     {analysis.length === 0 && <p style={{ fontSize: 13, color: '#636e72' }}>Sin análisis publicados.</p>}
-                  </div>}
+                  </div>
 
-                  {prefs.showArticles && <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Artículos Exclusivos</h3>
                       <button onClick={() => setActiveTab('articles')} style={{ fontSize: 11, color: '#6c5ce7',
@@ -590,85 +479,28 @@ const ClientPortal: React.FC = () => {
                       </div>
                     ))}
                     {articles.length === 0 && <p style={{ fontSize: 13, color: '#636e72' }}>Sin artículos publicados.</p>}
-                  </div>}
+                  </div>
                 </div>
 
                 {/* Mini chart */}
-                {prefs.showMiniChart && (
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Vista Rápida de Mercado</h3>
-                    <TradingViewSymbolOverview height={200} theme="dark" />
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* CHART */}
-            {activeTab === 'chart' && (
-              <motion.div key="chart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Gráfico de Mercados</h2>
-                    <p style={{ fontSize: 13, color: '#636e72' }}>Análisis técnico avanzado · cambia símbolo desde el gráfico</p>
-                  </div>
-                  {/* Selector rápido de símbolo */}
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {[
-                      { sym: 'FX:EURUSD',        label: 'EUR/USD' },
-                      { sym: 'FX:GBPUSD',        label: 'GBP/USD' },
-                      { sym: 'OANDA:XAUUSD',     label: 'XAU/USD' },
-                      { sym: 'BITSTAMP:BTCUSD',  label: 'BTC/USD' },
-                      { sym: 'OANDA:SPX500USD',  label: 'S&P 500' },
-                    ].map(({ sym, label }) => (
-                      <button key={sym}
-                        onClick={() => updatePref('defaultSymbol', sym)}
-                        style={{
-                          padding: '5px 11px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                          background: prefs.defaultSymbol === sym ? '#6c5ce7' : 'rgba(255,255,255,0.06)',
-                          color: prefs.defaultSymbol === sym ? '#fff' : '#636e72',
-                        }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <TradingViewAdvancedChart symbol={prefs.defaultSymbol} height={580} theme="dark" allow_symbol_change={true} />
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Vista Rápida de Mercado</h3>
+                  <TradingViewSymbolOverview height={200} theme="dark" />
                 </div>
               </motion.div>
             )}
 
-            {/* SCREENER */}
-            {activeTab === 'screener' && (
-              <motion.div key="screener" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Screener de Mercados</h2>
-                    <p style={{ fontSize: 13, color: '#636e72' }}>Filtra y analiza instrumentos en tiempo real</p>
-                  </div>
-                  {/* Selector de mercado */}
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {[
-                      { key: 'forex',   label: 'Forex'   },
-                      { key: 'crypto',  label: 'Crypto'  },
-                      { key: 'america', label: 'Acciones' },
-                    ].map(({ key, label }) => (
-                      <button key={key}
-                        onClick={() => updatePref('marketView', key as 'forex' | 'crypto' | 'america')}
-                        style={{
-                          padding: '5px 14px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                          background: prefs.marketView === key ? '#0984e3' : 'rgba(255,255,255,0.06)',
-                          color: prefs.marketView === key ? '#fff' : '#636e72',
-                        }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+            {/* MARKETS */}
+            {activeTab === 'markets' && (
+              <motion.div key="markets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ display: 'grid', gap: 20 }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Gráfico Avanzado</h3>
+                  <TradingViewAdvancedChart symbol="EURUSD" height={520} theme="dark" allow_symbol_change={true} />
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <TradingViewMarketScreener height={600} theme="dark" market={prefs.marketView} />
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Screener de Mercados</h3>
+                  <TradingViewMarketScreener height={500} theme="dark" market="forex" />
                 </div>
               </motion.div>
             )}
@@ -747,134 +579,26 @@ const ClientPortal: React.FC = () => {
             {/* ACCOUNT */}
             {activeTab === 'account' && (
               <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Mi Cuenta</h2>
-                    <p style={{ fontSize: 13, color: '#636e72' }}>Información personal y detalles de trading</p>
-                  </div>
-                  {!editingProfile ? (
-                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => setEditingProfile(true)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px',
-                        borderRadius: 8, border: '1px solid rgba(108,92,231,0.4)',
-                        background: 'rgba(108,92,231,0.12)', color: '#a29bfe',
-                        cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                      <Pencil size={13} /> Editar datos
-                    </motion.button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setEditingProfile(false); setSaveStatus('idle'); }}
-                        style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-                          background: 'transparent', color: '#636e72', cursor: 'pointer', fontSize: 12 }}>
-                        Cancelar
-                      </button>
-                      <motion.button whileTap={{ scale: 0.95 }} onClick={handleSaveProfile}
-                        disabled={saveStatus === 'saving'}
-                        style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px',
-                          borderRadius: 8, border: 'none',
-                          background: saveStatus === 'saving' ? 'rgba(0,208,132,0.3)' : '#00b894',
-                          color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                        <Save size={13} />
-                        {saveStatus === 'saving' ? 'Guardando…' : 'Guardar cambios'}
-                      </motion.button>
-                    </div>
-                  )}
+                <div style={{ marginBottom: 24 }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Mi Cuenta</h2>
+                  <p style={{ fontSize: 13, color: '#636e72' }}>Información personal y detalles de trading</p>
                 </div>
-
-                {/* Feedback */}
-                {saveStatus === 'saved' && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
-                      background: 'rgba(0,184,148,0.1)', border: '1px solid rgba(0,184,148,0.3)',
-                      borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#00b894' }}>
-                    <Check size={15} /> Datos actualizados correctamente
-                  </motion.div>
-                )}
-                {saveStatus === 'error' && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
-                      background: 'rgba(255,71,87,0.1)', border: '1px solid rgba(255,71,87,0.3)',
-                      borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#ff4757' }}>
-                    <AlertCircle size={15} /> Error al guardar. Intenta nuevamente.
-                  </motion.div>
-                )}
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                  {/* ─ Información Personal ─ */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Información Personal</h3>
-
-                    {editingProfile ? (
-                      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
-                        {/* Nombre */}
-                        <div>
-                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Nombre</label>
-                          <input
-                            value={editForm.first_name}
-                            onChange={e => setEditForm(p => ({ ...p, first_name: e.target.value }))}
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
-                              border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
-                              color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
-                          />
-                        </div>
-                        {/* Apellido */}
-                        <div>
-                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Apellido</label>
-                          <input
-                            value={editForm.last_name}
-                            onChange={e => setEditForm(p => ({ ...p, last_name: e.target.value }))}
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
-                              border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
-                              color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
-                          />
-                        </div>
-                        {/* Teléfono */}
-                        <div>
-                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Teléfono</label>
-                          <div style={{ position: 'relative' as const }}>
-                            <Phone size={14} color="#636e72" style={{ position: 'absolute' as const, left: 10, top: '50%', transform: 'translateY(-50%)' }} />
-                            <input
-                              value={editForm.phone}
-                              onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
-                              placeholder="+56 9 XXXX XXXX"
-                              style={{ width: '100%', padding: '9px 12px 9px 32px', borderRadius: 8,
-                                border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
-                                color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
-                            />
-                          </div>
-                        </div>
-                        {/* Email (solo lectura) */}
-                        <div>
-                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
-                            Email <span style={{ color: '#4a4a6a', fontSize: 10 }}>(no editable)</span>
-                          </label>
-                          <input
-                            value={profile.email}
-                            disabled
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
-                              border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)',
-                              color: '#636e72', fontSize: 14, cursor: 'not-allowed', boxSizing: 'border-box' as const }}
-                          />
-                        </div>
+                    {[
+                      ['Nombre', `${profile.first_name} ${profile.last_name}`],
+                      ['Email', profile.email],
+                      ['Teléfono', profile.phone || 'No registrado'],
+                      ['Tolerancia al riesgo', profile.risk_tolerance || 'No definida'],
+                      ['Estado', profile.account_status || 'Activa'],
+                    ].map(([label, value]) => (
+                      <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
+                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' }}>{value}</p>
                       </div>
-                    ) : (
-                      <>
-                        {[
-                          ['Nombre', `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || '—'],
-                          ['Email', profile.email],
-                          ['Teléfono', profile.phone || 'No registrado'],
-                          ['Tolerancia al riesgo', profile.risk_tolerance || 'No definida'],
-                          ['Estado', profile.account_status || 'Activa'],
-                        ].map(([label, value]) => (
-                          <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
-                            <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500 }}>{value}</p>
-                          </div>
-                        ))}
-                      </>
-                    )}
+                    ))}
                   </div>
-
-                  {/* ─ Cuenta de Trading (solo lectura) ─ */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Cuenta de Trading</h3>
                     {account ? [
@@ -885,28 +609,22 @@ const ClientPortal: React.FC = () => {
                       ['Estado', account.status],
                     ].map(([label, value]) => (
                       <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
-                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' as const }}>{value}</p>
+                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
+                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' }}>{value}</p>
                       </div>
                     )) : <p style={{ color: '#636e72', fontSize: 13 }}>Sin cuenta de trading asociada.</p>}
                     <div style={{ marginTop: 16, padding: 14, background: 'rgba(108,92,231,0.1)',
                       border: '1px solid rgba(108,92,231,0.2)', borderRadius: 10 }}>
                       <p style={{ fontSize: 12, fontWeight: 600, color: '#a29bfe', marginBottom: 6 }}>¿Necesitas ayuda?</p>
                       <p style={{ fontSize: 12, color: '#636e72', marginBottom: 10 }}>Contacta a tu asesor Pessaro Capital</p>
-                      <a href="mailto:info@pessarocapital.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                        fontSize: 12, color: '#6c5ce7', fontWeight: 600, textDecoration: 'none' }}>
+                      <button
+                        onClick={() => setShowAdvisorPopup(true)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: '#6c5ce7', fontWeight: 600, background: 'none',
+                          border: 'none', cursor: 'pointer', padding: 0 }}>
                         Contactar Asesor <ChevronRight size={12} />
-                      </a>
+                      </button>
                     </div>
-                    {/* Botón cerrar sesión también en Mi Cuenta */}
-                    <button onClick={handleSignOut}
-                      style={{ width: '100%', marginTop: 16, display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', gap: 8, padding: '10px',
-                        borderRadius: 8, border: '1px solid rgba(255,71,87,0.4)',
-                        background: 'rgba(255,71,87,0.08)', color: '#ff6b81',
-                        cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                      <LogOut size={14} /> Cerrar Sesión
-                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -916,95 +634,107 @@ const ClientPortal: React.FC = () => {
         </div>
       </main>
 
-
-      {/* ── Panel de Configuración ─────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowSettings(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200,
-              display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '80px 20px 0' }}>
-            <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}
-              onClick={e => e.stopPropagation()}
-              style={{ background: '#13151f', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 16, padding: 24, width: 300, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Settings size={16} color="#a29bfe" />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f2f6' }}>Personalizar Dashboard</span>
-                </div>
-                <button onClick={() => setShowSettings(false)}
-                  style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Widgets visibles */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Widgets en Resumen</p>
-              {([
-                ['showPrices',   'Precios en Tiempo Real'],
-                ['showAnalysis', 'Panel de Análisis'],
-                ['showArticles', 'Artículos Exclusivos'],
-                ['showMiniChart','Vista Rápida de Mercado'],
-              ] as [keyof DashboardPrefs, string][]).map(([key, label]) => (
-                <div key={key} onClick={() => updatePref(key, !prefs[key])}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 12px', borderRadius: 8, marginBottom: 6, cursor: 'pointer',
-                    background: prefs[key] ? 'rgba(108,92,231,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${prefs[key] ? 'rgba(108,92,231,0.3)' : 'rgba(255,255,255,0.07)'}`,
-                    transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 13, color: prefs[key] ? '#a29bfe' : '#a4b0be' }}>{label}</span>
-                  <div style={{ width: 20, height: 20, borderRadius: 6,
-                    background: prefs[key] ? '#6c5ce7' : 'rgba(255,255,255,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {prefs[key] && <Check size={12} color="#fff" />}
-                  </div>
-                </div>
-              ))}
-
-              {/* Símbolo por defecto */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '16px 0 10px' }}>Símbolo por Defecto (Gráfico)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                {(['FX:EURUSD','FX:GBPUSD','OANDA:XAUUSD','BITSTAMP:BTCUSD'] as const).map(sym => (
-                  <div key={sym} onClick={() => updatePref('defaultSymbol', sym)}
-                    style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', textAlign: 'center' as const,
-                      background: prefs.defaultSymbol === sym ? 'rgba(108,92,231,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${prefs.defaultSymbol === sym ? 'rgba(108,92,231,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                      fontSize: 11, fontWeight: 600, color: prefs.defaultSymbol === sym ? '#a29bfe' : '#636e72',
-                      transition: 'all 0.15s' }}>
-                    {sym.replace('FX:','').replace('OANDA:','').replace('BITSTAMP:','')}
-                  </div>
-                ))}
-              </div>
-
-              {/* Tipo de mercado en screener */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '16px 0 10px' }}>Vista de Mercados</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                {(['forex','crypto','america'] as const).map(m => (
-                  <div key={m} onClick={() => updatePref('marketView', m)}
-                    style={{ padding: '8px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center' as const,
-                      background: prefs.marketView === m ? 'rgba(9,132,227,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${prefs.marketView === m ? 'rgba(9,132,227,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                      fontSize: 11, fontWeight: 600, color: prefs.marketView === m ? '#74b9ff' : '#636e72',
-                      transition: 'all 0.15s', textTransform: 'capitalize' as const }}>
-                    {m}
-                  </div>
-                ))}
-              </div>
-
-              <button onClick={() => { setPrefs(DEFAULT_PREFS); sessionStorage.removeItem('pessaro_dashboard_prefs'); }}
-                style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'transparent', color: '#636e72', cursor: 'pointer', fontSize: 12 }}>
-                Restaurar por defecto
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
+
+      {/* ── POPUP ASESOR COMERCIAL ─────────────────────────────── */}
+      {showAdvisorPopup && (
+        <div
+          onClick={() => setShowAdvisorPopup(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '20px'
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#16213e', border: '1px solid rgba(108,92,231,0.3)',
+              borderRadius: 16, padding: 32, maxWidth: 420, width: '100%',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
+            }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(108,92,231,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 18 }}>👤</span>
+                </div>
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#f1f2f6', margin: 0 }}>Asesor Comercial</p>
+                  <p style={{ fontSize: 12, color: '#a29bfe', margin: 0 }}>Pessaro Capital</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAdvisorPopup(false)}
+                style={{ background: 'none', border: 'none', color: '#636e72',
+                  cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+
+            {/* Mensaje */}
+            <p style={{ fontSize: 13, color: '#b2bec3', marginBottom: 24, lineHeight: 1.6 }}>
+              Estamos aquí para ayudarte. Elige cómo prefieres contactar a tu asesor:
+            </p>
+
+            {/* Opciones de contacto */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="mailto:info@pessarocapital.com"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(108,92,231,0.12)', border: '1px solid rgba(108,92,231,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6',
+                  fontSize: 13, fontWeight: 500, transition: 'background 0.2s'
+                }}>
+                <span style={{ fontSize: 18 }}>✉️</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Enviar Email</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>info@pessarocapital.com</p>
+                </div>
+              </a>
+
+              <a
+                href="https://wa.me/56922071511?text=Hola,%20soy%20cliente%20de%20Pessaro%20Capital%20y%20necesito%20hablar%20con%20un%20asesor"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6',
+                  fontSize: 13, fontWeight: 500
+                }}>
+                <span style={{ fontSize: 18 }}>💬</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>WhatsApp</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>+56 9 2207 1511</p>
+                </div>
+              </a>
+
+              <a
+                href="https://www.linkedin.com/company/pessarocapital"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(0,119,181,0.1)', border: '1px solid rgba(0,119,181,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6',
+                  fontSize: 13, fontWeight: 500
+                }}>
+                <span style={{ fontSize: 18 }}>💼</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>LinkedIn</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>Pessaro Capital</p>
+                </div>
+              </a>
+            </div>
+
+            {/* Horario */}
+            <p style={{ fontSize: 11, color: '#636e72', marginTop: 20, textAlign: 'center' }}>
+              Lunes a Viernes · 09:00 – 18:00 hrs · Santiago, Chile
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

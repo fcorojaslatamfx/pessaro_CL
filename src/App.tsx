@@ -68,6 +68,10 @@ const InstrumentsManager = lazy(() => import('@/pages/cms/InstrumentsManager'));
 const MediaLibrary = lazy(() => import('@/pages/cms/MediaLibrary'));
 const Settings = lazy(() => import('@/pages/cms/Settings'));
 const ErrorPage = lazy(() => import('@/pages/ErrorPage'));
+const TestResend = lazy(() => import('@/pages/TestResend'));
+const TestResendComplete = lazy(() => import('@/pages/TestResendComplete'));
+const SystemVerification = lazy(() => import('@/pages/SystemVerification'));
+const IntegrationVerificationPage = lazy(() => import('@/pages/IntegrationVerificationPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
@@ -127,16 +131,10 @@ export default function App() {
                             
                             {/* Test Pages */}
                             
-                            {/* Client Portal Section */}
-                            {/* Login público para clientes */}
+                            {/* Client Portal Login — CON Layout (navbar visible en login) */}
                             <Route 
                               path={ROUTE_PATHS.CLIENT_PORTAL} 
                               element={<ClientLogin />}
-                            />
-                            {/* Dashboard del portal (ClientPortal maneja auth internamente) */}
-                            <Route 
-                              path="/portal-cliente/dashboard" 
-                              element={<ClientPortal />} 
                             />
                             
                             {/* Error Page */}
@@ -146,6 +144,12 @@ export default function App() {
                       }
                     />
                     
+                    {/* PORTAL CLIENTE DASHBOARD — fuera del Layout (sin navbar/footer) */}
+                    <Route 
+                      path="/portal-cliente/dashboard" 
+                      element={<ClientPortal />} 
+                    />
+
                     {/* DOMINIO DE GESTIÓN (LOGIN / CMS) */}
                     {/* FIX: rutas con paths explícitos — el segundo <Route path="/*"> nunca matchea en RR v6 */}
 
