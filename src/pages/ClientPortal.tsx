@@ -445,10 +445,20 @@ const ClientPortal: React.FC = () => {
       {/* ── Main ───────────────────────────────────────────────────────────── */}
       <main style={{ marginLeft: 220, flex: 1 }}>
         
-        {/* Topbar */}
-        <div style={{ padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+        {/* ── Ticker tape — PRIMERA FILA, sticky top:0, altura fija para evitar CLS ── */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 60,
+          height: 46, minHeight: 46, overflow: 'hidden',
+          background: '#0d0f17',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <TradingViewTickerTape theme="dark" />
+        </div>
+
+        {/* ── Topbar — sticky debajo del ticker ── */}
+        <div style={{ padding: '14px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
+          background: 'rgba(13,15,23,0.96)', backdropFilter: 'blur(12px)', position: 'sticky', top: 46, zIndex: 50 }}>
           <div>
             <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
               {NAV.find(n => n.id === activeTab)?.label}
@@ -477,10 +487,6 @@ const ClientPortal: React.FC = () => {
               <Star size={12} color="#ffa502" fill="#ffa502" />
               <span style={{ fontSize: 11, color: '#ffa502', fontWeight: 600 }}>CLIENTE PREMIUM</span>
             </div>
-          </div>
-          {/* Ticker integrado en el topbar — sin espacio en blanco */}
-          <div style={{ margin: '8px -32px -16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-            <TradingViewTickerTape theme="dark" />
           </div>
         </div>
 
