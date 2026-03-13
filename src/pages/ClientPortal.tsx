@@ -5,7 +5,7 @@ import {
   LogOut, ChevronRight, Clock, Target, Shield, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Minus, BookMarked, Zap,
   User, CreditCard, Activity, RefreshCw, Lock, Star,
-  Settings, X, Eye, EyeOff, Check
+  Settings, X, Eye, EyeOff, Check, Pencil, Save, Phone, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -255,6 +255,9 @@ const ClientPortal: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone: '' });
+  const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle');
   const [prefs, setPrefs] = useState<DashboardPrefs>(() => {
     try {
       const saved = sessionStorage.getItem('pessaro_dashboard_prefs');
@@ -286,7 +289,14 @@ const ClientPortal: React.FC = () => {
         supabase.from('client_market_analysis_2026_03_11').select('*').eq('is_published', true).order('published_at', { ascending: false }),
       ]);
 
-      if (profileRes.data) setClientData({ profile: profileRes.data, account: accountRes.data || null });
+      if (profileRes.data) {
+        setClientData({ profile: profileRes.data, account: accountRes.data || null });
+        setEditForm({
+          first_name: profileRes.data.first_name || '',
+          last_name: profileRes.data.last_name || '',
+          phone: profileRes.data.phone || '',
+        });
+      }
       if (articlesRes.data) setArticles(articlesRes.data as Article[]);
       if (analysisRes.data) setAnalysis(analysisRes.data as MarketAnalysis[]);
     } catch (err) {
@@ -298,6 +308,33 @@ const ClientPortal: React.FC = () => {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/portal-cliente', { replace: true }); };
   const handleRefresh = () => { setLoading(true); setLastRefresh(new Date()); loadAll(); };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setSaveStatus('saving');
+    try {
+      const { error } = await supabase
+        .from('client_profiles_2026_02_08_22_02')
+        .update({
+          first_name: editForm.first_name.trim(),
+          last_name: editForm.last_name.trim(),
+          phone: editForm.phone.trim() || null,
+        })
+        .eq('user_id', user.id);
+      if (error) throw error;
+      // Actualizar estado local
+      setClientData((prev: any) => ({
+        ...prev,
+        profile: { ...prev.profile, ...editForm }
+      }));
+      setSaveStatus('saved');
+      setEditingProfile(false);
+      setTimeout(() => setSaveStatus('idle'), 2500);
+    } catch (e) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  };
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -366,24 +403,41 @@ const ClientPortal: React.FC = () => {
           })}
         </nav>
 
-        <div style={{ padding: '16px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
+        <div style={{ padding: '12px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Usuario */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: 10, marginBottom: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700,
+              color: '#fff', flexShrink: 0 }}>
               {profile.first_name?.[0]?.toUpperCase() || 'C'}
             </div>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9' }}>{profile.first_name}</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile.first_name} {profile.last_name}
+              </p>
               <p style={{ fontSize: 10, color: '#636e72' }}>{account?.account_number || 'N/A'}</p>
             </div>
           </div>
-          <div style={{ fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.1)',
-            padding: '2px 8px', borderRadius: 20, display: 'inline-block', textTransform: 'uppercase',
-            letterSpacing: '0.06em', marginBottom: 10 }}>● Activo</div>
-          <button onClick={handleSignOut} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-            padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,71,87,0.3)',
-            background: 'rgba(255,71,87,0.08)', color: '#ff6b81', cursor: 'pointer', fontSize: 12 }}>
-            <LogOut size={14} />Cerrar sesión
+          {/* Estado activo */}
+          <div style={{ fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.08)',
+            border: '1px solid rgba(0,208,132,0.2)',
+            padding: '3px 10px', borderRadius: 20, display: 'inline-block', textTransform: 'uppercase',
+            letterSpacing: '0.06em', marginBottom: 8 }}>● Activo</div>
+          {/* Cerrar sesión — siempre visible */}
+          <button
+            onClick={handleSignOut}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '9px 12px', borderRadius: 8,
+              border: '1px solid rgba(255,71,87,0.4)',
+              background: 'rgba(255,71,87,0.1)',
+              color: '#ff6b81', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              transition: 'all 0.15s' }}
+            onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = 'rgba(255,71,87,0.2)'; }}
+            onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'rgba(255,71,87,0.1)'; }}
+          >
+            <LogOut size={14} />
+            Cerrar Sesión
           </button>
         </div>
       </aside>
@@ -424,13 +478,12 @@ const ClientPortal: React.FC = () => {
               <span style={{ fontSize: 11, color: '#ffa502', fontWeight: 600 }}>CLIENTE PREMIUM</span>
             </div>
           </div>
+          {/* Ticker integrado en el topbar — sin espacio en blanco */}
+          <div style={{ margin: '8px -32px -16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <TradingViewTickerTape theme="dark" />
+          </div>
         </div>
 
-
-        {/* Ticker en tiempo real */}
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
-          <TradingViewTickerTape theme="dark" />
-        </div>
 
         <div style={{ padding: '28px 32px' }}>
           <AnimatePresence mode="wait">
@@ -688,26 +741,134 @@ const ClientPortal: React.FC = () => {
             {/* ACCOUNT */}
             {activeTab === 'account' && (
               <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ marginBottom: 24 }}>
-                  <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Mi Cuenta</h2>
-                  <p style={{ fontSize: 13, color: '#636e72' }}>Información personal y detalles de trading</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <div>
+                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Mi Cuenta</h2>
+                    <p style={{ fontSize: 13, color: '#636e72' }}>Información personal y detalles de trading</p>
+                  </div>
+                  {!editingProfile ? (
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => setEditingProfile(true)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px',
+                        borderRadius: 8, border: '1px solid rgba(108,92,231,0.4)',
+                        background: 'rgba(108,92,231,0.12)', color: '#a29bfe',
+                        cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                      <Pencil size={13} /> Editar datos
+                    </motion.button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setEditingProfile(false); setSaveStatus('idle'); }}
+                        style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'transparent', color: '#636e72', cursor: 'pointer', fontSize: 12 }}>
+                        Cancelar
+                      </button>
+                      <motion.button whileTap={{ scale: 0.95 }} onClick={handleSaveProfile}
+                        disabled={saveStatus === 'saving'}
+                        style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px',
+                          borderRadius: 8, border: 'none',
+                          background: saveStatus === 'saving' ? 'rgba(0,208,132,0.3)' : '#00b894',
+                          color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                        <Save size={13} />
+                        {saveStatus === 'saving' ? 'Guardando…' : 'Guardar cambios'}
+                      </motion.button>
+                    </div>
+                  )}
                 </div>
+
+                {/* Feedback */}
+                {saveStatus === 'saved' && (
+                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
+                      background: 'rgba(0,184,148,0.1)', border: '1px solid rgba(0,184,148,0.3)',
+                      borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#00b894' }}>
+                    <Check size={15} /> Datos actualizados correctamente
+                  </motion.div>
+                )}
+                {saveStatus === 'error' && (
+                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
+                      background: 'rgba(255,71,87,0.1)', border: '1px solid rgba(255,71,87,0.3)',
+                      borderRadius: 8, marginBottom: 16, fontSize: 13, color: '#ff4757' }}>
+                    <AlertCircle size={15} /> Error al guardar. Intenta nuevamente.
+                  </motion.div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* ─ Información Personal ─ */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Información Personal</h3>
-                    {[
-                      ['Nombre', `${profile.first_name} ${profile.last_name}`],
-                      ['Email', profile.email],
-                      ['Teléfono', profile.phone || 'No registrado'],
-                      ['Tolerancia al riesgo', profile.risk_tolerance || 'No definida'],
-                      ['Estado', profile.account_status || 'Activa'],
-                    ].map(([label, value]) => (
-                      <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
-                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' }}>{value}</p>
+
+                    {editingProfile ? (
+                      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
+                        {/* Nombre */}
+                        <div>
+                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Nombre</label>
+                          <input
+                            value={editForm.first_name}
+                            onChange={e => setEditForm(p => ({ ...p, first_name: e.target.value }))}
+                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
+                              border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
+                              color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
+                          />
+                        </div>
+                        {/* Apellido */}
+                        <div>
+                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Apellido</label>
+                          <input
+                            value={editForm.last_name}
+                            onChange={e => setEditForm(p => ({ ...p, last_name: e.target.value }))}
+                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
+                              border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
+                              color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
+                          />
+                        </div>
+                        {/* Teléfono */}
+                        <div>
+                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Teléfono</label>
+                          <div style={{ position: 'relative' as const }}>
+                            <Phone size={14} color="#636e72" style={{ position: 'absolute' as const, left: 10, top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                              value={editForm.phone}
+                              onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
+                              placeholder="+56 9 XXXX XXXX"
+                              style={{ width: '100%', padding: '9px 12px 9px 32px', borderRadius: 8,
+                                border: '1px solid rgba(108,92,231,0.4)', background: 'rgba(108,92,231,0.08)',
+                                color: '#f1f2f6', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
+                            />
+                          </div>
+                        </div>
+                        {/* Email (solo lectura) */}
+                        <div>
+                          <label style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
+                            Email <span style={{ color: '#4a4a6a', fontSize: 10 }}>(no editable)</span>
+                          </label>
+                          <input
+                            value={profile.email}
+                            disabled
+                            style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
+                              border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)',
+                              color: '#636e72', fontSize: 14, cursor: 'not-allowed', boxSizing: 'border-box' as const }}
+                          />
+                        </div>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {[
+                          ['Nombre', `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || '—'],
+                          ['Email', profile.email],
+                          ['Teléfono', profile.phone || 'No registrado'],
+                          ['Tolerancia al riesgo', profile.risk_tolerance || 'No definida'],
+                          ['Estado', profile.account_status || 'Activa'],
+                        ].map(([label, value]) => (
+                          <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
+                            <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500 }}>{value}</p>
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
+
+                  {/* ─ Cuenta de Trading (solo lectura) ─ */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Cuenta de Trading</h3>
                     {account ? [
@@ -718,8 +879,8 @@ const ClientPortal: React.FC = () => {
                       ['Estado', account.status],
                     ].map(([label, value]) => (
                       <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
-                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' }}>{value}</p>
+                        <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
+                        <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' as const }}>{value}</p>
                       </div>
                     )) : <p style={{ color: '#636e72', fontSize: 13 }}>Sin cuenta de trading asociada.</p>}
                     <div style={{ marginTop: 16, padding: 14, background: 'rgba(108,92,231,0.1)',
@@ -731,6 +892,15 @@ const ClientPortal: React.FC = () => {
                         Contactar Asesor <ChevronRight size={12} />
                       </a>
                     </div>
+                    {/* Botón cerrar sesión también en Mi Cuenta */}
+                    <button onClick={handleSignOut}
+                      style={{ width: '100%', marginTop: 16, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', gap: 8, padding: '10px',
+                        borderRadius: 8, border: '1px solid rgba(255,71,87,0.4)',
+                        background: 'rgba(255,71,87,0.08)', color: '#ff6b81',
+                        cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                      <LogOut size={14} /> Cerrar Sesión
+                    </button>
                   </div>
                 </div>
               </motion.div>
