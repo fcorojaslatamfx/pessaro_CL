@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ROUTE_PATHS } from '@/lib/index';
 import { getMainSiteUrl } from '@/lib/domains';
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
+
 
 const ClientLogin: React.FC = () => {
   const navigate = useNavigate();

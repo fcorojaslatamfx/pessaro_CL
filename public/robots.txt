@@ -24,6 +24,12 @@ Allow: /manifest.json
 Allow: /og-image*
 Allow: /apple-touch-icon*
 
+# Bloquear páginas de testing (eliminadas del código pero bloqueadas por seguridad)
+Disallow: /test-resend
+Disallow: /test-formularios
+Disallow: /verificacion-sistema
+Disallow: /verificacion-integracion
+
 # Bloquear páginas administrativas y de sistema
 Disallow: /super-admin-login
 Disallow: /super-admin-panel

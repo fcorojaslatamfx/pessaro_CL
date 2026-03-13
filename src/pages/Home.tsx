@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -112,8 +114,11 @@ const Home: React.FC = () => {
   } = useContactPopup();
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
 
+
   // Funciones del carrusel
   const nextTestimonial = () => {
+  useSEO(PAGE_SEO.home);
+
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
   };
 

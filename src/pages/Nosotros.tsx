@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Award, Globe, Users, Target, History, CheckCircle } from 'lucide-react';
@@ -9,6 +11,8 @@ import { Link } from 'react-router-dom';
 import { useRiskProfile } from '@/hooks/useRiskProfile';
 import RiskProfileModal from '@/components/RiskProfileModal';
 const Nosotros = () => {
+  useSEO(PAGE_SEO.nosotros);
+
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
   
   const stats = [{
@@ -44,6 +48,7 @@ const Nosotros = () => {
           <img src={IMAGES.BUSINESS_OFFICE_4} alt="Pessaro Capital Office" className="w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/80 to-background" />
         </div>
+
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <motion.div initial={{

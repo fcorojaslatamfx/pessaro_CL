@@ -68,10 +68,6 @@ const InstrumentsManager = lazy(() => import('@/pages/cms/InstrumentsManager'));
 const MediaLibrary = lazy(() => import('@/pages/cms/MediaLibrary'));
 const Settings = lazy(() => import('@/pages/cms/Settings'));
 const ErrorPage = lazy(() => import('@/pages/ErrorPage'));
-const TestResend = lazy(() => import('@/pages/TestResend'));
-const TestResendComplete = lazy(() => import('@/pages/TestResendComplete'));
-const SystemVerification = lazy(() => import('@/pages/SystemVerification'));
-const IntegrationVerificationPage = lazy(() => import('@/pages/IntegrationVerificationPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
@@ -130,15 +126,17 @@ export default function App() {
                             <Route path={ROUTE_PATHS.RECUPERAR_CONTRASENA} element={<RecuperarContrasena />} />
                             
                             {/* Test Pages */}
-                            <Route path={ROUTE_PATHS.RESEND_TEST} element={<TestResend />} />
-                            <Route path={ROUTE_PATHS.RESEND_TEST_COMPLETE} element={<TestResendComplete />} />
-                            <Route path={ROUTE_PATHS.SYSTEM_VERIFICATION} element={<SystemVerification />} />
-                            <Route path={ROUTE_PATHS.INTEGRATION_VERIFICATION} element={<IntegrationVerificationPage />} />
                             
-                            {/* Client Portal Login - con layout del website */}
+                            {/* Client Portal Section */}
+                            {/* Login público para clientes */}
                             <Route 
                               path={ROUTE_PATHS.CLIENT_PORTAL} 
                               element={<ClientLogin />}
+                            />
+                            {/* Dashboard del portal (ClientPortal maneja auth internamente) */}
+                            <Route 
+                              path="/portal-cliente/dashboard" 
+                              element={<ClientPortal />} 
                             />
                             
                             {/* Error Page */}
@@ -148,12 +146,6 @@ export default function App() {
                       }
                     />
                     
-                    {/* PORTAL CLIENTE — sin Layout del website (tiene su propio UI) */}
-                    <Route 
-                      path="/portal-cliente/dashboard" 
-                      element={<ClientPortal />} 
-                    />
-
                     {/* DOMINIO DE GESTIÓN (LOGIN / CMS) */}
                     {/* FIX: rutas con paths explícitos — el segundo <Route path="/*"> nunca matchea en RR v6 */}
 

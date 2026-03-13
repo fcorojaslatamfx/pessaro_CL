@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
+
 
 const contactFormSchema = z.object({
   name:    z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres' }),

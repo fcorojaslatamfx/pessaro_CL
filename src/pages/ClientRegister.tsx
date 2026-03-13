@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClientRegistration } from '@/hooks/useClientRegistration';
 import { ROUTE_PATHS } from '@/lib/index';
+
 
 const ClientRegister: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -148,6 +151,8 @@ const ClientRegister: React.FC = () => {
   };
 
   const handleInputChange = (field: string, value: any) => {
+  useSEO(PAGE_SEO.registro);
+
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));

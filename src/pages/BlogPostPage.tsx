@@ -7,6 +7,9 @@ import { useBlogPost } from '@/hooks/useBlogPublic';
 import { Button } from '@/components/ui/button';
 import SocialShare from '@/components/SocialShare';
 import NewsletterPopup from '@/components/NewsletterPopup';
+import { useSEO } from '@/hooks/useSEO';
+
+
 
 const categoryColors: Record<string, string> = {
   'Trading':        'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -76,6 +79,22 @@ const BlogPostPage: React.FC = () => {
   const [showNewsletter, setShowNewsletter] = useState(false);
 
   const { post, isLoading, prevPost, nextPost, related } = useBlogPost(slug);
+
+  // SEO dinámico — usa los campos del tipo BlogPost
+  useSEO({
+    title:       post ? `${post.title} | Pessaro Capital` : 'Blog | Pessaro Capital',
+    description: post?.excerpt || 'Análisis de mercados financieros por Pessaro Capital.',
+    canonical:   post ? `https://pessaro.cl/blog/${post.slug}` : undefined,
+    keywords:    post?.tags?.join(', ') || 'trading, análisis financiero, Pessaro Capital',
+    ogImage:     post?.image || undefined,
+    ogType:      'article',
+    article: post ? {
+      publishedTime: post.publishDate,
+      author:        post.author,
+      tags:          post.tags,
+      section:       post.category,
+    } : undefined,
+  });
 
   // Scroll al top al cambiar de artículo
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);

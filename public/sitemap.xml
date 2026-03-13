@@ -1,136 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-  <!-- Página Principal -->
+  <!-- ═══ PÁGINAS PÚBLICAS DEL WEBSITE ═══════════════════════════════════════
+       Ambos dominios (pessaro.cl y pessarocapital.com) sirven el mismo contenido.
+       Se usa hreflang para indicar a Google que son equivalentes.
+       ────────────────────────────────────────────────────────────────────── -->
+
+  <!-- HOME — Prioridad máxima, actualización semanal -->
   <url>
     <loc>https://pessaro.cl/</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/"/>
   </url>
 
-  <!-- Páginas Principales del Sitio -->
+  <!-- SERVICIOS — Trading, gestión de carteras, CopyTrading -->
   <url>
     <loc>https://pessaro.cl/servicios</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/servicios"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/servicios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/servicios"/>
   </url>
 
+  <!-- INSTRUMENTOS — Forex, índices, commodities, crypto -->
   <url>
     <loc>https://pessaro.cl/instrumentos</loc>
-    <lastmod>2026-02-11</lastmod>
+    <lastmod>2026-03-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/instrumentos"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/instrumentos"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/instrumentos"/>
   </url>
 
-  <url>
-    <loc>https://pessaro.cl/nosotros</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://pessaro.cl/contacto</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Sección Educativa -->
+  <!-- EDUCACIÓN — Cursos, rutas de aprendizaje, análisis técnico -->
   <url>
     <loc>https://pessaro.cl/educacion</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/educacion"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/educacion"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/educacion"/>
   </url>
 
-
-
+  <!-- BLOG — Análisis de mercados (alta frecuencia por posts nuevos) -->
   <url>
     <loc>https://pessaro.cl/blog</loc>
-    <lastmod>2026-02-11</lastmod>
+    <lastmod>2026-03-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/blog"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/blog"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/blog"/>
   </url>
 
-  <!-- Portal de Clientes -->
+  <!-- NOSOTROS — Historia, equipo, valores -->
   <url>
-    <loc>https://pessaro.cl/portal-cliente</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://pessaro.cl/registro-cliente</loc>
-    <lastmod>2026-02-11</lastmod>
+    <loc>https://pessaro.cl/nosotros</loc>
+    <lastmod>2026-03-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/nosotros"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/nosotros"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/nosotros"/>
   </url>
 
+  <!-- CONTACTO — Formulario y datos de contacto -->
   <url>
-    <loc>https://pessaro.cl/error</loc>
-    <lastmod>2026-02-13</lastmod>
-    <changefreq>yearly</changefreq>
+    <loc>https://pessaro.cl/contacto</loc>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/contacto"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/contacto"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/contacto"/>
+  </url>
+
+  <!-- REGISTRO CLIENTE — Apertura de cuenta -->
+  <url>
+    <loc>https://pessaro.cl/registro-cliente</loc>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/registro-cliente"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/registro-cliente"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/registro-cliente"/>
+  </url>
+
+  <!-- PORTAL CLIENTE LOGIN — Baja prioridad, solo para que Google conozca su existencia -->
+  <url>
+    <loc>https://pessaro.cl/portal-cliente</loc>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="es-CL"    href="https://pessaro.cl/portal-cliente"/>
+    <xhtml:link rel="alternate" hreflang="es"        href="https://pessarocapital.com/portal-cliente"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pessaro.cl/portal-cliente"/>
   </url>
 
-  <!-- Dominio de Login (login.pessaro.cl) -->
-  <url>
-    <loc>https://login.pessaro.cl/super-admin-login</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://login.pessaro.cl/login-interno</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://login.pessaro.cl/super-admin-panel</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-
-  <url>
-    <loc>https://login.pessaro.cl/dashboard-interno</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-
-  <!-- Herramientas de Diagnóstico -->
-  <url>
-    <loc>https://pessaro.cl/diagnostico-acceso</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-
-  <!-- Dashboard Wyckoff (Acceso Restringido) -->
-  <url>
-    <loc>https://pessaro.cl/wyckoff-dashboard</loc>
-    <lastmod>2026-02-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.1</priority>
-  </url>
-
-  <!-- Sistema CMS (Administrativo) -->
-  <url>
-    <loc>https://pessaro.cl/cms/login</loc>
-    <lastmod>2026-02-11</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.1</priority>
-  </url>
+  <!-- ═══ NOTA: Blog posts individuales (/blog/:slug) se agregan dinámicamente
+       via la Edge Function /sitemap-dynamic en Supabase.
+       Ver: supabase/functions/sitemap/index.ts
+       ════════════════════════════════════════════════════════════════════════ -->
 
 </urlset>

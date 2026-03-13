@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -26,6 +28,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { learningPaths, faqData, faqCategories, type LearningPath, type FAQItem } from '@/data/learningPaths';
+
 
 const Educacion: React.FC = () => {
   const navigate = useNavigate();
@@ -86,6 +89,8 @@ const Educacion: React.FC = () => {
   };
 
   const toggleLesson = (lessonId: string) => {
+  useSEO(PAGE_SEO.educacion);
+
     setOpenLessons(prev => 
       prev.includes(lessonId) 
         ? prev.filter(id => id !== lessonId)

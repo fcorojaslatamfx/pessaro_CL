@@ -1,3 +1,5 @@
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -19,6 +21,7 @@ import { springPresets, fadeInUp, staggerContainer, staggerItem } from '@/lib/mo
 import { useRiskProfile } from '@/hooks/useRiskProfile';
 import RiskProfileModal from '@/components/RiskProfileModal';
 
+
 const iconMap: Record<string, React.ReactNode> = {
   LineChart: <LineChart className="w-6 h-6" />,
   Briefcase: <Briefcase className="w-6 h-6" />,
@@ -27,6 +30,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Servicios() {
+  useSEO(PAGE_SEO.servicios);
   const { showProfileModal, setShowProfileModal, saveProfile } = useRiskProfile();
   
   return (

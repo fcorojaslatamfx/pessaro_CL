@@ -11,8 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RiskProfileModal from '@/components/RiskProfileModal';
 import NewsletterPopup from '@/components/NewsletterPopup';
+import { useSEO } from '@/hooks/useSEO';
+import { PAGE_SEO } from '@/lib/seo-config';
+
 
 const Blog = () => {
+  useSEO(PAGE_SEO.blog);
+
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewsletterPopup, setShowNewsletterPopup] = useState(false);
