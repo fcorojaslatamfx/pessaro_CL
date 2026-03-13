@@ -135,16 +135,10 @@ export default function App() {
                             <Route path={ROUTE_PATHS.SYSTEM_VERIFICATION} element={<SystemVerification />} />
                             <Route path={ROUTE_PATHS.INTEGRATION_VERIFICATION} element={<IntegrationVerificationPage />} />
                             
-                            {/* Client Portal Section */}
-                            {/* Login público para clientes */}
+                            {/* Client Portal Login - con layout del website */}
                             <Route 
                               path={ROUTE_PATHS.CLIENT_PORTAL} 
                               element={<ClientLogin />}
-                            />
-                            {/* Dashboard del portal (ClientPortal maneja auth internamente) */}
-                            <Route 
-                              path="/portal-cliente/dashboard" 
-                              element={<ClientPortal />} 
                             />
                             
                             {/* Error Page */}
@@ -154,6 +148,12 @@ export default function App() {
                       }
                     />
                     
+                    {/* PORTAL CLIENTE — sin Layout del website (tiene su propio UI) */}
+                    <Route 
+                      path="/portal-cliente/dashboard" 
+                      element={<ClientPortal />} 
+                    />
+
                     {/* DOMINIO DE GESTIÓN (LOGIN / CMS) */}
                     {/* FIX: rutas con paths explícitos — el segundo <Route path="/*"> nunca matchea en RR v6 */}
 
