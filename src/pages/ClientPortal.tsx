@@ -13,8 +13,7 @@ import {
   TradingViewSymbolOverview,
   TradingViewEconomicCalendar,
   TradingViewMarketScreener,
-  TradingViewTickerTape,
-  TwelveDataPriceCard
+  TradingViewTickerTape
 } from '@/components/TradingViewWidgets';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -232,6 +231,7 @@ const ClientPortal: React.FC = () => {
   const [analysis, setAnalysis] = useState<MarketAnalysis[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [showAdvisorPopup, setShowAdvisorPopup] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => { loadAll(); }, []);
@@ -429,18 +429,12 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Precios en tiempo real - Twelve Data */}
-                <div style={{ marginBottom: 20 }}>
-                  <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Precios en Tiempo Real</p>
-                  <TwelveDataPriceCard symbols={['EUR/USD','GBP/USD','XAU/USD','BTC/USD']} />
-                </div>
-
                 {/* Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
-                  <StatCard label="Balance" value={formatCurrency(account?.balance || 0)} sub="Saldo total" Icon={CreditCard} accent="#6c5ce7" delay={0.05} />
-                  <StatCard label="Equity" value={formatCurrency(account?.equity || 0)} sub="Valor de cuenta" Icon={TrendingUp} accent="#0984e3" delay={0.1} />
-                  <StatCard label="Margen Libre" value={formatCurrency(account?.free_margin || 0)} sub="Para nuevas posiciones" Icon={Activity} accent="#00d084" delay={0.15} />
-                  <StatCard label="Nivel Margen" value={`${account?.margin_level || 0}%`} sub={account?.margin_level > 200 ? 'Saludable' : 'Revisar'} Icon={Shield} accent={account?.margin_level > 200 ? '#00d084' : '#ffa502'} delay={0.2} />
+                  <StatCard label="N° Cuenta" value={account?.account_number || '—'} sub="Número de cuenta" Icon={CreditCard} accent="#6c5ce7" delay={0.05} />
+                  <StatCard label="Tipo" value={account?.account_type || '—'} sub="Tipo de cuenta" Icon={TrendingUp} accent="#0984e3" delay={0.1} />
+                  <StatCard label="Apalancamiento" value={account?.leverage || '—'} sub="Ratio máximo" Icon={Activity} accent="#00d084" delay={0.15} />
+                  <StatCard label="Estado" value={account?.status || '—'} sub={account?.status === 'active' ? 'Cuenta activa' : 'Ver estado'} Icon={Shield} accent={account?.status === 'active' ? '#00d084' : '#ffa502'} delay={0.2} />
                 </div>
 
                 {/* Quick panels */}
@@ -631,10 +625,12 @@ const ClientPortal: React.FC = () => {
                       border: '1px solid rgba(108,92,231,0.2)', borderRadius: 10 }}>
                       <p style={{ fontSize: 12, fontWeight: 600, color: '#a29bfe', marginBottom: 6 }}>¿Necesitas ayuda?</p>
                       <p style={{ fontSize: 12, color: '#636e72', marginBottom: 10 }}>Contacta a tu asesor Pessaro Capital</p>
-                      <a href="mailto:info@pessarocapital.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                        fontSize: 12, color: '#6c5ce7', fontWeight: 600, textDecoration: 'none' }}>
+                      <button onClick={() => setShowAdvisorPopup(true)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
+                          fontSize: 12, color: '#6c5ce7', fontWeight: 600, background: 'none',
+                          border: 'none', cursor: 'pointer', padding: 0 }}>
                         Contactar Asesor <ChevronRight size={12} />
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -646,6 +642,73 @@ const ClientPortal: React.FC = () => {
       </main>
 
       <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
+
+      {/* ── POPUP ASESOR ──────────────────────────────────────────────────── */}
+      {showAdvisorPopup && (
+        <div onClick={() => setShowAdvisorPopup(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#16213e', border: '1px solid rgba(108,92,231,0.3)',
+              borderRadius: 16, padding: 32, maxWidth: 420, width: '100%',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(108,92,231,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👤</div>
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#f1f2f6', margin: 0 }}>Asesor Comercial</p>
+                  <p style={{ fontSize: 12, color: '#a29bfe', margin: 0 }}>Pessaro Capital</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAdvisorPopup(false)}
+                style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', fontSize: 20 }}>✕</button>
+            </div>
+            <p style={{ fontSize: 13, color: '#b2bec3', marginBottom: 20, lineHeight: 1.6 }}>
+              Estamos aquí para ayudarte. Elige cómo prefieres contactar a tu asesor:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a href="mailto:info@pessarocapital.com"
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(108,92,231,0.12)', border: '1px solid rgba(108,92,231,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                <span style={{ fontSize: 18 }}>✉️</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Enviar Email</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>info@pessarocapital.com</p>
+                </div>
+              </a>
+              <a href="https://wa.me/56922071511?text=Hola,%20soy%20cliente%20de%20Pessaro%20Capital%20y%20necesito%20hablar%20con%20un%20asesor"
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                <span style={{ fontSize: 18 }}>💬</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>WhatsApp</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>+56 9 2207 1511</p>
+                </div>
+              </a>
+              <a href="https://www.linkedin.com/company/pessarocapital"
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  background: 'rgba(0,119,181,0.1)', border: '1px solid rgba(0,119,181,0.25)',
+                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                <span style={{ fontSize: 18 }}>💼</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>LinkedIn</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#636e72' }}>Pessaro Capital</p>
+                </div>
+              </a>
+            </div>
+            <p style={{ fontSize: 11, color: '#636e72', marginTop: 20, textAlign: 'center' }}>
+              Lunes a Viernes · 09:00 – 18:00 hrs · Santiago, Chile
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
