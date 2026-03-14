@@ -4,8 +4,7 @@ import {
   LayoutDashboard, TrendingUp, BarChart2, BookOpen,
   LogOut, ChevronRight, Clock, Target, Shield, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Minus, BookMarked, Zap,
-  User, CreditCard, Activity, RefreshCw, Lock, Star,
-  Settings, X, Eye, EyeOff, Check
+  User, CreditCard, Activity, RefreshCw, Lock, Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -44,26 +43,6 @@ interface MarketAnalysis {
   published_at: string;
 }
 
-
-// ─── Dashboard Preferences ───────────────────────────────────────────────────
-interface DashboardPrefs {
-  showPrices: boolean;
-  showAnalysis: boolean;
-  showArticles: boolean;
-  showMiniChart: boolean;
-  defaultSymbol: string;
-  marketView: 'forex' | 'crypto' | 'america';
-}
-
-const DEFAULT_PREFS: DashboardPrefs = {
-  showPrices: true,
-  showAnalysis: true,
-  showArticles: true,
-  showMiniChart: true,
-  defaultSymbol: 'FX:EURUSD',
-  marketView: 'forex',
-};
-
 // ─── Constants ───────────────────────────────────────────────────────────────
 const formatCurrency = (amount: number, currency = 'USD') =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency }).format(amount);
@@ -87,9 +66,8 @@ const categoryColors: Record<string, string> = {
 
 const NAV = [
   { id: 'overview',  label: 'Resumen',    Icon: LayoutDashboard },
-  { id: 'chart',     label: 'Gráfico',    Icon: TrendingUp      },
-  { id: 'screener',  label: 'Screener',   Icon: BarChart2       },
-  { id: 'analysis',  label: 'Análisis',   Icon: Target          },
+  { id: 'markets',   label: 'Mercados',   Icon: TrendingUp      },
+  { id: 'analysis',  label: 'Análisis',   Icon: BarChart2       },
   { id: 'articles',  label: 'Exclusivos', Icon: BookOpen        },
   { id: 'calendar',  label: 'Calendario', Icon: Activity        },
   { id: 'account',   label: 'Mi Cuenta',  Icon: User            },
@@ -254,22 +232,7 @@ const ClientPortal: React.FC = () => {
   const [analysis, setAnalysis] = useState<MarketAnalysis[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-  const [showSettings, setShowSettings] = useState(false);
-  const [prefs, setPrefs] = useState<DashboardPrefs>(() => {
-    try {
-      const saved = sessionStorage.getItem('pessaro_dashboard_prefs');
-      return saved ? { ...DEFAULT_PREFS, ...JSON.parse(saved) } : DEFAULT_PREFS;
-    } catch { return DEFAULT_PREFS; }
-  });
   const navigate = useNavigate();
-
-  const updatePref = <K extends keyof DashboardPrefs>(key: K, value: DashboardPrefs[K]) => {
-    setPrefs(prev => {
-      const next = { ...prev, [key]: value };
-      try { sessionStorage.setItem('pessaro_dashboard_prefs', JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
 
   useEffect(() => { loadAll(); }, []);
 
@@ -298,6 +261,14 @@ const ClientPortal: React.FC = () => {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/portal-cliente', { replace: true }); };
   const handleRefresh = () => { setLoading(true); setLastRefresh(new Date()); loadAll(); };
+
+  // Inyectar keyframe para spinner de Twelve Data
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+    return () => { try { document.head.removeChild(style); } catch {} };
+  }, []);
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -411,13 +382,6 @@ const ClientPortal: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <RefreshCw size={14} />
             </motion.button>
-            <motion.button whileTap={{ scale: 0.92 }} onClick={() => setShowSettings(true)}
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
-                background: showSettings ? 'rgba(108,92,231,0.2)' : 'rgba(255,255,255,0.04)',
-                color: showSettings ? '#a29bfe' : '#a4b0be', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Settings size={14} />
-            </motion.button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,165,2,0.1)',
               border: '1px solid rgba(255,165,2,0.2)', borderRadius: 8, padding: '6px 12px' }}>
               <Star size={12} color="#ffa502" fill="#ffa502" />
@@ -465,15 +429,13 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Precios en tiempo real */}
-                {prefs.showPrices && (
-                  <div style={{ marginBottom: 20 }}>
-                    <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Precios en Tiempo Real · actualiza c/30s</p>
-                    <TwelveDataPriceCard symbols={['EUR/USD', 'GBP/USD', 'XAU/USD', 'BTC/USD']} />
-                  </div>
-                )}
+                {/* Precios en tiempo real - Twelve Data */}
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Precios en Tiempo Real</p>
+                  <TwelveDataPriceCard symbols={['EUR/USD','GBP/USD','XAU/USD','BTC/USD']} />
+                </div>
 
-                {/* Stats cuenta */}
+                {/* Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
                   <StatCard label="Balance" value={formatCurrency(account?.balance || 0)} sub="Saldo total" Icon={CreditCard} accent="#6c5ce7" delay={0.05} />
                   <StatCard label="Equity" value={formatCurrency(account?.equity || 0)} sub="Valor de cuenta" Icon={TrendingUp} accent="#0984e3" delay={0.1} />
@@ -483,7 +445,7 @@ const ClientPortal: React.FC = () => {
 
                 {/* Quick panels */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
-                  {prefs.showAnalysis && <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Análisis Reciente</h3>
                       <button onClick={() => setActiveTab('analysis')} style={{ fontSize: 11, color: '#6c5ce7',
@@ -508,9 +470,9 @@ const ClientPortal: React.FC = () => {
                       );
                     })}
                     {analysis.length === 0 && <p style={{ fontSize: 13, color: '#636e72' }}>Sin análisis publicados.</p>}
-                  </div>}
+                  </div>
 
-                  {prefs.showArticles && <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Artículos Exclusivos</h3>
                       <button onClick={() => setActiveTab('articles')} style={{ fontSize: 11, color: '#6c5ce7',
@@ -531,85 +493,28 @@ const ClientPortal: React.FC = () => {
                       </div>
                     ))}
                     {articles.length === 0 && <p style={{ fontSize: 13, color: '#636e72' }}>Sin artículos publicados.</p>}
-                  </div>}
+                  </div>
                 </div>
 
                 {/* Mini chart */}
-                {prefs.showMiniChart && (
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Vista Rápida de Mercado</h3>
-                    <TradingViewSymbolOverview height={200} theme="dark" />
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* CHART */}
-            {activeTab === 'chart' && (
-              <motion.div key="chart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Gráfico de Mercados</h2>
-                    <p style={{ fontSize: 13, color: '#636e72' }}>Análisis técnico avanzado · cambia símbolo desde el gráfico</p>
-                  </div>
-                  {/* Selector rápido de símbolo */}
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {[
-                      { sym: 'FX:EURUSD',        label: 'EUR/USD' },
-                      { sym: 'FX:GBPUSD',        label: 'GBP/USD' },
-                      { sym: 'OANDA:XAUUSD',     label: 'XAU/USD' },
-                      { sym: 'BITSTAMP:BTCUSD',  label: 'BTC/USD' },
-                      { sym: 'OANDA:SPX500USD',  label: 'S&P 500' },
-                    ].map(({ sym, label }) => (
-                      <button key={sym}
-                        onClick={() => updatePref('defaultSymbol', sym)}
-                        style={{
-                          padding: '5px 11px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                          background: prefs.defaultSymbol === sym ? '#6c5ce7' : 'rgba(255,255,255,0.06)',
-                          color: prefs.defaultSymbol === sym ? '#fff' : '#636e72',
-                        }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <TradingViewAdvancedChart symbol={prefs.defaultSymbol} height={580} theme="dark" allow_symbol_change={true} />
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Vista Rápida de Mercado</h3>
+                  <TradingViewSymbolOverview height={200} theme="dark" />
                 </div>
               </motion.div>
             )}
 
-            {/* SCREENER */}
-            {activeTab === 'screener' && (
-              <motion.div key="screener" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Screener de Mercados</h2>
-                    <p style={{ fontSize: 13, color: '#636e72' }}>Filtra y analiza instrumentos en tiempo real</p>
-                  </div>
-                  {/* Selector de mercado */}
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {[
-                      { key: 'forex',   label: 'Forex'   },
-                      { key: 'crypto',  label: 'Crypto'  },
-                      { key: 'america', label: 'Acciones' },
-                    ].map(({ key, label }) => (
-                      <button key={key}
-                        onClick={() => updatePref('marketView', key as 'forex' | 'crypto' | 'america')}
-                        style={{
-                          padding: '5px 14px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                          background: prefs.marketView === key ? '#0984e3' : 'rgba(255,255,255,0.06)',
-                          color: prefs.marketView === key ? '#fff' : '#636e72',
-                        }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+            {/* MARKETS */}
+            {activeTab === 'markets' && (
+              <motion.div key="markets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ display: 'grid', gap: 20 }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Gráfico Avanzado</h3>
+                  <TradingViewAdvancedChart symbol="EURUSD" height={520} theme="dark" allow_symbol_change={true} />
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <TradingViewMarketScreener height={600} theme="dark" market={prefs.marketView} />
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Screener de Mercados</h3>
+                  <TradingViewMarketScreener height={500} theme="dark" market="forex" />
                 </div>
               </motion.div>
             )}
@@ -739,94 +644,6 @@ const ClientPortal: React.FC = () => {
           </AnimatePresence>
         </div>
       </main>
-
-
-      {/* ── Panel de Configuración ─────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowSettings(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200,
-              display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '80px 20px 0' }}>
-            <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}
-              onClick={e => e.stopPropagation()}
-              style={{ background: '#13151f', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 16, padding: 24, width: 300, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Settings size={16} color="#a29bfe" />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f2f6' }}>Personalizar Dashboard</span>
-                </div>
-                <button onClick={() => setShowSettings(false)}
-                  style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Widgets visibles */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Widgets en Resumen</p>
-              {([
-                ['showPrices',   'Precios en Tiempo Real'],
-                ['showAnalysis', 'Panel de Análisis'],
-                ['showArticles', 'Artículos Exclusivos'],
-                ['showMiniChart','Vista Rápida de Mercado'],
-              ] as [keyof DashboardPrefs, string][]).map(([key, label]) => (
-                <div key={key} onClick={() => updatePref(key, !prefs[key])}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 12px', borderRadius: 8, marginBottom: 6, cursor: 'pointer',
-                    background: prefs[key] ? 'rgba(108,92,231,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${prefs[key] ? 'rgba(108,92,231,0.3)' : 'rgba(255,255,255,0.07)'}`,
-                    transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 13, color: prefs[key] ? '#a29bfe' : '#a4b0be' }}>{label}</span>
-                  <div style={{ width: 20, height: 20, borderRadius: 6,
-                    background: prefs[key] ? '#6c5ce7' : 'rgba(255,255,255,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {prefs[key] && <Check size={12} color="#fff" />}
-                  </div>
-                </div>
-              ))}
-
-              {/* Símbolo por defecto */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '16px 0 10px' }}>Símbolo por Defecto (Gráfico)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                {(['FX:EURUSD','FX:GBPUSD','OANDA:XAUUSD','BITSTAMP:BTCUSD'] as const).map(sym => (
-                  <div key={sym} onClick={() => updatePref('defaultSymbol', sym)}
-                    style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', textAlign: 'center' as const,
-                      background: prefs.defaultSymbol === sym ? 'rgba(108,92,231,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${prefs.defaultSymbol === sym ? 'rgba(108,92,231,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                      fontSize: 11, fontWeight: 600, color: prefs.defaultSymbol === sym ? '#a29bfe' : '#636e72',
-                      transition: 'all 0.15s' }}>
-                    {sym.replace('FX:','').replace('OANDA:','').replace('BITSTAMP:','')}
-                  </div>
-                ))}
-              </div>
-
-              {/* Tipo de mercado en screener */}
-              <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '16px 0 10px' }}>Vista de Mercados</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                {(['forex','crypto','america'] as const).map(m => (
-                  <div key={m} onClick={() => updatePref('marketView', m)}
-                    style={{ padding: '8px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center' as const,
-                      background: prefs.marketView === m ? 'rgba(9,132,227,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${prefs.marketView === m ? 'rgba(9,132,227,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                      fontSize: 11, fontWeight: 600, color: prefs.marketView === m ? '#74b9ff' : '#636e72',
-                      transition: 'all 0.15s', textTransform: 'capitalize' as const }}>
-                    {m}
-                  </div>
-                ))}
-              </div>
-
-              <button onClick={() => { setPrefs(DEFAULT_PREFS); sessionStorage.removeItem('pessaro_dashboard_prefs'); }}
-                style={{ width: '100%', marginTop: 16, padding: '9px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'transparent', color: '#636e72', cursor: 'pointer', fontSize: 12 }}>
-                Restaurar por defecto
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
     </div>
