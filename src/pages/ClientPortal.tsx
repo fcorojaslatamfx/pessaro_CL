@@ -4,7 +4,8 @@ import {
   LayoutDashboard, TrendingUp, BarChart2, BookOpen,
   LogOut, ChevronRight, Clock, Target, Shield, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Minus, BookMarked, Zap,
-  User, CreditCard, Activity, RefreshCw, Lock, Star
+  User, CreditCard, Activity, RefreshCw, Lock, Star,
+  CheckCircle2, AlertCircle, Hash
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -43,9 +44,6 @@ interface MarketAnalysis {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const formatCurrency = (amount: number, currency = 'USD') =>
-  new Intl.NumberFormat('es-CL', { style: 'currency', currency }).format(amount);
-
 const directionConfig = {
   alcista: { label: 'Alcista',  color: '#00d084', Icon: ArrowUpRight,   bg: 'rgba(0,208,132,0.12)' },
   bajista: { label: 'Bajista',  color: '#ff4757', Icon: ArrowDownRight, bg: 'rgba(255,71,87,0.12)'  },
@@ -66,6 +64,7 @@ const categoryColors: Record<string, string> = {
 const NAV = [
   { id: 'overview',  label: 'Resumen',    Icon: LayoutDashboard },
   { id: 'markets',   label: 'Mercados',   Icon: TrendingUp      },
+  { id: 'screener',  label: 'Screener',   Icon: BarChart2       },
   { id: 'analysis',  label: 'Análisis',   Icon: BarChart2       },
   { id: 'articles',  label: 'Exclusivos', Icon: BookOpen        },
   { id: 'calendar',  label: 'Calendario', Icon: Activity        },
@@ -73,22 +72,62 @@ const NAV = [
 ];
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
-const StatCard = ({ label, value, sub, Icon, accent = '#6c5ce7', delay = 0 }: any) => (
-  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.4 }}
-    style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))',
-      border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
-    <div style={{ position: 'absolute', top: 0, right: 0, width: 80, height: 80,
-      background: `radial-gradient(circle at 80% 20%,${accent}22,transparent 70%)` }} />
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div>
-        <p style={{ fontSize: 11, color: '#a4b0be', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</p>
-        <p style={{ fontSize: 24, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>{value}</p>
-        {sub && <p style={{ fontSize: 12, color: '#a4b0be', marginTop: 4 }}>{sub}</p>}
+
+/** Tarjeta de estado estilo mockup: ícono arriba, label arriba, valor grande abajo */
+const StatusCard = ({
+  label, value, Icon, accent = '#6c5ce7', delay = 0, iconBg, valueBg
+}: {
+  label: string; value: string; Icon: any;
+  accent?: string; delay?: number; iconBg?: string; valueBg?: string;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.35 }}
+    style={{
+      background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 14,
+      padding: '20px 22px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      position: 'relative',
+      overflow: 'hidden',
+    }}
+  >
+    {/* Decorative glow */}
+    <div style={{
+      position: 'absolute', top: -20, right: -20, width: 90, height: 90,
+      background: `radial-gradient(circle,${accent}28,transparent 70%)`,
+      borderRadius: '50%',
+    }} />
+
+    {/* Row: label + icon */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <p style={{
+        fontSize: 10, fontWeight: 600, color: '#7f8c9a',
+        textTransform: 'uppercase', letterSpacing: '0.10em',
+      }}>{label}</p>
+      <div style={{
+        width: 28, height: 28, borderRadius: 8,
+        background: iconBg || `${accent}22`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon size={14} color={accent} />
       </div>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${accent}22`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon size={18} color={accent} />
-      </div>
+    </div>
+
+    {/* Value */}
+    <div style={{
+      display: 'inline-flex', alignSelf: 'flex-start',
+      background: valueBg || `${accent}18`,
+      border: `1px solid ${accent}35`,
+      borderRadius: 8, padding: '5px 12px',
+    }}>
+      <span style={{ fontSize: 15, fontWeight: 700, color: accent, letterSpacing: '0.02em' }}>
+        {value}
+      </span>
     </div>
   </motion.div>
 );
@@ -96,12 +135,20 @@ const StatCard = ({ label, value, sub, Icon, accent = '#6c5ce7', delay = 0 }: an
 const ArticleCard = ({ article, onClick }: { article: Article; onClick: () => void }) => {
   const catColor = categoryColors[article.category] || '#6c5ce7';
   return (
-    <motion.div whileHover={{ translateY: -2, boxShadow: '0 8px 32px rgba(0,0,0,0.35)' }} onClick={onClick}
-      style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))',
-        border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, cursor: 'pointer', transition: 'all 0.2s' }}>
+    <motion.div
+      whileHover={{ translateY: -2, boxShadow: '0 8px 32px rgba(0,0,0,0.35)' }}
+      onClick={onClick}
+      style={{
+        background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))',
+        border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12,
+        padding: 20, cursor: 'pointer', transition: 'all 0.2s',
+      }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: catColor, textTransform: 'uppercase',
-          letterSpacing: '0.08em', background: `${catColor}20`, padding: '3px 8px', borderRadius: 4 }}>
+        <span style={{
+          fontSize: 11, fontWeight: 600, color: catColor, textTransform: 'uppercase',
+          letterSpacing: '0.08em', background: `${catColor}20`, padding: '3px 8px', borderRadius: 4,
+        }}>
           {categoryLabels[article.category] || article.category}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#636e72', fontSize: 11 }}>
@@ -115,8 +162,10 @@ const ArticleCard = ({ article, onClick }: { article: Article; onClick: () => vo
           <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9' }}>{article.author_name}</p>
           <p style={{ fontSize: 11, color: '#636e72' }}>{article.author_role}</p>
         </div>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(108,92,231,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8, background: 'rgba(108,92,231,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
           <ChevronRight size={14} color="#6c5ce7" />
         </div>
       </div>
@@ -130,9 +179,14 @@ const AnalysisCard = ({ analysis }: { analysis: MarketAnalysis }) => {
   const validUntil = new Date(analysis.valid_until);
   const expiringSoon = (validUntil.getTime() - Date.now()) < 24 * 3600 * 1000;
   return (
-    <motion.div whileHover={{ translateY: -2 }}
-      style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))',
-        border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${dir.color}`, borderRadius: 12, padding: 20 }}>
+    <motion.div
+      whileHover={{ translateY: -2 }}
+      style={{
+        background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))',
+        border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${dir.color}`,
+        borderRadius: 12, padding: 20,
+      }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -142,8 +196,7 @@ const AnalysisCard = ({ analysis }: { analysis: MarketAnalysis }) => {
           <p style={{ fontSize: 13, color: '#a4b0be' }}>{analysis.title}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: dir.bg,
-            padding: '4px 10px', borderRadius: 6, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: dir.bg, padding: '4px 10px', borderRadius: 6, marginBottom: 4 }}>
             <DirIcon size={13} color={dir.color} />
             <span style={{ fontSize: 12, fontWeight: 600, color: dir.color }}>{dir.label}</span>
           </div>
@@ -152,7 +205,8 @@ const AnalysisCard = ({ analysis }: { analysis: MarketAnalysis }) => {
       </div>
       <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, marginBottom: 12 }}>
         <motion.div initial={{ width: 0 }} animate={{ width: `${analysis.confidence_level}%` }}
-          transition={{ delay: 0.3, duration: 0.8 }} style={{ height: '100%', background: dir.color, borderRadius: 2 }} />
+          transition={{ delay: 0.3, duration: 0.8 }}
+          style={{ height: '100%', background: dir.color, borderRadius: 2 }} />
       </div>
       <p style={{ fontSize: 13, color: '#a4b0be', marginBottom: 14, lineHeight: 1.5 }}>{analysis.summary}</p>
       {analysis.key_levels && (analysis.key_levels.entry || analysis.key_levels.sl) && (
@@ -181,15 +235,24 @@ const ArticleModal = ({ article, onClose }: { article: Article | null; onClose: 
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }}>
         <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }} onClick={e => e.stopPropagation()}
-          style={{ background: '#13151f', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 16, padding: 32, maxWidth: 680, width: '100%', maxHeight: '80vh', overflowY: 'auto' as const }}>
+          exit={{ opacity: 0, scale: 0.95 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: '#13151f', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 16, padding: 32, maxWidth: 680, width: '100%',
+            maxHeight: '80vh', overflowY: 'auto' as const,
+          }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: catColor, textTransform: 'uppercase',
-              letterSpacing: '0.08em', background: `${catColor}20`, padding: '3px 8px', borderRadius: 4 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: catColor, textTransform: 'uppercase',
+              letterSpacing: '0.08em', background: `${catColor}20`, padding: '3px 8px', borderRadius: 4,
+            }}>
               {categoryLabels[article.category]}
             </span>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', fontSize: 20 }}>×</button>
@@ -236,6 +299,14 @@ const ClientPortal: React.FC = () => {
 
   useEffect(() => { loadAll(); }, []);
 
+  // Spinner keyframe
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+    return () => { try { document.head.removeChild(style); } catch {} };
+  }, []);
+
   const loadAll = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -262,36 +333,33 @@ const ClientPortal: React.FC = () => {
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/portal-cliente', { replace: true }); };
   const handleRefresh = () => { setLoading(true); setLastRefresh(new Date()); loadAll(); };
 
-  // Inyectar keyframe para spinner de Twelve Data
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = '@keyframes spin { to { transform: rotate(360deg); } }';
-    document.head.appendChild(style);
-    return () => { try { document.head.removeChild(style); } catch {} };
-  }, []);
-
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          style={{ width: 40, height: 40, border: '3px solid rgba(108,92,231,0.2)', borderTopColor: '#6c5ce7',
-            borderRadius: '50%', margin: '0 auto 16px' }} />
+          style={{
+            width: 40, height: 40, border: '3px solid rgba(108,92,231,0.2)',
+            borderTopColor: '#6c5ce7', borderRadius: '50%', margin: '0 auto 16px',
+          }} />
         <p style={{ color: '#636e72', fontSize: 14 }}>Cargando portal seguro...</p>
       </div>
     </div>
   );
 
+  // ── No profile ────────────────────────────────────────────────────────────
   if (!clientData?.profile) return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', maxWidth: 360 }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,71,87,0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,71,87,0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+        }}>
           <Shield size={28} color="#ff4757" />
         </div>
         <h3 style={{ fontSize: 18, fontWeight: 600, color: '#f1f2f6', marginBottom: 8 }}>Perfil no encontrado</h3>
         <p style={{ color: '#636e72', fontSize: 14, marginBottom: 24 }}>No se encontraron datos de tu cuenta. Contacta a soporte.</p>
-        <button onClick={() => navigate('/')} style={{ background: '#6c5ce7', color: '#fff',
-          border: 'none', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontSize: 14 }}>
+        <button onClick={() => navigate('/')} style={{ background: '#6c5ce7', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontSize: 14 }}>
           Volver al inicio
         </button>
       </div>
@@ -300,150 +368,248 @@ const ClientPortal: React.FC = () => {
 
   const { profile, account } = clientData;
 
+  // ── Derived values matching the mockup cards ──────────────────────────────
+  const accountStatus = account?.status === 'active' ? 'Activa' : (account?.status || 'Activa');
+  const accountType   = account?.account_type
+    ? account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)
+    : 'Estándar';
+  const accountNumber = account?.account_number || '—';
+
+  // Initials for avatar
+  const initials = [profile.first_name?.[0], profile.last_name?.[0]].filter(Boolean).join('').toUpperCase() || 'PC';
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: '#0d0f17', display: 'flex' }}>
 
-      {/* ── Sidebar ────────────────────────────────────────────────────────── */}
-      <aside style={{ width: 220, background: 'rgba(255,255,255,0.025)', borderRight: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 100 }}>
-        
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
+      <aside style={{
+        width: 228, background: 'rgba(255,255,255,0.022)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', flexDirection: 'column',
+        position: 'fixed', height: '100vh', zIndex: 100,
+      }}>
+
+        {/* Logo */}
+        <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 8,
+            <div style={{
+              width: 36, height: 36, borderRadius: 9,
               background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={16} color="#fff" />
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Zap size={17} color="#fff" />
             </div>
             <div>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.01em' }}>Pessaro</p>
-              <p style={{ fontSize: 10, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Portal Cliente</p>
+              <p style={{ fontSize: 9, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Portal Cliente</p>
             </div>
           </div>
         </div>
 
-        <nav style={{ padding: '12px 10px', flex: 1 }}>
+        {/* Nav */}
+        <nav style={{ padding: '10px 10px', flex: 1 }}>
           {NAV.map(({ id, label, Icon }) => {
             const active = activeTab === id;
             return (
-              <motion.button key={id} whileHover={{ x: 2 }} onClick={() => setActiveTab(id)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
-                  background: active ? 'linear-gradient(135deg,rgba(108,92,231,0.25),rgba(9,132,227,0.15))' : 'transparent',
-                  color: active ? '#a29bfe' : '#636e72', fontWeight: active ? 600 : 400, fontSize: 13, marginBottom: 2,
-                  borderLeft: active ? '2px solid #6c5ce7' : '2px solid transparent', transition: 'all 0.15s' }}>
+              <motion.button
+                key={id}
+                whileHover={{ x: 2 }}
+                onClick={() => setActiveTab(id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  textAlign: 'left' as const,
+                  background: active
+                    ? 'linear-gradient(135deg,rgba(108,92,231,0.22),rgba(9,132,227,0.13))'
+                    : 'transparent',
+                  color: active ? '#a29bfe' : '#636e72',
+                  fontWeight: active ? 600 : 400,
+                  fontSize: 13, marginBottom: 2,
+                  borderLeft: active ? '2px solid #6c5ce7' : '2px solid transparent',
+                  transition: 'all 0.15s',
+                }}
+              >
                 <Icon size={16} />{label}
               </motion.button>
             );
           })}
         </nav>
 
-        <div style={{ padding: '16px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* User footer */}
+        <div style={{ padding: '14px 14px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
-              {profile.first_name?.[0]?.toUpperCase() || 'C'}
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'linear-gradient(135deg,#6c5ce7,#0984e3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,
+            }}>
+              {initials}
             </div>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9' }}>{profile.first_name}</p>
-              <p style={{ fontSize: 10, color: '#636e72' }}>{account?.account_number || 'N/A'}</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#dfe6e9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {profile.first_name}
+              </p>
+              <p style={{ fontSize: 10, color: '#636e72' }}>{accountNumber}</p>
             </div>
           </div>
-          <div style={{ fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.1)',
-            padding: '2px 8px', borderRadius: 20, display: 'inline-block', textTransform: 'uppercase',
-            letterSpacing: '0.06em', marginBottom: 10 }}>● Activo</div>
-          <button onClick={handleSignOut} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          {/* Status badge */}
+          <div style={{
+            fontSize: 10, color: '#00d084', background: 'rgba(0,208,132,0.1)',
+            padding: '3px 8px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 4,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#00d084', display: 'inline-block' }} />
+            Activo
+          </div>
+          {/* Sign out */}
+          <button onClick={handleSignOut} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 8,
             padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,71,87,0.3)',
-            background: 'rgba(255,71,87,0.08)', color: '#ff6b81', cursor: 'pointer', fontSize: 12 }}>
+            background: 'rgba(255,71,87,0.08)', color: '#ff6b81', cursor: 'pointer', fontSize: 12,
+          }}>
             <LogOut size={14} />Cerrar sesión
           </button>
         </div>
       </aside>
 
-      {/* ── Main ───────────────────────────────────────────────────────────── */}
-      <main style={{ marginLeft: 220, flex: 1 }}>
-        
-        {/* Topbar */}
-        <div style={{ padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
-              {NAV.find(n => n.id === activeTab)?.label}
-            </h1>
-            <p style={{ fontSize: 12, color: '#636e72' }}>
-              {new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 11, color: '#636e72' }}>Actualizado: {lastRefresh.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-            <motion.button whileTap={{ rotate: 180 }} onClick={handleRefresh}
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.04)', color: '#a4b0be', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <RefreshCw size={14} />
-            </motion.button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,165,2,0.1)',
-              border: '1px solid rgba(255,165,2,0.2)', borderRadius: 8, padding: '6px 12px' }}>
-              <Star size={12} color="#ffa502" fill="#ffa502" />
-              <span style={{ fontSize: 11, color: '#ffa502', fontWeight: 600 }}>CLIENTE PREMIUM</span>
+      {/* ── MAIN ────────────────────────────────────────────────────────── */}
+      <main style={{ marginLeft: 228, flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+        {/* ── TOPBAR (con ticker integrado) ──────────────────────────── */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 50,
+          background: 'rgba(13,15,23,0.92)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+        }}>
+          {/* Fila superior: título + controles */}
+          <div style={{
+            padding: '14px 32px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div>
+              <h1 style={{ fontSize: 17, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
+                {NAV.find(n => n.id === activeTab)?.label}
+              </h1>
+              <p style={{ fontSize: 11, color: '#636e72' }}>
+                {new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, color: '#636e72' }}>
+                Actualizado: {lastRefresh.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <motion.button
+                whileTap={{ rotate: 180 }} onClick={handleRefresh}
+                style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: '#a4b0be', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <RefreshCw size={14} />
+              </motion.button>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'rgba(255,165,2,0.1)',
+                border: '1px solid rgba(255,165,2,0.25)',
+                borderRadius: 8, padding: '5px 12px',
+              }}>
+                <Star size={11} color="#ffa502" fill="#ffa502" />
+                <span style={{ fontSize: 11, color: '#ffa502', fontWeight: 600 }}>CLIENTE PREMIUM</span>
+              </div>
             </div>
           </div>
+
+          {/* Fila ticker */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <TradingViewTickerTape theme="dark" />
+          </div>
         </div>
 
-
-        {/* Ticker en tiempo real */}
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
-          <TradingViewTickerTape theme="dark" />
-        </div>
-
-        <div style={{ padding: '28px 32px' }}>
+        {/* ── CONTENT ───────────────────────────────────────────────────── */}
+        <div style={{ padding: '28px 32px', flex: 1 }}>
           <AnimatePresence mode="wait">
 
-            {/* OVERVIEW */}
+            {/* ── OVERVIEW ─────────────────────────────────────────────── */}
             {activeTab === 'overview' && (
               <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                
-                {/* Banner */}
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ background: 'linear-gradient(135deg,rgba(108,92,231,0.15),rgba(9,132,227,0.1))',
-                    border: '1px solid rgba(108,92,231,0.25)', borderRadius: 14, padding: '20px 28px',
-                    marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    overflow: 'hidden', position: 'relative' }}>
-                  <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180,
-                    background: 'radial-gradient(circle,rgba(108,92,231,0.2),transparent 70%)', borderRadius: '50%' }} />
+
+                {/* Welcome banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    background: 'linear-gradient(135deg,rgba(108,92,231,0.13),rgba(9,132,227,0.08))',
+                    border: '1px solid rgba(108,92,231,0.22)',
+                    borderRadius: 14, padding: '22px 28px',
+                    marginBottom: 24,
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    overflow: 'hidden', position: 'relative',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', right: -40, top: -40,
+                    width: 200, height: 200,
+                    background: 'radial-gradient(circle,rgba(108,92,231,0.18),transparent 70%)',
+                    borderRadius: '50%',
+                  }} />
                   <div>
-                    <p style={{ fontSize: 13, color: '#a29bfe', fontWeight: 500, marginBottom: 4 }}>Bienvenido de vuelta</p>
-                    <h2 style={{ fontSize: 24, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
-                      {profile.first_name} {profile.last_name}
+                    <p style={{ fontSize: 12, color: '#a29bfe', fontWeight: 500, marginBottom: 4 }}>Bienvenido, {profile.first_name}</p>
+                    <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f1f2f6', letterSpacing: '-0.02em' }}>
+                      Aquí está el resumen de tu cuenta.
                     </h2>
-                    <p style={{ fontSize: 13, color: '#636e72', marginTop: 4 }}>
-                      Cuenta #{account?.account_number || 'N/A'} · Apalancamiento {account?.leverage || '1:100'}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 11, color: '#636e72', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tipo de Cuenta</p>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#6c5ce7', background: 'rgba(108,92,231,0.15)',
-                      padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(108,92,231,0.3)', textTransform: 'capitalize' }}>
-                      {account?.account_type || 'Standard'}
-                    </div>
                   </div>
                 </motion.div>
 
-                {/* Stats */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
-                  <StatCard label="N° Cuenta" value={account?.account_number || '—'} sub="Número de cuenta" Icon={CreditCard} accent="#6c5ce7" delay={0.05} />
-                  <StatCard label="Tipo" value={account?.account_type || '—'} sub="Tipo de cuenta" Icon={TrendingUp} accent="#0984e3" delay={0.1} />
-                  <StatCard label="Apalancamiento" value={account?.leverage || '—'} sub="Ratio máximo" Icon={Activity} accent="#00d084" delay={0.15} />
-                  <StatCard label="Estado" value={account?.status || '—'} sub={account?.status === 'active' ? 'Cuenta activa' : 'Ver estado'} Icon={Shield} accent={account?.status === 'active' ? '#00d084' : '#ffa502'} delay={0.2} />
+                {/* ── Las 3 tarjetas del mockup ─────────────────────────── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
+
+                  {/* ESTADO */}
+                  <StatusCard
+                    label="Estado"
+                    value={accountStatus}
+                    Icon={CheckCircle2}
+                    accent="#00d084"
+                    delay={0.05}
+                    iconBg="rgba(0,208,132,0.15)"
+                    valueBg="rgba(0,208,132,0.12)"
+                  />
+
+                  {/* TIPO DE CUENTA */}
+                  <StatusCard
+                    label="Tipo de Cuenta"
+                    value={accountType}
+                    Icon={AlertCircle}
+                    accent="#ffa502"
+                    delay={0.10}
+                    iconBg="rgba(255,165,2,0.15)"
+                    valueBg="rgba(255,165,2,0.12)"
+                  />
+
+                  {/* Nº DE CUENTA */}
+                  <StatusCard
+                    label="Nº de Cuenta"
+                    value={`PC-${accountNumber}`}
+                    Icon={Hash}
+                    accent="#6c5ce7"
+                    delay={0.15}
+                    iconBg="rgba(108,92,231,0.18)"
+                    valueBg="rgba(108,92,231,0.13)"
+                  />
                 </div>
 
-                {/* Quick panels */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+                {/* Quick panels: análisis reciente + artículos */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+
+                  {/* Últimos análisis */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Análisis Reciente</h3>
-                      <button onClick={() => setActiveTab('analysis')} style={{ fontSize: 11, color: '#6c5ce7',
-                        background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Últimos análisis</h3>
+                      <button onClick={() => setActiveTab('analysis')} style={{ fontSize: 11, color: '#6c5ce7', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                         Ver todos <ChevronRight size={12} />
                       </button>
                     </div>
@@ -451,8 +617,10 @@ const ClientPortal: React.FC = () => {
                       const dir = directionConfig[a.direction] || directionConfig.neutral;
                       const DirIcon = dir.Icon;
                       return (
-                        <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div key={a.id} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        }}>
                           <div style={{ display: 'flex', gap: 10 }}>
                             <span style={{ fontWeight: 700, fontSize: 13, color: '#f1f2f6', minWidth: 60 }}>{a.instrument}</span>
                             <span style={{ fontSize: 12, color: '#636e72' }}>{a.timeframe}</span>
@@ -466,22 +634,23 @@ const ClientPortal: React.FC = () => {
                     {analysis.length === 0 && <p style={{ fontSize: 13, color: '#636e72' }}>Sin análisis publicados.</p>}
                   </div>
 
+                  {/* Artículos exclusivos */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9' }}>Artículos Exclusivos</h3>
-                      <button onClick={() => setActiveTab('articles')} style={{ fontSize: 11, color: '#6c5ce7',
-                        background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button onClick={() => setActiveTab('articles')} style={{ fontSize: 11, color: '#6c5ce7', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                         Ver todos <ChevronRight size={12} />
                       </button>
                     </div>
                     {articles.slice(0, 3).map(a => (
                       <div key={a.id} onClick={() => setSelectedArticle(a)}
                         style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}>
-                        <p style={{ fontSize: 13, color: '#dfe6e9', marginBottom: 3, fontWeight: 500,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</p>
+                        <p style={{
+                          fontSize: 13, color: '#dfe6e9', marginBottom: 3, fontWeight: 500,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{a.title}</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <span style={{ fontSize: 10, color: categoryColors[a.category] || '#6c5ce7',
-                            textTransform: 'uppercase', letterSpacing: '0.06em' }}>{categoryLabels[a.category]}</span>
+                          <span style={{ fontSize: 10, color: categoryColors[a.category] || '#6c5ce7', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{categoryLabels[a.category]}</span>
                           <span style={{ fontSize: 10, color: '#636e72' }}>{a.read_time_minutes} min</span>
                         </div>
                       </div>
@@ -490,30 +659,38 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Mini chart */}
+                {/* Mini gráfico */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Vista Rápida de Mercado</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Mini gráfico</h3>
                   <TradingViewSymbolOverview height={200} theme="dark" />
                 </div>
               </motion.div>
             )}
 
-            {/* MARKETS */}
+            {/* ── MARKETS ──────────────────────────────────────────────── */}
             {activeTab === 'markets' && (
-              <motion.div key="markets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{ display: 'grid', gap: 20 }}>
+              <motion.div key="markets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'grid', gap: 20 }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Gráfico Avanzado</h3>
-                  <TradingViewAdvancedChart symbol="EURUSD" height={520} theme="dark" allow_symbol_change={true} />
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 16 }}>Screener de Mercados</h3>
-                  <TradingViewMarketScreener height={500} theme="dark" market="forex" />
+                  <TradingViewAdvancedChart symbol="FX:EURUSD" height={520} theme="dark" allow_symbol_change={true} />
                 </div>
               </motion.div>
             )}
 
-            {/* ANALYSIS */}
+            {/* ── SCREENER ─────────────────────────────────────────────── */}
+            {activeTab === 'screener' && (
+              <motion.div key="screener" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div style={{ marginBottom: 24 }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Screener</h2>
+                  <p style={{ fontSize: 13, color: '#636e72' }}>Explora instrumentos por mercado</p>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                  <TradingViewMarketScreener height={560} theme="dark" market="forex" />
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── ANALYSIS ─────────────────────────────────────────────── */}
             {activeTab === 'analysis' && (
               <motion.div key="analysis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -521,8 +698,11 @@ const ClientPortal: React.FC = () => {
                     <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Análisis de Mercado</h2>
                     <p style={{ fontSize: 13, color: '#636e72' }}>Setups exclusivos del equipo Pessaro Research · {analysis.length} activos</p>
                   </div>
-                  <div style={{ fontSize: 11, color: '#ffa502', background: 'rgba(255,165,2,0.1)',
-                    border: '1px solid rgba(255,165,2,0.25)', padding: '4px 12px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    fontSize: 11, color: '#ffa502', background: 'rgba(255,165,2,0.1)',
+                    border: '1px solid rgba(255,165,2,0.25)', padding: '4px 12px',
+                    borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4,
+                  }}>
                     <Lock size={10} /><span>Contenido Exclusivo</span>
                   </div>
                 </div>
@@ -542,7 +722,7 @@ const ClientPortal: React.FC = () => {
               </motion.div>
             )}
 
-            {/* ARTICLES */}
+            {/* ── ARTICLES ─────────────────────────────────────────────── */}
             {activeTab === 'articles' && (
               <motion.div key="articles" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -550,8 +730,11 @@ const ClientPortal: React.FC = () => {
                     <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f2f6', marginBottom: 4 }}>Artículos Exclusivos</h2>
                     <p style={{ fontSize: 13, color: '#636e72' }}>Investigación y análisis profundo para clientes · {articles.length} artículos</p>
                   </div>
-                  <div style={{ fontSize: 11, color: '#ffa502', background: 'rgba(255,165,2,0.1)',
-                    border: '1px solid rgba(255,165,2,0.25)', padding: '4px 12px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    fontSize: 11, color: '#ffa502', background: 'rgba(255,165,2,0.1)',
+                    border: '1px solid rgba(255,165,2,0.25)', padding: '4px 12px',
+                    borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4,
+                  }}>
                     <BookMarked size={10} /><span>Solo para clientes</span>
                   </div>
                 </div>
@@ -571,7 +754,7 @@ const ClientPortal: React.FC = () => {
               </motion.div>
             )}
 
-            {/* CALENDAR */}
+            {/* ── CALENDAR ─────────────────────────────────────────────── */}
             {activeTab === 'calendar' && (
               <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div style={{ marginBottom: 24 }}>
@@ -584,7 +767,7 @@ const ClientPortal: React.FC = () => {
               </motion.div>
             )}
 
-            {/* ACCOUNT */}
+            {/* ── ACCOUNT ──────────────────────────────────────────────── */}
             {activeTab === 'account' && (
               <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div style={{ marginBottom: 24 }}>
@@ -592,14 +775,15 @@ const ClientPortal: React.FC = () => {
                   <p style={{ fontSize: 13, color: '#636e72' }}>Información personal y detalles de trading</p>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* Personal info */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Información Personal</h3>
                     {[
-                      ['Nombre', `${profile.first_name} ${profile.last_name}`],
-                      ['Email', profile.email],
-                      ['Teléfono', profile.phone || 'No registrado'],
+                      ['Nombre',             `${profile.first_name} ${profile.last_name}`],
+                      ['Email',              profile.email],
+                      ['Teléfono',           profile.phone || 'No registrado'],
                       ['Tolerancia al riesgo', profile.risk_tolerance || 'No definida'],
-                      ['Estado', profile.account_status || 'Activa'],
+                      ['Estado',             profile.account_status || 'Activa'],
                     ].map(([label, value]) => (
                       <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
@@ -607,28 +791,25 @@ const ClientPortal: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {/* Trading account */}
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 24 }}>
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: '#dfe6e9', marginBottom: 20 }}>Cuenta de Trading</h3>
                     {account ? [
-                      ['N° Cuenta', account.account_number],
-                      ['Tipo', account.account_type],
-                      ['Moneda', account.currency],
+                      ['N° Cuenta',      account.account_number],
+                      ['Tipo',           account.account_type],
+                      ['Moneda',         account.currency],
                       ['Apalancamiento', account.leverage],
-                      ['Estado', account.status],
+                      ['Estado',         account.status],
                     ].map(([label, value]) => (
                       <div key={label} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <p style={{ fontSize: 11, color: '#636e72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{label}</p>
                         <p style={{ fontSize: 14, color: '#f1f2f6', fontWeight: 500, textTransform: 'capitalize' }}>{value}</p>
                       </div>
                     )) : <p style={{ color: '#636e72', fontSize: 13 }}>Sin cuenta de trading asociada.</p>}
-                    <div style={{ marginTop: 16, padding: 14, background: 'rgba(108,92,231,0.1)',
-                      border: '1px solid rgba(108,92,231,0.2)', borderRadius: 10 }}>
+                    <div style={{ marginTop: 16, padding: 14, background: 'rgba(108,92,231,0.1)', border: '1px solid rgba(108,92,231,0.2)', borderRadius: 10 }}>
                       <p style={{ fontSize: 12, fontWeight: 600, color: '#a29bfe', marginBottom: 6 }}>¿Necesitas ayuda?</p>
                       <p style={{ fontSize: 12, color: '#636e72', marginBottom: 10 }}>Contacta a tu asesor Pessaro Capital</p>
-                      <button onClick={() => setShowAdvisorPopup(true)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                          fontSize: 12, color: '#6c5ce7', fontWeight: 600, background: 'none',
-                          border: 'none', cursor: 'pointer', padding: 0 }}>
+                      <button onClick={() => setShowAdvisorPopup(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6c5ce7', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                         Contactar Asesor <ChevronRight size={12} />
                       </button>
                     </div>
@@ -641,38 +822,31 @@ const ClientPortal: React.FC = () => {
         </div>
       </main>
 
+      {/* ── ARTICLE MODAL ───────────────────────────────────────────────── */}
       <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
 
-      {/* ── POPUP ASESOR ──────────────────────────────────────────────────── */}
+      {/* ── ADVISOR POPUP ───────────────────────────────────────────────── */}
       {showAdvisorPopup && (
         <div onClick={() => setShowAdvisorPopup(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, padding: 20 }}>
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: '#16213e', border: '1px solid rgba(108,92,231,0.3)',
-              borderRadius: 16, padding: 32, maxWidth: 420, width: '100%',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
+            style={{ background: '#16213e', border: '1px solid rgba(108,92,231,0.3)', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(108,92,231,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👤</div>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(108,92,231,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👤</div>
                 <div>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#f1f2f6', margin: 0 }}>Asesor Comercial</p>
                   <p style={{ fontSize: 12, color: '#a29bfe', margin: 0 }}>Pessaro Capital</p>
                 </div>
               </div>
-              <button onClick={() => setShowAdvisorPopup(false)}
-                style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', fontSize: 20 }}>✕</button>
+              <button onClick={() => setShowAdvisorPopup(false)} style={{ background: 'none', border: 'none', color: '#636e72', cursor: 'pointer', fontSize: 20 }}>✕</button>
             </div>
             <p style={{ fontSize: 13, color: '#b2bec3', marginBottom: 20, lineHeight: 1.6 }}>
               Estamos aquí para ayudarte. Elige cómo prefieres contactar a tu asesor:
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <a href="mailto:info@pessarocapital.com"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                  background: 'rgba(108,92,231,0.12)', border: '1px solid rgba(108,92,231,0.25)',
-                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(108,92,231,0.12)', border: '1px solid rgba(108,92,231,0.25)', borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
                 <span style={{ fontSize: 18 }}>✉️</span>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Enviar Email</p>
@@ -681,9 +855,7 @@ const ClientPortal: React.FC = () => {
               </a>
               <a href="https://wa.me/56922071511?text=Hola,%20soy%20cliente%20de%20Pessaro%20Capital%20y%20necesito%20hablar%20con%20un%20asesor"
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                  background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)',
-                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
                 <span style={{ fontSize: 18 }}>💬</span>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>WhatsApp</p>
@@ -692,9 +864,7 @@ const ClientPortal: React.FC = () => {
               </a>
               <a href="https://www.linkedin.com/company/pessarocapital"
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                  background: 'rgba(0,119,181,0.1)', border: '1px solid rgba(0,119,181,0.25)',
-                  borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(0,119,181,0.1)', border: '1px solid rgba(0,119,181,0.25)', borderRadius: 10, textDecoration: 'none', color: '#f1f2f6', fontSize: 13, fontWeight: 500 }}>
                 <span style={{ fontSize: 18 }}>💼</span>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>LinkedIn</p>

@@ -1,11 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 
-// ─── Helper ──────────────────────────────────────────────────────────────────
-// TradingView requiere esta estructura exacta:
+// ─── Helper ───────────────────────────────────────────────────────────────────
+// TradingView requiere estructura exacta:
 // <div class="tradingview-widget-container">
-//   <div class="tradingview-widget-container__widget"></div>  ← target del script
-//   <script>{ config }</script>
+//   <div class="tradingview-widget-container__widget"></div>
+//   <script type="text/javascript" src="...widget.js">{ config JSON }</script>
 // </div>
+//
+// IMPORTANTE: el script carga el widget via src= y lee la config desde
+// el contenido inline del mismo <script>. Algunos browsers ignoran
+// innerHTML cuando src está presente → se usa un <script> separado
+// con la config ANTES del script que carga el widget.
+
 function useTradingViewScript(
   containerRef: React.RefObject<HTMLDivElement>,
   src: string,
@@ -16,23 +22,28 @@ function useTradingViewScript(
     const container = containerRef.current;
     if (!container) return;
 
-    // Limpiar instancia previa completamente
+    // Limpiar instancia previa
     container.innerHTML = '';
 
-    // Crear el div inner que TradingView necesita como target
+    // Div inner requerido por TradingView
     const widget = document.createElement('div');
     widget.className = 'tradingview-widget-container__widget';
-    widget.style.height = 'calc(100% - 32px)';
+    widget.style.height = '100%';
     widget.style.width = '100%';
     container.appendChild(widget);
 
-    // Crear script con la config
-    const script = document.createElement('script');
-    script.src = src;
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify(config);
-    container.appendChild(script);
+    // Script de configuración (ANTES del script que carga el widget)
+    const configScript = document.createElement('script');
+    configScript.type = 'text/javascript';
+    configScript.text = JSON.stringify(config);
+    container.appendChild(configScript);
+
+    // Script que carga el widget real desde TradingView CDN
+    const loaderScript = document.createElement('script');
+    loaderScript.src = src;
+    loaderScript.type = 'text/javascript';
+    loaderScript.async = true;
+    container.appendChild(loaderScript);
 
     return () => {
       if (container) container.innerHTML = '';
@@ -66,7 +77,7 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
       interval: 'D',
       timezone: 'America/Santiago',
       theme,
-      style: '1',
+      style: '1',        // velas japonesas
       locale: 'es',
       allow_symbol_change,
       calendar: false,
@@ -84,7 +95,7 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
   );
 };
 
-// ─── Symbol Overview (mini spark lines) ──────────────────────────────────────
+// ─── Symbol Overview ──────────────────────────────────────────────────────────
 interface SymbolOverviewProps {
   height?: number;
   theme?: 'light' | 'dark';
@@ -205,7 +216,7 @@ export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
   );
 };
 
-// ─── Ticker Tape (barra top opcional) ────────────────────────────────────────
+// ─── Ticker Tape ─────────────────────────────────────────────────────────────
 export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
   theme = 'dark',
 }) => {
@@ -216,17 +227,20 @@ export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
     'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',
     {
       symbols: [
-        { proName: 'FX:EURUSD', title: 'EUR/USD' },
-        { proName: 'FX:GBPUSD', title: 'GBP/USD' },
-        { proName: 'FX:USDJPY', title: 'USD/JPY' },
-        { proName: 'OANDA:XAUUSD', title: 'XAU/USD' },
-        { proName: 'BITSTAMP:BTCUSD', title: 'BTC/USD' },
-        { proName: 'OANDA:SPX500USD', title: 'S&P 500' },
+        { proName: 'FX:EURUSD',       title: 'EUR/USD'  },
+        { proName: 'FX:GBPUSD',       title: 'GBP/USD'  },
+        { proName: 'FX:USDJPY',       title: 'USD/JPY'  },
+        { proName: 'FX:USDCHF',       title: 'USD/CHF'  },
+        { proName: 'OANDA:XAUUSD',    title: 'XAU/USD'  },
+        { proName: 'BITSTAMP:BTCUSD', title: 'BTC/USD'  },
+        { proName: 'BITSTAMP:ETHUSD', title: 'ETH/USD'  },
+        { proName: 'OANDA:SPX500USD', title: 'S&P 500'  },
+        { proName: 'NASDAQ:NVDA',     title: 'NVDA'     },
+        { proName: 'NASDAQ:TSLA',     title: 'TSLA'     },
       ],
       showSymbolLogo: true,
       colorTheme: theme,
       isTransparent: false,
-      backgroundColor: '#0f0f1a',
       displayMode: 'adaptive',
       locale: 'es',
     },
