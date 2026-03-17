@@ -9,7 +9,7 @@ export interface RiskProfile {
   lastName: string;
   email: string;
   phone: string;
-  riskTolerance: 'conservador' | 'moderado' | 'agresivo' | 'muy-agresivo';
+  riskTolerance: 'conservador' | 'moderado' | 'moderado_plus' | 'agresivo' | 'muy_agresivo';
   investmentCapital: string;
   investmentGoals: string[];
   investmentHorizon: '3-meses' | '6-meses' | '1-año' | '2-años' | '5-años' | 'mas-5-años';

@@ -35,8 +35,23 @@ export const useClientRegistration = () => {
         body: { action: 'register_client_from_profile', profileData }
       });
 
-      if (error) { setError(error.message); return { success: false, error: error.message }; }
-      if (!data.success) { setError(data.error); return { success: false, error: data.error }; }
+      // FunctionsHttpError contiene el body real en error.context
+      if (error) {
+        let errorMsg = error.message;
+        let errorCode = '';
+        try {
+          // Intentar leer el body JSON del error
+          const ctx = (error as any).context;
+          if (ctx) {
+            const body = typeof ctx === 'string' ? JSON.parse(ctx) : ctx;
+            if (body?.error) errorMsg = body.error;
+            if (body?.code) errorCode = body.code;
+          }
+        } catch { /* usar error.message por defecto */ }
+        setError(errorMsg);
+        return { success: false, error: errorMsg, code: errorCode } as any;
+      }
+      if (!data?.success) { setError(data?.error); return { success: false, error: data?.error }; }
 
       // Enviar email de confirmación de registro
       try {
