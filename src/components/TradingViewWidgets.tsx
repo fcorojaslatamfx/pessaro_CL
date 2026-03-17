@@ -1,16 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
-// TradingView requiere estructura exacta:
-// <div class="tradingview-widget-container">
-//   <div class="tradingview-widget-container__widget"></div>
-//   <script type="text/javascript" src="...widget.js">{ config JSON }</script>
-// </div>
+// ─── Colores del portal Pessaro ───────────────────────────────────────────────
+const PORTAL_BG = '#0d0f17';
+
+// ─── Hook central ────────────────────────────────────────────────────────────
+// La documentación oficial de TradingView requiere esta estructura exacta:
+//   <div class="tradingview-widget-container">
+//     <div class="tradingview-widget-container__widget"></div>
+//     <script>{ JSON config }</script>   ← config ANTES del loader
+//     <script src="...widget.js" async/> ← loader externo
+//   </div>
 //
-// IMPORTANTE: el script carga el widget via src= y lee la config desde
-// el contenido inline del mismo <script>. Algunos browsers ignoran
-// innerHTML cuando src está presente → se usa un <script> separado
-// con la config ANTES del script que carga el widget.
+// El loader lee la config desde el script anterior al ejecutarse.
+// Fuente: https://www.tradingview.com/widget-docs/tutorials/iframe/build-page/widget-integration/
 
 function useTradingViewScript(
   containerRef: React.RefObject<HTMLDivElement>,
@@ -22,37 +24,45 @@ function useTradingViewScript(
     const container = containerRef.current;
     if (!container) return;
 
-    // Limpiar instancia previa
+    // Destruir instancia anterior completamente
     container.innerHTML = '';
 
-    // Div inner requerido por TradingView
-    const widget = document.createElement('div');
-    widget.className = 'tradingview-widget-container__widget';
-    widget.style.height = '100%';
-    widget.style.width = '100%';
-    container.appendChild(widget);
+    // Div interno requerido por TradingView
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    inner.style.cssText = 'height:100%;width:100%;';
+    container.appendChild(inner);
 
-    // Script de configuración (ANTES del script que carga el widget)
-    const configScript = document.createElement('script');
-    configScript.type = 'text/javascript';
-    configScript.text = JSON.stringify(config);
-    container.appendChild(configScript);
+    // Script de configuración — DEBE ir antes del loader
+    const cfgScript = document.createElement('script');
+    cfgScript.type = 'text/javascript';
+    cfgScript.text = JSON.stringify(config);
+    container.appendChild(cfgScript);
 
-    // Script que carga el widget real desde TradingView CDN
-    const loaderScript = document.createElement('script');
-    loaderScript.src = src;
-    loaderScript.type = 'text/javascript';
-    loaderScript.async = true;
-    container.appendChild(loaderScript);
+    // Loader del widget desde TradingView CDN
+    const loader = document.createElement('script');
+    loader.src = src;
+    loader.type = 'text/javascript';
+    loader.async = true;
+    container.appendChild(loader);
 
-    return () => {
-      if (container) container.innerHTML = '';
-    };
+    return () => { if (container) container.innerHTML = ''; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }
 
 // ─── Advanced Chart ───────────────────────────────────────────────────────────
+// Documentación tema oscuro:
+//   theme: "dark"
+//   backgroundColor: "#..." (color del toolbar / header)
+//   loading_screen: { backgroundColor: "..." } (pantalla de carga)
+//   overrides: { "paneProperties.background": "...", "paneProperties.backgroundType": "solid" }
+// Fuente: https://www.tradingview.com/charting-library-docs/latest/customization/overrides/chart-overrides/
+//
+// Cambio de instrumento desde UI del widget:
+//   allow_symbol_change: true — activa el buscador interno de TradingView
+// Fuente: https://www.tradingview.com/widget-docs/widgets/charts/advanced-chart/
+
 interface AdvancedChartProps {
   symbol?: string;
   height?: number;
@@ -72,16 +82,28 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
     ref,
     'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',
     {
-      autosize: true,
+      autosize:             true,
       symbol,
-      interval: 'D',
-      timezone: 'America/Santiago',
+      interval:             'D',
+      timezone:             'America/Santiago',
       theme,
-      style: '1',        // velas japonesas
-      locale: 'es',
+      // Fondo oscuro: establecido en 3 niveles según docs oficiales
+      backgroundColor:      PORTAL_BG,          // toolbar/header
+      loading_screen:       { backgroundColor: PORTAL_BG, foregroundColor: '#6c5ce7' },
+      overrides: {
+        // Fondo del canvas (pane) — requiere backgroundType: "solid"
+        'paneProperties.background':     PORTAL_BG,
+        'paneProperties.backgroundType': 'solid',
+        // Grid sutil sobre fondo oscuro
+        'paneProperties.vertGridProperties.color':  'rgba(255,255,255,0.04)',
+        'paneProperties.horzGridProperties.color':  'rgba(255,255,255,0.04)',
+      },
+      style:                '1',               // Velas japonesas
+      locale:               'es',
+      // allow_symbol_change: true activa el buscador interno del widget
       allow_symbol_change,
-      calendar: false,
-      support_host: 'https://www.tradingview.com',
+      calendar:             false,
+      support_host:         'https://www.tradingview.com',
     },
     [symbol, height, theme, allow_symbol_change]
   );
@@ -90,12 +112,15 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
     <div
       className="tradingview-widget-container"
       ref={ref}
-      style={{ height, width: '100%' }}
+      style={{ height, width: '100%', background: PORTAL_BG }}
     />
   );
 };
 
 // ─── Symbol Overview ──────────────────────────────────────────────────────────
+// Documentación tema oscuro: colorTheme + isTransparent
+// Fuente: https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/
+
 interface SymbolOverviewProps {
   height?: number;
   theme?: 'light' | 'dark';
@@ -112,21 +137,22 @@ export const TradingViewSymbolOverview: React.FC<SymbolOverviewProps> = ({
     'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js',
     {
       symbols: [
-        ['FX:EURUSD|1D'],
-        ['FX:GBPUSD|1D'],
-        ['OANDA:XAUUSD|1D'],
-        ['BITSTAMP:BTCUSD|1D'],
+        ['EUR/USD', 'FX:EURUSD|1D'],
+        ['GBP/USD', 'FX:GBPUSD|1D'],
+        ['XAU/USD', 'OANDA:XAUUSD|1D'],
+        ['BTC/USD', 'BITSTAMP:BTCUSD|1D'],
       ],
-      chartOnly: false,
-      width: '100%',
+      chartOnly:    false,
+      width:        '100%',
       height,
-      locale: 'es',
-      colorTheme: theme,
-      autosize: true,
-      showVolume: false,
-      chartType: 'area',
-      lineWidth: 2,
-      dateRanges: ['1d|1', '1m|30', '3m|60', '12m|1D'],
+      locale:       'es',
+      colorTheme:   theme,          // 'dark' — parámetro oficial para este widget
+      isTransparent: true,          // fondo transparente → usa el color del contenedor
+      autosize:     true,
+      showVolume:   false,
+      chartType:    'area',
+      lineWidth:    2,
+      dateRanges:   ['1d|1', '1m|30', '3m|60', '12m|1D'],
     },
     [height, theme]
   );
@@ -135,12 +161,14 @@ export const TradingViewSymbolOverview: React.FC<SymbolOverviewProps> = ({
     <div
       className="tradingview-widget-container"
       ref={ref}
-      style={{ height, width: '100%' }}
+      style={{ height, width: '100%', background: PORTAL_BG }}
     />
   );
 };
 
 // ─── Economic Calendar ────────────────────────────────────────────────────────
+// Parámetro de tema: colorTheme + isTransparent: true
+
 interface CalendarProps {
   height?: number;
   theme?: 'light' | 'dark';
@@ -156,13 +184,13 @@ export const TradingViewEconomicCalendar: React.FC<CalendarProps> = ({
     ref,
     'https://s3.tradingview.com/external-embedding/embed-widget-events.js',
     {
-      colorTheme: theme,
-      isTransparent: true,
-      width: '100%',
+      colorTheme:       theme,
+      isTransparent:    true,
+      width:            '100%',
       height,
-      locale: 'es',
+      locale:           'es',
       importanceFilter: '-1,0,1,2',
-      countryFilter: 'us,eu,jp,gb,ch,au,ca,cn,cl',
+      countryFilter:    'us,eu,jp,gb,ch,au,ca,cn,cl',
     },
     [height, theme]
   );
@@ -171,12 +199,14 @@ export const TradingViewEconomicCalendar: React.FC<CalendarProps> = ({
     <div
       className="tradingview-widget-container"
       ref={ref}
-      style={{ height, width: '100%' }}
+      style={{ height, width: '100%', background: PORTAL_BG }}
     />
   );
 };
 
 // ─── Market Screener ──────────────────────────────────────────────────────────
+// Parámetros tema oscuro: colorTheme + isTransparent
+
 interface ScreenerProps {
   height?: number;
   theme?: 'light' | 'dark';
@@ -194,15 +224,15 @@ export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
     ref,
     'https://s3.tradingview.com/external-embedding/embed-widget-screener.js',
     {
-      width: '100%',
+      width:         '100%',
       height,
       defaultColumn: 'overview',
       defaultScreen: market === 'forex' ? 'general' : market,
       market,
-      showToolbar: true,
-      colorTheme: theme,
-      locale: 'es',
+      showToolbar:   true,
+      colorTheme:    theme,
       isTransparent: true,
+      locale:        'es',
     },
     [height, theme, market]
   );
@@ -211,12 +241,14 @@ export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
     <div
       className="tradingview-widget-container"
       ref={ref}
-      style={{ height, width: '100%' }}
+      style={{ height, width: '100%', background: PORTAL_BG }}
     />
   );
 };
 
-// ─── Ticker Tape ─────────────────────────────────────────────────────────────
+// ─── Ticker Tape ──────────────────────────────────────────────────────────────
+// isTransparent: false para mantener fondo propio del ticker en el topbar
+
 export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
   theme = 'dark',
 }) => {
@@ -227,22 +259,22 @@ export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
     'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',
     {
       symbols: [
-        { proName: 'FX:EURUSD',       title: 'EUR/USD'  },
-        { proName: 'FX:GBPUSD',       title: 'GBP/USD'  },
-        { proName: 'FX:USDJPY',       title: 'USD/JPY'  },
-        { proName: 'FX:USDCHF',       title: 'USD/CHF'  },
-        { proName: 'OANDA:XAUUSD',    title: 'XAU/USD'  },
-        { proName: 'BITSTAMP:BTCUSD', title: 'BTC/USD'  },
-        { proName: 'BITSTAMP:ETHUSD', title: 'ETH/USD'  },
-        { proName: 'OANDA:SPX500USD', title: 'S&P 500'  },
-        { proName: 'NASDAQ:NVDA',     title: 'NVDA'     },
-        { proName: 'NASDAQ:TSLA',     title: 'TSLA'     },
+        { proName: 'FX:EURUSD',        title: 'EUR/USD'  },
+        { proName: 'FX:GBPUSD',        title: 'GBP/USD'  },
+        { proName: 'FX:USDJPY',        title: 'USD/JPY'  },
+        { proName: 'FX:USDCHF',        title: 'USD/CHF'  },
+        { proName: 'OANDA:XAUUSD',     title: 'XAU/USD'  },
+        { proName: 'BITSTAMP:BTCUSD',  title: 'BTC/USD'  },
+        { proName: 'BITSTAMP:ETHUSD',  title: 'ETH/USD'  },
+        { proName: 'OANDA:SPX500USD',  title: 'S&P 500'  },
+        { proName: 'NASDAQ:NVDA',      title: 'NVDA'     },
+        { proName: 'NASDAQ:TSLA',      title: 'TSLA'     },
       ],
       showSymbolLogo: true,
-      colorTheme: theme,
-      isTransparent: false,
-      displayMode: 'adaptive',
-      locale: 'es',
+      colorTheme:     theme,
+      isTransparent:  false,
+      displayMode:    'adaptive',
+      locale:         'es',
     },
     [theme]
   );

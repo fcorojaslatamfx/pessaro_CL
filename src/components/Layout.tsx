@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion';
 import { Menu, X, Phone, Mail, MapPin, ChevronRight, ArrowRight, Shield } from 'lucide-react';
 import { SiLinkedin, SiFacebook, SiX, SiInstagram } from 'react-icons/si';
 import { ROUTE_PATHS, PESSARO_LOGO, PESSARO_LOGO_HEADER, PESSARO_LOGO_FOOTER } from '@/lib/index';
@@ -34,8 +34,11 @@ export function Layout({ children }: LayoutProps) {
   // --- TODOS LOS HOOKS PRIMERO (regla de hooks de React) ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
   const [showNewsletterPopup, setShowNewsletterPopup] = useState(false);
+  const lastScrollY = useRef(0);
+  const { scrollY } = useScroll();
   const [legalPopup, setLegalPopup] = useState<{ isOpen: boolean; type: 'terms' | 'privacy' | 'risk' | null }>({
     isOpen: false,
     type: null
@@ -87,19 +90,32 @@ export function Layout({ children }: LayoutProps) {
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // Scroll: isScrolled para fondo + navHidden para hide/show
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const diff = y - lastScrollY.current;
+    // Sólo actuar si el movimiento supera 8px (evita micro-scrolls en móvil)
+    if (Math.abs(diff) > 8) {
+      if (diff > 0 && y > 80) {
+        // Scrolling DOWN y ya pasamos el header → ocultar
+        setNavHidden(true);
+      } else {
+        // Scrolling UP o cerca del top → mostrar siempre
+        setNavHidden(false);
+      }
+      lastScrollY.current = y;
+    }
+    // isScrolled para el cambio visual de fondo
+    setIsScrolled(y > 20);
+  });
 
   useEffect(() => {
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.offsetHeight);
     }
     setIsMenuOpen(false);
+    // Al navegar a otra página el nav vuelve a ser visible
+    setNavHidden(false);
+    lastScrollY.current = 0;
   }, [location.pathname]);
 
   // Manejar visibilidad del botón de WhatsApp
@@ -126,12 +142,23 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Navigation Header */}
-      <header 
-        ref={headerRef} 
+      {/* Navigation Header — se oculta al bajar y reaparece al subir */}
+      <motion.header
+        ref={headerRef}
         role="banner"
         aria-label="Navegación principal"
-        className="fixed top-0 left-0 right-0 z-50 bg-blue-900 border-b border-blue-800 py-1 sm:py-2 transition-all duration-300 safe-area-top"
+        variants={{
+          visible: { y: '0%',    opacity: 1 },
+          hidden:  { y: '-100%', opacity: 0 },
+          peeking: { y: '0%',    opacity: 1, cursor: 'pointer' },
+        }}
+        animate={isMenuOpen ? 'visible' : navHidden ? 'hidden' : 'visible'}
+        whileHover={navHidden && !isMenuOpen ? 'peeking' : undefined}
+        onHoverStart={() => { if (navHidden && !isMenuOpen) setNavHidden(false); }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+        className={`fixed top-0 left-0 right-0 z-50 border-b border-white/10 py-1 sm:py-2 transition-colors duration-300 safe-area-top ${
+          isScrolled ? 'bg-[#1a1f6e]/95 backdrop-blur-md shadow-lg' : 'bg-[#1a1f6e]'
+        }`}
       >
         <div className="container-wide flex items-center h-full">
           <Link 
@@ -160,8 +187,8 @@ export function Layout({ children }: LayoutProps) {
                 key={link.path} 
                 to={link.path} 
                 className={({ isActive }) => 
-                  `text-sm lg:text-base font-medium transition-all duration-200 text-white hover:text-blue-200 px-3 py-2 rounded-md hover:bg-white/10 ${
-                    isActive ? 'text-blue-200 bg-white/20' : ''
+                  `text-sm lg:text-base font-medium transition-all duration-200 text-white hover:text-white px-3 py-2 rounded-md hover:bg-white/10 ${
+                    isActive ? 'text-white bg-[#374151]' : ''
                   }`
                 }
               >
@@ -174,7 +201,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="desktop-only flex flex-row items-center gap-4 ml-auto">
             <Button 
               size="sm" 
-              className="flex-shrink-0 px-6 py-2.5 text-sm font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-sm"
+              className="flex-shrink-0 px-6 py-2.5 text-sm font-bold bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition-all duration-200 shadow-sm"
               onClick={() => setShowProfileModal(true)}
             >
               Abrir Cuenta
@@ -217,7 +244,7 @@ export function Layout({ children }: LayoutProps) {
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, y: -20 }} 
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="mobile-tablet bg-background/95 backdrop-blur-md border-b border-border relative z-50 shadow-2xl safe-area-bottom"
+                className="mobile-tablet bg-[#1a1f6e]/98 backdrop-blur-md border-b border-white/10 relative z-50 shadow-2xl safe-area-bottom"
             >
               <nav 
                 id="mobile-navigation"
@@ -231,8 +258,8 @@ export function Layout({ children }: LayoutProps) {
                     to={link.path} 
                     onClick={handleMobileNavClick} 
                     className={({ isActive }) => 
-                      `mobile-menu-item rounded-xl hover:bg-muted/50 active:bg-muted/70 transition-all duration-200 ${
-                        isActive ? 'text-primary bg-primary/10 border-l-4 border-primary' : 'text-foreground hover:text-primary'
+                      `mobile-menu-item rounded-xl hover:bg-white/10 active:bg-white/15 transition-all duration-200 ${
+                        isActive ? 'text-white bg-[#374151] border-l-4 border-[#00C077]' : 'text-white/80 hover:text-white'
                       }`
                     }
                   >
@@ -241,7 +268,7 @@ export function Layout({ children }: LayoutProps) {
                 ))}
                 <div className="flex flex-col gap-mobile-sm pt-6 border-t border-border/50 mobile-safe-padding">
                   <Button 
-                    className="btn-mobile-md w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:shadow-accent/30 transition-all duration-200"
+                    className="btn-mobile-md w-full bg-[#7c3aed] text-white hover:bg-[#6d28d9] shadow-lg transition-all duration-200"
                     onClick={() => { 
                       setShowProfileModal(true); 
                       setIsMenuOpen(false); 
@@ -258,7 +285,7 @@ export function Layout({ children }: LayoutProps) {
             </>
           )}
         </AnimatePresence>
-      </header>
+      </motion.header>
 
       {/* Main Content Area */}
       <main className="flex-grow">
