@@ -384,19 +384,21 @@
     }
   }
   
+  /* desktop-only: nav links y CTAs, solo visibles en desktop >=1024px */
   .desktop-only { 
     display: none !important;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .desktop-only { 
       display: flex !important;
     }
   }
   
+  /* mobile-tablet: hamburger y panel menú, visibles en <1024px */
   .mobile-tablet { 
     display: block !important;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .mobile-tablet { 
       display: none !important;
     }
