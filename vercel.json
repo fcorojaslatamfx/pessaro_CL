@@ -35,6 +35,26 @@
       "has": [
         {
           "type": "host",
+          "value": "pessarocapital.com"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.pessarocapital.com"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html",
+      "has": [
+        {
+          "type": "host",
           "value": "login.pessaro.cl"
         }
       ]
@@ -100,6 +120,17 @@
         }
       ],
       "destination": "/super-admin-login",
+      "permanent": false
+    },
+    {
+      "source": "/login-interno",
+      "has": [
+        {
+          "type": "host",
+          "value": "login.pessaro.cl"
+        }
+      ],
+      "destination": "/cms/login",
       "permanent": false
     }
   ]
