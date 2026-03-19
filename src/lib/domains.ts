@@ -21,7 +21,8 @@ export const DOMAIN_CONFIG = {
   // Subdominio para accesos administrativos
   LOGIN_DOMAIN: 'login.pessaro.cl',
   // Dominios de desarrollo/staging
-  DEV_DOMAINS: ['localhost', '127.0.0.1', 'babr325dcb.skywork.website'],
+  // ── vercel.app agregado para que los previews de Vercel no redirijan a producción
+  DEV_DOMAINS: ['localhost', '127.0.0.1', 'babr325dcb.skywork.website', 'vercel.app'],
 } as const;
 
 // Variables de entorno para detección dinámica
@@ -55,7 +56,7 @@ export const isMainDomain = (): boolean => {
   const mainDomain = getEnvironmentDomain('main');
 
   // En desarrollo, permitir acceso desde cualquier dominio de desarrollo
-  if ((DOMAIN_CONFIG.DEV_DOMAINS as readonly string[]).includes(currentDomain)) {
+  if (isDevelopment()) {
     return true;
   }
 
@@ -75,9 +76,13 @@ export const isLoginDomain = (): boolean => {
 };
 
 // Función para verificar si estamos en desarrollo
+// ── Usa endsWith para cubrir subdominios de vercel.app (ej. xxx.vercel.app)
 export const isDevelopment = (): boolean => {
   const currentDomain = getCurrentDomain();
-  return (DOMAIN_CONFIG.DEV_DOMAINS as readonly string[]).includes(currentDomain);
+  return (
+    (DOMAIN_CONFIG.DEV_DOMAINS as readonly string[]).includes(currentDomain) ||
+    currentDomain.endsWith('.vercel.app')
+  );
 };
 
 // Función ESTRICTA para verificar si debemos forzar el dominio de login
@@ -140,6 +145,7 @@ export const LOGIN_ONLY_ROUTES = [
   '/cms/instruments',
   '/cms/media',
   '/cms/settings',
+  '/cms/clientes',  // ── NUEVO: Gestión de clientes
 ] as const;
 
 // Rutas disponibles en el dominio principal (pessaro.cl / pessarocapital.com)
