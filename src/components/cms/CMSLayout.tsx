@@ -13,7 +13,8 @@ import {
   X,
   ChevronRight,
   User,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -64,6 +65,14 @@ const NAV_ITEMS: NavItem[] = [
     path: '/cms/media',
     icon: ImageIcon
   },
+  // ── NUEVO: Gestión de Clientes ──────────────────────────────────────────
+  {
+    label: 'Clientes',
+    path: '/cms/clientes',
+    icon: UserCheck,
+    roles: ['interno', 'admin', 'super_admin']
+  },
+  // ────────────────────────────────────────────────────────────────────────
   {
     label: 'Configuración',
     path: '/cms/settings',
@@ -118,8 +127,8 @@ export function CMSLayout({ children }: CMSLayoutProps) {
           </div>
           <span className="font-bold text-foreground">Pessaro CMS</span>
         </div>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
@@ -147,16 +156,16 @@ export function CMSLayout({ children }: CMSLayoutProps) {
                 return null;
               }
             }
-            
+
             const isActive = location.pathname === item.path;
-            
+
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-                  isActive 
+                  isActive
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
@@ -164,7 +173,7 @@ export function CMSLayout({ children }: CMSLayoutProps) {
                 <item.icon className={cn("h-5 w-5", !isActive && "group-hover:scale-110 transition-transform")} />
                 <span className="font-medium">{item.label}</span>
                 {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="activeIndicator"
                     className="ml-auto"
                   >
@@ -193,9 +202,9 @@ export function CMSLayout({ children }: CMSLayoutProps) {
               </div>
             </div>
           </div>
-          
-          <Button 
-            variant="ghost" 
+
+          <Button
+            variant="ghost"
             className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 gap-3"
             onClick={handleLogout}
           >
@@ -240,7 +249,7 @@ export function CMSLayout({ children }: CMSLayoutProps) {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={({ isActive }) => cn(
                         "flex items-center gap-4 px-4 py-4 rounded-xl transition-colors",
-                        isActive 
+                        isActive
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:bg-muted"
                       )}
@@ -253,7 +262,7 @@ export function CMSLayout({ children }: CMSLayoutProps) {
               </nav>
 
               <div className="absolute bottom-8 left-6 right-6">
-                <Button 
+                <Button
                   variant="destructive"
                   className="w-full gap-3 py-6 rounded-xl"
                   onClick={handleLogout}
