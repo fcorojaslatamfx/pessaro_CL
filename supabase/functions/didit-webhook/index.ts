@@ -37,16 +37,22 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Permitir test webhooks de Didit (X-Didit-Test-Webhook: true)
-    const isTestWebhook = req.headers.get('x-didit-test-webhook') === 'true';
+    // Permitir test webhooks de Didit
+    const isTestWebhook = req.headers.get('x-didit-test-webhook') === 'true' ||
+                          req.headers.get('X-Didit-Test-Webhook') === 'true';
 
-    if (!isTestWebhook && signatureSimple !== expectedSignature) {
-      console.error('[didit-webhook] Invalid signature');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // En producción verificar firma — en test permitir siempre
+    if (!isTestWebhook) {
+      if (!signatureSimple || signatureSimple !== expectedSignature) {
+        console.error('[didit-webhook] Invalid signature. Expected:', expectedSignature, 'Got:', signatureSimple);
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
+
+    console.log('[didit-webhook] Auth OK — isTest:', isTestWebhook);
 
     // ── 2. Parsear payload ───────────────────────────────────────────────────
     const payload = JSON.parse(bodyText);
