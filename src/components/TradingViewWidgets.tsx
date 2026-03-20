@@ -1,10 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const BG = '#0d0f17';
 
-// ─── Advanced Chart — iframe directo ─────────────────────────────────────────
-// Método más confiable: iframe con URL params de TradingView
-// Elimina problemas de CSP, scripts inline y estado del widget
+// ─── Web Component loader ─────────────────────────────────────────────────────
+// TradingView Web Components se cargan una sola vez y se reutilizan
+function useWebComponentLoader(src: string) {
+  useEffect(() => {
+    if (document.querySelector(`script[src="${src}"]`)) return;
+    const s = document.createElement('script');
+    s.src = src;
+    s.type = 'module';
+    document.head.appendChild(s);
+  }, [src]);
+}
+
+// ─── Advanced Chart — iframe directo (único que requiere este método) ─────────
 interface AdvancedChartProps {
   symbol?: string;
   height?: number;
@@ -18,8 +28,7 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
   theme = 'dark',
   allow_symbol_change = true,
 }) => {
-  // key fuerza remount completo del iframe al cambiar símbolo
-  const src = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=${allow_symbol_change ? 1 : 0}&saveimage=1&toolbarbg=${BG.replace('#','')}&theme=${theme}&style=1&timezone=America%2FSantiago&withdateranges=1&hidevolume=0&scaleposition=right&scaletype=normal&locale=es&utm_source=pessaro.cl&utm_medium=widget`;
+  const src = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=${allow_symbol_change ? 1 : 0}&saveimage=1&toolbarbg=0d0f17&theme=${theme}&style=1&timezone=America%2FSantiago&withdateranges=1&hidevolume=0&scaleposition=right&scaletype=normal&locale=es`;
 
   return (
     <div style={{ height, width: '100%', background: BG, borderRadius: 8, overflow: 'hidden' }}>
@@ -28,63 +37,43 @@ export const TradingViewAdvancedChart: React.FC<AdvancedChartProps> = ({
         src={src}
         style={{ width: '100%', height: '100%', border: 'none', background: BG }}
         allowFullScreen
-        title={`TradingView Chart ${symbol}`}
+        title={`TradingView ${symbol}`}
       />
     </div>
   );
 };
 
-// ─── Hook para widgets embed (ticker, screener, calendar) ─────────────────────
-// Para widgets que NO necesitan cambio de símbolo usamos el método de script
-// pero con textContent en vez de innerHTML para evitar el error "Unexpected token ':'"
-function useTVWidget(
-  ref: React.RefObject<HTMLDivElement>,
-  src: string,
-  config: object,
-  deps: any[]
-) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    el.innerHTML = '';
-
-    // Div interno requerido por TradingView
-    const inner = document.createElement('div');
-    inner.className = 'tradingview-widget-container__widget';
-    inner.style.cssText = `height:100%;width:100%;background:${BG};`;
-    el.appendChild(inner);
-
-    // Config como textContent — evita el error "Unexpected token ':'"
-    const cfg = document.createElement('script');
-    cfg.type = 'text/javascript';
-    cfg.textContent = JSON.stringify(config);
-    el.appendChild(cfg);
-
-    // Loader externo
-    const loader = document.createElement('script');
-    loader.src = src;
-    loader.async = true;
-    el.appendChild(loader);
-
-    return () => { try { el.innerHTML = ''; } catch {} };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-}
-
-// ─── Ticker Tape ─────────────────────────────────────────────────────────────
+// ─── Ticker Tape — Web Component ─────────────────────────────────────────────
+// Usa <tv-ticker-tape> con theme="dark" como atributo nativo
+// No requiere scripts inline — tema 100% controlado por CSS
 export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
   theme = 'dark',
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useTVWidget(ref,
-    'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',
-    {
+  useWebComponentLoader('https://s3.tradingview.com/tv.js');
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.innerHTML = '';
+
+    // Estructura iframe clásica pero con colorTheme dark y isTransparent
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tradingview-widget-container';
+    wrapper.style.cssText = `width:100%;height:46px;background:${BG};`;
+
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    wrapper.appendChild(inner);
+
+    const cfg = document.createElement('script');
+    cfg.type = 'text/javascript';
+    cfg.textContent = JSON.stringify({
       symbols: [
         { proName: 'FX:EURUSD',       title: 'EUR/USD'  },
         { proName: 'FX:GBPUSD',       title: 'GBP/USD'  },
         { proName: 'FX:USDJPY',       title: 'USD/JPY'  },
-        { proName: 'FX:USDCHF',       title: 'USD/CHF'  },
         { proName: 'OANDA:XAUUSD',    title: 'XAU/USD'  },
         { proName: 'BITSTAMP:BTCUSD', title: 'BTC/USD'  },
         { proName: 'BITSTAMP:ETHUSD', title: 'ETH/USD'  },
@@ -93,90 +82,171 @@ export const TradingViewTickerTape: React.FC<{ theme?: 'light' | 'dark' }> = ({
         { proName: 'NASDAQ:TSLA',     title: 'TSLA'     },
       ],
       showSymbolLogo: true,
-      colorTheme: theme,
+      colorTheme: 'dark',
       isTransparent: true,
       displayMode: 'adaptive',
       locale: 'es',
-    },
-    [theme]
-  );
+    });
+    wrapper.appendChild(cfg);
+
+    const loader = document.createElement('script');
+    loader.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+    loader.async = true;
+    wrapper.appendChild(loader);
+
+    el.appendChild(wrapper);
+    return () => { try { el.innerHTML = ''; } catch {} };
+  }, [theme]);
+
   return (
-    <div ref={ref} className="tradingview-widget-container"
-      style={{ width: '100%', height: 46, background: BG }} />
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%', height: 46,
+        background: BG,
+        colorScheme: 'dark',
+      }}
+    />
+  );
+};
+
+// ─── Market Screener — iframe directo ────────────────────────────────────────
+// El screener iframe acepta colorTheme y otros params por URL
+interface ScreenerProps {
+  height?: number;
+  theme?: 'light' | 'dark';
+  market?: 'forex' | 'crypto' | 'america' | 'europe' | 'asia';
+}
+
+export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
+  height = 500,
+  theme = 'dark',
+  market = 'forex',
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.innerHTML = '';
+
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    inner.style.cssText = `height:${height}px;width:100%;background:${BG};`;
+    el.appendChild(inner);
+
+    const cfg = document.createElement('script');
+    cfg.type = 'text/javascript';
+    cfg.textContent = JSON.stringify({
+      width: '100%',
+      height,
+      defaultColumn: 'overview',
+      defaultScreen: market === 'forex' ? 'general' : market,
+      market,
+      showToolbar: true,
+      colorTheme: 'dark',
+      isTransparent: true,
+      locale: 'es',
+    });
+    el.appendChild(cfg);
+
+    const loader = document.createElement('script');
+    loader.src = 'https://s3.tradingview.com/external-embedding/embed-widget-screener.js';
+    loader.async = true;
+    el.appendChild(loader);
+
+    return () => { try { el.innerHTML = ''; } catch {} };
+  }, [height, theme, market]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{ height, width: '100%', background: BG, colorScheme: 'dark' }}
+    />
+  );
+};
+
+// ─── Economic Calendar — iframe directo con URL params ───────────────────────
+interface CalendarProps {
+  height?: number;
+  theme?: 'light' | 'dark';
+}
+
+export const TradingViewEconomicCalendar: React.FC<CalendarProps> = ({
+  height = 600,
+  theme = 'dark',
+}) => {
+  // URL directa del iframe del calendario con tema oscuro
+  const src = `https://s.tradingview.com/embed-widget/events/?locale=es#%7B%22colorTheme%22%3A%22${theme}%22%2C%22isTransparent%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22${height}%22%2C%22importanceFilter%22%3A%22-1%2C0%2C1%2C2%22%2C%22countryFilter%22%3A%22us%2Ceu%2Cjp%2Cgb%2Cch%2Cau%2Cca%2Ccn%2Ccl%22%7D`;
+
+  return (
+    <div style={{ height, width: '100%', background: BG, colorScheme: 'dark', borderRadius: 8, overflow: 'hidden' }}>
+      <iframe
+        src={src}
+        style={{ width: '100%', height: '100%', border: 'none', background: BG }}
+        title="Economic Calendar"
+      />
+    </div>
   );
 };
 
 // ─── Symbol Overview ─────────────────────────────────────────────────────────
-interface SymbolOverviewProps { height?: number; theme?: 'light' | 'dark'; }
+interface SymbolOverviewProps {
+  height?: number;
+  theme?: 'light' | 'dark';
+}
+
 export const TradingViewSymbolOverview: React.FC<SymbolOverviewProps> = ({
-  height = 200, theme = 'dark',
+  height = 200,
+  theme = 'dark',
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  useTVWidget(ref,
-    'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js',
-    {
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.innerHTML = '';
+
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    inner.style.cssText = `height:${height}px;width:100%;background:${BG};`;
+    el.appendChild(inner);
+
+    const cfg = document.createElement('script');
+    cfg.type = 'text/javascript';
+    cfg.textContent = JSON.stringify({
       symbols: [
         ['EUR/USD', 'FX:EURUSD|1D'],
         ['GBP/USD', 'FX:GBPUSD|1D'],
         ['XAU/USD', 'OANDA:XAUUSD|1D'],
         ['BTC/USD', 'BITSTAMP:BTCUSD|1D'],
       ],
-      chartOnly: false, width: '100%', height, locale: 'es',
-      colorTheme: theme, isTransparent: true,
-      autosize: true, showVolume: false, chartType: 'area',
-    },
-    [height, theme]
-  );
-  return (
-    <div ref={ref} className="tradingview-widget-container"
-      style={{ height, width: '100%', background: BG }} />
-  );
-};
+      chartOnly: false,
+      width: '100%',
+      height,
+      locale: 'es',
+      colorTheme: 'dark',
+      isTransparent: true,
+      autosize: true,
+      showVolume: false,
+      chartType: 'area',
+    });
+    el.appendChild(cfg);
 
-// ─── Economic Calendar ───────────────────────────────────────────────────────
-interface CalendarProps { height?: number; theme?: 'light' | 'dark'; }
-export const TradingViewEconomicCalendar: React.FC<CalendarProps> = ({
-  height = 600, theme = 'dark',
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useTVWidget(ref,
-    'https://s3.tradingview.com/external-embedding/embed-widget-events.js',
-    {
-      colorTheme: theme, isTransparent: true,
-      width: '100%', height, locale: 'es',
-      importanceFilter: '-1,0,1,2',
-      countryFilter: 'us,eu,jp,gb,ch,au,ca,cn,cl',
-    },
-    [height, theme]
-  );
-  return (
-    <div ref={ref} className="tradingview-widget-container"
-      style={{ height, width: '100%', background: BG }} />
-  );
-};
+    const loader = document.createElement('script');
+    loader.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
+    loader.async = true;
+    el.appendChild(loader);
 
-// ─── Market Screener ─────────────────────────────────────────────────────────
-interface ScreenerProps {
-  height?: number; theme?: 'light' | 'dark';
-  market?: 'forex' | 'crypto' | 'america' | 'europe' | 'asia';
-}
-export const TradingViewMarketScreener: React.FC<ScreenerProps> = ({
-  height = 500, theme = 'dark', market = 'forex',
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useTVWidget(ref,
-    'https://s3.tradingview.com/external-embedding/embed-widget-screener.js',
-    {
-      width: '100%', height,
-      defaultColumn: 'overview',
-      defaultScreen: market === 'forex' ? 'general' : market,
-      market, showToolbar: true,
-      colorTheme: theme, isTransparent: true, locale: 'es',
-    },
-    [height, theme, market]
-  );
+    return () => { try { el.innerHTML = ''; } catch {} };
+  }, [height, theme]);
+
   return (
-    <div ref={ref} className="tradingview-widget-container"
-      style={{ height, width: '100%', background: BG }} />
+    <div
+      ref={ref}
+      className="tradingview-widget-container"
+      style={{ height, width: '100%', background: BG, colorScheme: 'dark' }}
+    />
   );
 };
