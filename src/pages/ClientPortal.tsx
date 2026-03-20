@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { KYCVerification } from '@/components/KYCVerification';
 import {
   TradingViewAdvancedChart,
   TradingViewSymbolOverview,
@@ -265,12 +266,19 @@ const AccountSection = ({ profile, account, onSave, onContactAdvisor }: {
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
   const [error, setError]     = useState('');
+  const [kycUserId, setKycUserId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState({
     first_name:     profile.first_name    ||'',
     last_name:      profile.last_name     ||'',
     phone:          profile.phone         ||'',
     risk_tolerance: profile.risk_tolerance||'moderado',
   });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) setKycUserId(data.user.id);
+    });
+  }, []);
 
   const fieldStyle: React.CSSProperties = {
     width:'100%', background:'rgba(255,255,255,0.06)',
@@ -416,6 +424,16 @@ const AccountSection = ({ profile, account, onSave, onContactAdvisor }: {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Verificación KYC */}
+        <div style={{ marginBottom:0 }}>
+          <KYCVerification
+            userId={kycUserId}
+            onComplete={(status, sessionId) => {
+              console.log('[KYC] Completed:', status, sessionId);
+            }}
+          />
         </div>
 
         {/* Cuenta de Trading */}
