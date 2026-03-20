@@ -1,16 +1,5 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://s3.tradingview.com https://unpkg.com https://cdn.jsdelivr.net; frame-src 'self' https://*.tradingview.com https://tradingview.com https://www.tradingview.com https://s3.tradingview.com https://verify.didit.me https://*.didit.me; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.tradingview.com https://verification.didit.me https://*.didit.me https://fonts.googleapis.com; img-src * data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; worker-src blob: 'self'; media-src 'self' blob: data:;"
-        }
-      ]
-    }
   ]
 }

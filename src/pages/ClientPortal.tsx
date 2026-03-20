@@ -23,6 +23,7 @@ import {
 // isTransparent:true en los widgets hace que el iframe no ponga fondo propio.
 // Este CSS garantiza que el div contenedor nunca muestre blanco.
 const GLOBAL_CSS = `
+  body { padding-top: 0 !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .tradingview-widget-container,
   .tradingview-widget-container__widget,
