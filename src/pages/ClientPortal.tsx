@@ -24,9 +24,13 @@ import {
 // Este CSS garantiza que el div contenedor nunca muestre blanco.
 const GLOBAL_CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
-  .tradingview-widget-container { background: #0d0f17 !important; }
-  .tradingview-widget-container__widget { background: #0d0f17 !important; }
-  .tradingview-widget-copyright { background: #0d0f17 !important; display: none; }
+  .tradingview-widget-container,
+  .tradingview-widget-container__widget,
+  .tradingview-widget-container iframe {
+    background: #0d0f17 !important;
+    color-scheme: dark !important;
+  }
+  .tradingview-widget-copyright { display: none !important; }
 `;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -625,7 +629,7 @@ const ClientPortal: React.FC = () => {
       </nav>
 
       {/* Footer — flexShrink:0 CRÍTICO para que el botón logout SIEMPRE sea visible */}
-      <div style={{ padding:'14px 14px 18px', borderTop:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
+      <div style={{ padding:'14px 14px 22px', borderTop:'1px solid rgba(255,255,255,0.06)', flexShrink:0, minHeight:130 }}>
         {/* Info usuario */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
           <div style={{ width:32, height:32, borderRadius:'50%', flexShrink:0,
@@ -751,8 +755,8 @@ const ClientPortal: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* Ticker tape */}
-          <div style={{ borderTop:'1px solid rgba(255,255,255,0.04)' }}>
+          {/* Ticker tape — background forzado oscuro para evitar flash blanco */}
+          <div style={{ borderTop:'1px solid rgba(255,255,255,0.04)', background:'#0d0f17', minHeight:46 }}>
             <TradingViewTickerTape theme="dark"/>
           </div>
         </div>
