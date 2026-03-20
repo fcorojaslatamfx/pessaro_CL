@@ -610,7 +610,7 @@ const ClientPortal: React.FC = () => {
         )}
       </div>
 
-      {/* Nav — minHeight:0 y overflowY:auto para que no empuje el footer */}
+      {/* Nav */}
       <nav style={{ padding:'10px 10px', flex:1, overflowY:'auto' as const, minHeight:0 }}>
         {NAV.map(({ id, label, Icon }) => {
           const active = activeTab===id;
@@ -626,44 +626,39 @@ const ClientPortal: React.FC = () => {
             </motion.button>
           );
         })}
+
+        {/* ── Cerrar sesión — justo debajo de Mi Cuenta en el nav ── */}
+        <div style={{ height:1, background:'rgba(255,255,255,0.05)', margin:'8px 4px' }}/>
+        <motion.button whileHover={{ x:2 }} onClick={handleSignOut}
+          style={{ width:'100%', display:'flex', alignItems:'center', gap:10,
+            padding:'10px 12px', borderRadius:8, border:'none', cursor:'pointer',
+            textAlign:'left' as const, marginBottom:2,
+            background:'rgba(255,71,87,0.06)',
+            color:'#ff6b81', fontWeight:400, fontSize:13,
+            borderLeft:'2px solid transparent', transition:'all 0.15s' }}>
+          <LogOut size={16}/>Cerrar sesión
+        </motion.button>
       </nav>
 
-      {/* Footer — flexShrink:0 CRÍTICO para que el botón logout SIEMPRE sea visible */}
-      <div style={{ padding:'14px 14px 22px', borderTop:'1px solid rgba(255,255,255,0.06)', flexShrink:0, minHeight:130 }}>
-        {/* Info usuario */}
-        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-          <div style={{ width:32, height:32, borderRadius:'50%', flexShrink:0,
+      {/* Footer — solo info del usuario, sin botón logout */}
+      <div style={{ padding:'12px 14px 16px', borderTop:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0,
             background:'linear-gradient(135deg,#6c5ce7,#0984e3)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:12, fontWeight:700, color:'#fff' }}>
+            fontSize:11, fontWeight:700, color:'#fff' }}>
             {initials}
           </div>
           <div style={{ minWidth:0 }}>
             <p style={{ fontSize:12, fontWeight:600, color:'#dfe6e9', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
               {profile.first_name}
             </p>
-            <p style={{ fontSize:10, color:'#636e72' }}>{accountNumber}</p>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, color:'#00d084' }}>
+              <span style={{ width:5, height:5, borderRadius:'50%', background:'#00d084', display:'inline-block' }}/>
+              {accountNumber}
+            </div>
           </div>
         </div>
-
-        {/* Badge ● ACTIVO */}
-        <div style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10,
-          color:'#00d084', background:'rgba(0,208,132,0.1)',
-          padding:'3px 8px', borderRadius:20, textTransform:'uppercase' as const,
-          letterSpacing:'0.06em', marginBottom:10 }}>
-          <span style={{ width:5, height:5, borderRadius:'50%', background:'#00d084', display:'inline-block' }}/>
-          Activo
-        </div>
-
-        {/* ──── CERRAR SESIÓN — visible siempre en desktop, tablet y móvil ──── */}
-        <button onClick={handleSignOut}
-          style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-            padding:'10px 12px', borderRadius:8,
-            border:'1px solid rgba(255,71,87,0.4)',
-            background:'rgba(255,71,87,0.1)',
-            color:'#ff6b81', cursor:'pointer', fontSize:13, fontWeight:600 }}>
-          <LogOut size={15}/>Cerrar sesión
-        </button>
       </div>
     </>
   );
@@ -708,9 +703,9 @@ const ClientPortal: React.FC = () => {
       {/* ── MAIN ─────────────────────────────────────────────────────────────── */}
       <main style={{ marginLeft:isDesktop?SIDEBAR_W:0, flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
 
-        {/* Topbar */}
+        {/* Topbar — background opaco para eliminar barra blanca al cargar */}
         <div style={{ position:'sticky', top:0, zIndex:50,
-          background:'rgba(13,15,23,0.95)', backdropFilter:'blur(12px)',
+          background:'#0d0f17',
           borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ padding:isMobile?'12px 16px':'14px 32px',
             display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
