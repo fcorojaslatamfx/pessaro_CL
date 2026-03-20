@@ -9,19 +9,29 @@ import { getMainSiteUrl, getAdminUrl } from '@/lib/domains';
 interface LoginMenuProps {
   className?: string;
   onMenuItemClick?: () => void;
+  /**
+   * dropUp={true} → el dropdown se abre hacia ARRIBA (bottom-full mb-2).
+   * Usar cuando el botón está en el footer de un overlay sin espacio debajo.
+   * Por defecto false → abre hacia abajo (top-full mt-2).
+   */
+  dropUp?: boolean;
 }
 
-const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }) => {
+const LoginMenu: React.FC<LoginMenuProps> = ({
+  className = '',
+  onMenuItemClick,
+  dropUp = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef   = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { setShowProfileModal } = useRiskProfile();
 
-  // Cerrar menú al hacer click fuera
+  // Cerrar al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        menuRef.current && 
+        menuRef.current &&
         buttonRef.current &&
         !menuRef.current.contains(event.target as Node) &&
         !buttonRef.current.contains(event.target as Node)
@@ -29,7 +39,6 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -58,7 +67,7 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
       description: 'Solo personal autorizado',
       external: true,
       highlight: false,
-    }
+    },
   ];
 
   return (
@@ -75,16 +84,23 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
-      {/* Menú desplegable */}
+      {/* Dropdown */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             ref={menuRef}
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: dropUp ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{   opacity: 0, y: dropUp ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-60 bg-white border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+            className={`
+              absolute right-0 w-60
+              bg-white border border-border rounded-lg shadow-lg z-[200] overflow-hidden
+              ${dropUp
+                ? 'bottom-full mb-2'   /* ↑ hacia arriba — para uso en footer de overlay */
+                : 'top-full mt-2'      /* ↓ hacia abajo  — comportamiento normal desktop  */
+              }
+            `}
           >
             <div className="py-2">
               {menuItems.map((item, index) => (
@@ -97,15 +113,15 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
                     setIsOpen(false);
                     onMenuItemClick?.();
                   }}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group ${
-                    item.highlight ? 'bg-[#00C077]/5 border-b border-[#00C077]/10' : ''
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors group
+                    ${item.highlight ? 'bg-[#00C077]/5 border-b border-[#00C077]/10' : ''}`}
                 >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
-                    item.highlight
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
+                    ${item.highlight
                       ? 'bg-[#00C077]/15 text-[#00C077] group-hover:bg-[#00C077]/25'
                       : 'bg-[#24d594]/10 text-[#24d594] group-hover:bg-[#24d594]/20'
-                  }`}>
+                    }`}
+                  >
                     {item.icon}
                   </div>
                   <div className="flex-1">
@@ -120,8 +136,6 @@ const LoginMenu: React.FC<LoginMenuProps> = ({ className = '', onMenuItemClick }
                 </a>
               ))}
             </div>
-            
-            {/* Footer */}
             <div className="border-t border-border bg-muted/30 px-4 py-3">
               <p className="text-xs text-muted-foreground text-center">
                 Pessaro Capital © 2026

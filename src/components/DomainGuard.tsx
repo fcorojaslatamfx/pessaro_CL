@@ -1,18 +1,17 @@
 import React, { useEffect, Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { 
-  isMainDomain, 
-  isLoginDomain, 
-  isLoginRoute, 
-  isMainRoute, 
+import {
+  isMainDomain,
+  isLoginDomain,
+  isLoginRoute,
+  isMainRoute,
   isDevelopment,
   getMainDomainUrl,
   getLoginDomainUrl,
   shouldForceLoginDomain,
-  enforceLoginDomainRoutes
+  enforceLoginDomainRoutes,
 } from '@/lib/domains';
 
-// Loader optimizado para DomainGuard
 const DomainLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center space-y-4">
@@ -23,9 +22,7 @@ const DomainLoader = () => (
         <h2 className="text-lg font-semibold text-foreground mb-1">
           Verificando dominio...
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Pessaro Capital
-        </p>
+        <p className="text-sm text-muted-foreground">Pessaro Capital</p>
       </div>
     </div>
   </div>
@@ -36,73 +33,68 @@ interface DomainGuardProps {
 }
 
 /**
- * Componente que protege las rutas según el dominio
- * Optimizado para trabajar con lazy loading y Suspense
- * Bloquea el acceso a rutas que no corresponden al dominio actual
+ * DomainGuard — protege rutas según el dominio activo.
+ *
+ * Lógica:
+ *   1. En desarrollo → permite todo.
+ *   2. En login.pessaro.cl → solo rutas admin; cualquier otra → /super-admin-login.
+ *   3. En pessaro.cl / pessarocapital.com (isMainDomain):
+ *        - Ruta de login  → redirige a login.pessaro.cl/<ruta>
+ *        - Ruta de main   → renderiza normalmente
+ *        - Ruta desconocida → renderiza normalmente (el router/404 la maneja)
+ *   4. Dominio desconocido → renderiza normalmente (Vercel ya filtra qué dominios
+ *      son válidos; si llega aquí es un dominio previamente autorizado).
  */
 const DomainGuard: React.FC<DomainGuardProps> = ({ children }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  // Aplicar lógica estricta para el dominio de login
+  // Forzar rutas válidas en login.pessaro.cl
   useEffect(() => {
-    // Solo en producción
     if (!isDevelopment()) {
       enforceLoginDomainRoutes(currentPath);
     }
   }, [currentPath]);
 
-  // En desarrollo, permitir todas las rutas con Suspense
+  // ── Desarrollo: sin restricciones ─────────────────────────────────────
   if (isDevelopment()) {
-    return (
-      <Suspense fallback={<DomainLoader />}>
-        {children}
-      </Suspense>
-    );
+    return <Suspense fallback={<DomainLoader />}>{children}</Suspense>;
   }
 
-  const isCurrentlyOnMain = isMainDomain();
+  const isCurrentlyOnMain  = isMainDomain();
   const isCurrentlyOnLogin = isLoginDomain();
-  const shouldBeOnLogin = isLoginRoute(currentPath);
-  const shouldBeOnMain = isMainRoute(currentPath);
-  const forceLoginDomain = shouldForceLoginDomain();
+  const shouldBeOnLogin    = isLoginRoute(currentPath);
+  const shouldBeOnMain     = isMainRoute(currentPath);
+  const forceLogin         = shouldForceLoginDomain();
 
-  // Lógica estricta: si estamos en login.pessaro.cl, solo permitir rutas administrativas
-  if (forceLoginDomain && !shouldBeOnLogin) {
+  // ── login.pessaro.cl: solo rutas admin ────────────────────────────────
+  if (forceLogin && !shouldBeOnLogin) {
     window.location.replace(getLoginDomainUrl('/super-admin-login'));
     return <DomainLoader />;
   }
 
-  // Si estamos en el dominio principal pero la ruta debe estar en login
+  // ── pessaro.cl / pessarocapital.com: redirigir rutas admin al subdominio
   if (isCurrentlyOnMain && shouldBeOnLogin) {
-    // Redirigir al dominio de login
     window.location.href = getLoginDomainUrl(currentPath);
     return <DomainLoader />;
   }
 
-  // Si estamos en el dominio de login pero la ruta debe estar en main
+  // ── login.pessaro.cl: redirigir rutas main al dominio principal ────────
   if (isCurrentlyOnLogin && shouldBeOnMain) {
-    // Redirigir al dominio principal
     window.location.href = getMainDomainUrl(currentPath);
     return <DomainLoader />;
   }
 
-  // Si estamos en el dominio de login pero la ruta no es válida para login
+  // ── login.pessaro.cl: ruta ni main ni login → super-admin-login ────────
   if (isCurrentlyOnLogin && !shouldBeOnLogin) {
     return <Navigate to="/super-admin-login" replace />;
   }
 
-  // Si estamos en el dominio principal pero la ruta no es válida para main
-  if (isCurrentlyOnMain && !shouldBeOnMain && !shouldBeOnLogin) {
-    return <Navigate to="/" replace />;
-  }
+  // ── Dominio principal: ruta desconocida → dejar pasar (router la maneja) ─
+  // NO redirigir a "/" — el catch-all de App.tsx mostrará la página de error
+  // correctamente. Redirigir aquí rompería rutas dinámicas como /blog/:slug.
 
-  // Si todo está correcto, renderizar los children con Suspense
-  return (
-    <Suspense fallback={<DomainLoader />}>
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<DomainLoader />}>{children}</Suspense>;
 };
 
 export default DomainGuard;

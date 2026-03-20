@@ -1,14 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Briefcase, 
-  LineChart, 
-  Image, 
-  Settings, 
-  PlusCircle, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Briefcase,
+  LineChart,
+  Image,
+  Settings,
+  PlusCircle,
   ArrowRight,
   TrendingUp,
   Clock,
@@ -16,22 +16,25 @@ import {
   HelpCircle,
   Edit3,
   BarChart3,
-  Zap
+  Zap,
+  UserCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CMSLayout } from '@/components/cms/CMSLayout';
 import { CMSAccessGuard } from '@/components/cms/CMSAccessGuard';
 import { useCMSOptimized } from '@/hooks/useCMSOptimized';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -51,6 +54,20 @@ const fadeInUp = {
 export default function Dashboard() {
   const cms = useCMSOptimized();
 
+  // ── NUEVO: contador de clientes ─────────────────────────────────────────
+  const [clientsCount, setClientsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchClientsCount = async () => {
+      const { count } = await supabase
+        .from('client_profiles_2026_02_08_22_02')
+        .select('*', { count: 'exact', head: true });
+      setClientsCount(count || 0);
+    };
+    fetchClientsCount();
+  }, []);
+  // ────────────────────────────────────────────────────────────────────────
+
   // Queries para estadísticas
   const blogQuery = cms.blog.useAll();
   const servicesQuery = cms.services.useAll();
@@ -59,10 +76,10 @@ export default function Dashboard() {
   const faqsQuery = cms.faqs.useAll();
   const settingsQuery = cms.settings.useAll();
 
-  const isLoading = 
-    blogQuery.isLoading || 
-    servicesQuery.isLoading || 
-    instrumentsQuery.isLoading || 
+  const isLoading =
+    blogQuery.isLoading ||
+    servicesQuery.isLoading ||
+    instrumentsQuery.isLoading ||
     teamQuery.isLoading ||
     faqsQuery.isLoading ||
     settingsQuery.isLoading;
@@ -122,7 +139,18 @@ export default function Dashboard() {
       color: 'text-gray-500',
       bg: 'bg-gray-500/10',
       link: '/cms/settings'
+    },
+    // ── NUEVO: Card Clientes ──────────────────────────────────────────────
+    {
+      label: 'Clientes',
+      value: clientsCount,
+      registered: clientsCount,
+      icon: UserCheck,
+      color: 'text-blue-600',
+      bg: 'bg-blue-600/10',
+      link: '/cms/clientes'
     }
+    // ─────────────────────────────────────────────────────────────────────
   ];
 
   // Acciones rápidas
@@ -190,7 +218,17 @@ export default function Dashboard() {
       link: '/cms/settings',
       actionLabel: 'Ver configuraciones',
       color: 'bg-gray-500'
+    },
+    // ── NUEVO: Acción rápida Clientes ─────────────────────────────────────
+    {
+      title: 'Gestionar Clientes',
+      description: 'Lista de clientes registrados, perfiles de riesgo y cuentas de trading.',
+      icon: UserCheck,
+      link: '/cms/clientes',
+      actionLabel: 'Ver clientes',
+      color: 'bg-blue-600'
     }
+    // ─────────────────────────────────────────────────────────────────────
   ];
 
   // Actividad reciente (simulada)
@@ -278,7 +316,7 @@ export default function Dashboard() {
                             {stat.label}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            {isLoading ? (
+                            {isLoading && stat.label !== 'Clientes' ? (
                               <Skeleton className="h-8 w-12" />
                             ) : (
                               <span className="text-2xl font-bold text-foreground">
@@ -298,6 +336,11 @@ export default function Dashboard() {
                             {(stat as any).popular !== undefined && (
                               <Badge variant="secondary" className="text-xs">
                                 {(stat as any).popular} populares
+                              </Badge>
+                            )}
+                            {(stat as any).registered !== undefined && (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                                {(stat as any).registered} registrados
                               </Badge>
                             )}
                           </div>
@@ -461,6 +504,23 @@ export default function Dashboard() {
                       {teamQuery.data?.filter(member => member.is_active).length || 0}
                     </span>
                   </div>
+
+                  {/* ── NUEVO: Métrica Clientes ───────────────────────────── */}
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-blue-600/10">
+                        <UserCheck className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Clientes Registrados</p>
+                        <p className="text-xs text-muted-foreground">Total en plataforma</p>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-blue-600">
+                      {clientsCount}
+                    </span>
+                  </div>
+                  {/* ──────────────────────────────────────────────────────── */}
                 </div>
               </CardContent>
             </Card>
@@ -498,9 +558,9 @@ export default function Dashboard() {
                   </Link>
                 </Button>
                 <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
-                  <Link to="/cms/settings">
-                    <Settings className="w-6 h-6" />
-                    <span className="text-sm font-medium">Configuraciones</span>
+                  <Link to="/cms/clientes">
+                    <UserCheck className="w-6 h-6" />
+                    <span className="text-sm font-medium">Gestionar Clientes</span>
                   </Link>
                 </Button>
               </div>

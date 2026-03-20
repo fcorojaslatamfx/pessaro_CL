@@ -67,6 +67,9 @@ const ServicesManager = lazy(() => import('@/pages/cms/ServicesManagerOptimized'
 const InstrumentsManager = lazy(() => import('@/pages/cms/InstrumentsManager'));
 const MediaLibrary = lazy(() => import('@/pages/cms/MediaLibrary'));
 const Settings = lazy(() => import('@/pages/cms/Settings'));
+// ── NUEVO: Gestión de clientes ──────────────────────────────────────────────
+const ClientsManager = lazy(() => import('@/pages/cms/ClientsManager'));
+// ───────────────────────────────────────────────────────────────────────────
 const ErrorPage = lazy(() => import('@/pages/ErrorPage'));
 const TestResend = lazy(() => import('@/pages/TestResend'));
 const TestResendComplete = lazy(() => import('@/pages/TestResendComplete'));
@@ -128,8 +131,6 @@ export default function App() {
                             
                             {/* Password Recovery */}
                             <Route path={ROUTE_PATHS.RECUPERAR_CONTRASENA} element={<RecuperarContrasena />} />
-                            
-                            {/* Test Pages */}
                             
                             {/* Client Portal Login — CON Layout (navbar visible en login) */}
                             <Route 
@@ -211,14 +212,17 @@ export default function App() {
                         </LoginLayout>
                       }
                     />
-                    <Route path="/cms/pages"   element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><PageContentManager /></ProtectedRoute></LoginLayout>} />
-                    <Route path="/cms/faqs"    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><FAQManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path="/cms/pages"    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><PageContentManager /></ProtectedRoute></LoginLayout>} />
+                    <Route path="/cms/faqs"     element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><FAQManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_BLOG}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><BlogManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_TEAM}        element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><TeamManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_SERVICES}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><ServicesManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_INSTRUMENTS} element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><InstrumentsManager /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_MEDIA}       element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><MediaLibrary /></ProtectedRoute></LoginLayout>} />
                     <Route path={ROUTE_PATHS.CMS_SETTINGS}    element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><Settings /></ProtectedRoute></LoginLayout>} />
+                    {/* ── NUEVO: Ruta Gestión de Clientes ───────────────────────────────────── */}
+                    <Route path="/cms/clientes" element={<LoginLayout><ProtectedRoute requiredRoles="interno,super_admin"><ClientsManager /></ProtectedRoute></LoginLayout>} />
+                    {/* ─────────────────────────────────────────────────────────────────────── */}
                     
                     {/* Catch-all route for 404 errors */}
                     <Route path="*" element={<ErrorPage />} />
